@@ -84,6 +84,7 @@ targets:
       - package: ZekrKit
       - sdk: SwiftUI.framework
       - sdk: WidgetKit.framework
+      - sdk: AppIntents.framework
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(ZEKR_BUNDLE_ID).widgets
