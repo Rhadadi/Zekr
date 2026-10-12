@@ -33,3 +33,13 @@ final class SmallTypesTests: XCTestCase {
         XCTAssertEqual(Set(Reciter.all.map(\.id)).count, Reciter.all.count)
     }
 }
+
+final class StringsTests: XCTestCase {
+    func testEveryStringExistsInBothLanguages() {
+        for s in Str.allCases {
+            XCTAssertFalse(s.text(language: "en").isEmpty, "\(s)")
+            XCTAssertFalse(s.text(language: "fa").isEmpty, "\(s)")
+            XCTAssertNotEqual(s.text(language: "en"), s.text(language: "fa"), "\(s)")
+        }
+    }
+}

@@ -1,0 +1,5 @@
+// Bundle ID while developing. Change it (and set your team) in Signing.local.xcconfig, which is not committed.
+ZEKR_BUNDLE_ID = com.rhadadi.zekr.dev
+
+// Optional, per developer: DEVELOPMENT_TEAM = ABCDE12345
+#include? "Signing.local.xcconfig"

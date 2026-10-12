@@ -10,3 +10,11 @@ node_modules/
 .DS_Store
 .build/
 __pycache__/
+ios/Zekr/Info.plist
+ios/ZekrWidgets/Info.plist
+ios/Config/Signing.local.xcconfig
+*.xcuserstate
+xcuserdata/
+DerivedData/
+web/test-results/
+web/playwright-report/
