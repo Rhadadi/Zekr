@@ -35,6 +35,17 @@ npm run e2e        # end-to-end tests (needs: npx playwright install chromium)
 npm run build      # static site in web/dist, works on any host
 ```
 
+## Publishing the web app on GitHub Pages
+
+The site ends up at `https://<your-user>.github.io/Zekr/`. It works from that sub-path (a test serves the build under `/Zekr/` and checks it, including offline use).
+
+1. Repo Settings > Pages > Build and deployment > Source: **GitHub Actions**.
+   - GitHub Pages on a **private** repo needs a paid plan (Pro, Team or Enterprise). On the free plan, make the repo public first (Settings > General > Danger Zone), which also makes the code public.
+2. The workflow `.github/workflows/pages.yml` has to be on `main`. It deploys on every push to `main`, or run it by hand from the Actions tab (Deploy web to GitHub Pages > Run workflow). By default the `github-pages` environment only accepts deployments from `main`.
+3. Open the URL from the finished run.
+
+The site is public to anyone who has the link. It asks search engines not to index it (`robots.txt` and a `noindex` tag), which is a request, not protection. It serves Tanzil's translations, which are for non-commercial use; the About page credits and links Tanzil.
+
 ## iPhone app
 
 On a Mac with Xcode 16 or later:

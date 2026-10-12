@@ -228,7 +228,7 @@ CI on GitHub checks every change. Because the repo is private, macOS minutes are
 - **EveryAyah audio, fonts:** check the terms. The fonts used are under the SIL Open Font License.
 - **Privacy:** no data collected, no tracking (App Store privacy label: "Data Not Collected").
 - **The web version is public once hosted.** That means the Tanzil translations are served to anyone, which counts as redistribution. Fine for a private test site; for a public one, get permission or keep the site unlisted behind a login (Cloudflare Access is free). The Al-Mizan text must never be in the public web build unless the publishers agree.
-- **Web hosting:** GitHub Pages isn't available for private repos on the free plan. Cloudflare Pages or Netlify are free and work with private repos; I'll prepare a static build that works on any of them, and you pick when you want a URL.
+- **Web hosting: GitHub Pages (decided).** `.github/workflows/pages.yml` builds and deploys the site; the steps are in the README. A private repo needs a paid GitHub plan for Pages; otherwise the repo has to be public. Cloudflare Pages or Netlify would also work with a private repo if that's ever easier. The site is public once deployed, with a `noindex` request to search engines.
 
 ---
 
