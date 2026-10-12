@@ -31,6 +31,8 @@ targets:
           - Resources
       - path: Zekr/Resources
         buildPhase: resources
+        excludes:
+          - ".gitkeep"
     preBuildScripts:
       - name: Check Quran database
         basedOnDependencyAnalysis: false
@@ -50,6 +52,8 @@ targets:
       path: Zekr/Info.plist
       properties:
         CFBundleDisplayName: Zekr
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CFBundleLocalizations: [en, fa]
         CFBundleDevelopmentRegion: en
         UILaunchScreen: {}
@@ -75,6 +79,8 @@ targets:
           - Resources
       - path: ZekrWidgets/Resources
         buildPhase: resources
+        excludes:
+          - ".gitkeep"
     preBuildScripts:
       - name: Check widget database
         basedOnDependencyAnalysis: false
@@ -95,6 +101,8 @@ targets:
       path: ZekrWidgets/Info.plist
       properties:
         CFBundleDisplayName: Zekr
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CFBundleLocalizations: [en, fa]
         CFBundleDevelopmentRegion: en
         NSExtension:

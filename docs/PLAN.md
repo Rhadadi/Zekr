@@ -238,7 +238,7 @@ CI on GitHub checks every change. Because the repo is private, macOS minutes are
 |---|---|
 | **M0** Foundation | Done. `tools/build_data.py` (with 16 tests) builds the databases and web data; the shared rotation rule has a spec, a reference implementation and test cases |
 | **M1** Web app | Done and tested here: 33 unit tests and 25 end-to-end tests at phone width, plus a check that real recitation plays. Not hosted yet (§8) |
-| **M2** iPhone widget | Written: `ZekrKit` (27 tests pass on Linux, including the shared rotation cases and daylight-saving cases), the app, the widget and the Xcode project definition. Compiled by CI on macOS; not yet run on a phone |
+| **M2** iPhone widget | Written: `ZekrKit` (27 tests pass on Linux, including the shared rotation cases and daylight-saving cases), the app, the widget and the Xcode project definition. Built by CI on macOS (Xcode 16.4, iOS 18.5 SDK): the app and widget compile, the widget is embedded, both databases and the widget's App Intents metadata are in the bundle. Not yet run on a phone |
 | M3 to M6 | Not started |
 
 **Data findings worth knowing**

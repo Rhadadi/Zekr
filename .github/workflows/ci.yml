@@ -115,6 +115,8 @@ jobs:
           ls -la "$app" "$appex"
           plutil -p "$app/Info.plist"
           plutil -p "$appex/Info.plist"
+          test "$(plutil -extract CFBundleShortVersionString raw "$app/Info.plist")" = "0.1.0" || { echo "error: wrong app version"; exit 1; }
+          test ! -e "$app/.gitkeep" || { echo "error: .gitkeep was copied into the app"; exit 1; }
           test -f "$app/quran.sqlite" || { echo "error: quran.sqlite is not in the app"; exit 1; }
           test -f "$appex/widget.sqlite" || { echo "error: widget.sqlite is not in the widget"; exit 1; }
           test -d "$appex/Metadata.appintents" || { echo "error: the widget has no App Intents metadata, so its settings would not appear"; exit 1; }
