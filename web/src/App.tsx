@@ -3,15 +3,17 @@ import { initAudio } from './audio'
 import { Icon, type IconName } from './components/Icon'
 import { LoadError, Loading } from './components/Page'
 import { PlayerBar } from './components/PlayerBar'
-import { loadMeta } from './data'
+import { ayahIdOf, loadMeta, pageOf } from './data'
 import { useAsync } from './hooks'
 import { t } from './i18n'
 import { type RouteName, href, route } from './router'
+import { settings } from './store'
 import { toast } from './toast'
 import { About } from './views/About'
 import { Daily } from './views/Daily'
 import { Home } from './views/Home'
 import { IndexView } from './views/Index'
+import { PageReader } from './views/PageReader'
 import { Reader } from './views/Reader'
 import { SearchView } from './views/Search'
 import { Saved } from './views/Saved'
@@ -31,7 +33,7 @@ export function App() {
     if (meta.value) initAudio(meta.value)
   }, [meta.value])
   const r = route.value
-  const active: RouteName = r.name === 'reader' || r.name === 'daily' ? (r.name === 'daily' ? 'home' : 'index') : r.name === 'about' ? 'settings' : r.name
+  const active: RouteName = r.name === 'reader' || r.name === 'page' ? 'index' : r.name === 'daily' ? 'home' : r.name === 'about' ? 'settings' : r.name
 
   let view
   if (meta.error) view = <LoadError retry={meta.retry} />
@@ -39,7 +41,16 @@ export function App() {
   else {
     const m = meta.value
     switch (r.name) {
-      case 'reader': view = <Reader key={`${r.surah}`} meta={m} surahId={r.surah!} ayah={r.ayah} />; break
+      case 'reader':
+        if (!r.verse && settings.value.readMode === 'page') {
+          const surah = m.surahs[r.surah! - 1]!
+          const id = ayahIdOf(m, surah.id, Math.min(r.ayah ?? 1, surah.ayahs))
+          view = <PageReader key="page" meta={m} pageNo={pageOf(m, id)} focusId={r.ayah ? id : undefined} />
+        } else {
+          view = <Reader key={`${r.surah}`} meta={m} surahId={r.surah!} ayah={r.ayah} />
+        }
+        break
+      case 'page': view = <PageReader key="page" meta={m} pageNo={r.page!} />; break
       case 'index': view = <IndexView meta={m} tab={r.query.get('tab') === 'juz' ? 'juz' : 'surah'} />; break
       case 'daily': view = <Daily meta={m} />; break
       case 'search': view = <SearchView meta={m} initial={r.query.get('q') ?? ''} />; break

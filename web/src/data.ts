@@ -174,6 +174,25 @@ export function endOf(meta: Meta, id: number, scope: PlayTo): number {
   }
 }
 
+/** Mushaf page (1-604) that holds an ayah. */
+export function pageOf(meta: Meta, id: number): number {
+  let lo = 0
+  let hi = meta.pages.length - 1
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1
+    if ((meta.pages[mid] as number) <= id) lo = mid
+    else hi = mid - 1
+  }
+  return lo + 1
+}
+
+/** First and last ayah id on a page. */
+export function pageRange(meta: Meta, page: number): { first: number; last: number } {
+  const first = meta.pages[page - 1]
+  if (first === undefined) throw new RangeError(`no page ${page}`)
+  return { first, last: (meta.pages[page] ?? TOTAL_AYAHS + 1) - 1 }
+}
+
 export function juzOf(meta: Meta, id: number): number {
   let n = 1
   for (const m of meta.juz) if (m.id <= id) n = m.n

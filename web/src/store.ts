@@ -17,6 +17,8 @@ export interface Settings {
   lang: 'auto' | 'fa' | 'en'
   theme: 'auto' | 'light' | 'sepia' | 'dark'
   script: Script
+  /** 'verse': one ayah at a time with translations. 'page': flowing mushaf page. */
+  readMode: 'verse' | 'page'
   arabicSize: number
   trSize: number
   /** Translation ids shown in the reader, in order. */
@@ -36,6 +38,7 @@ export const defaultSettings: Settings = {
   lang: 'auto',
   theme: 'auto',
   script: 'uthmani',
+  readMode: 'verse',
   arabicSize: 30,
   trSize: 17,
   translations: ['fa.safavi'],

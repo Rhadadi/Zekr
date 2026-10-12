@@ -201,3 +201,101 @@ test('works offline after the first visit', async ({ page, context }) => {
   await page.goto('/#/ayah/1/2')
   await expect(page.locator('article#a-2 .tr')).toContainText('ستایش')
 })
+
+test.describe('mushaf page view', () => {
+  test('page 305 matches the printed mushaf: Maryam 1-11, juz 16', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/305')
+    await expect(page.locator('.banner')).toContainText('سورة مريم')
+    await expect(page.locator('.basmala')).toBeVisible()
+    await expect(page.locator('.ay')).toHaveCount(11)
+    await expect(page.locator('.ay').first()).toContainText(/هيع/) // the letters, whatever marks the script puts on them
+    await expect(page.locator('.mark').first()).toHaveText('﴿١﴾')
+    await expect(page.locator('.mark').last()).toHaveText('﴿١١﴾')
+    await expect(page.locator('.mb-page')).toHaveText('305')
+    await expect(page.locator('.mb-juz')).toHaveText('Juz 16')
+    await expect(page.locator('.mb-surah')).toContainText('مريم')
+  })
+
+  test('tapping an ayah shows its translation and actions', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/305')
+    await page.locator('.ay').nth(1).click()
+    const sheet = page.getByTestId('ayah-sheet')
+    await expect(sheet).toContainText('19:2')
+    await expect(sheet).toContainText('رحمت بخشی پروردگارت')
+    await expect(page.locator('.ay.sel')).toHaveCount(1)
+    await sheet.getByRole('button', { name: 'Close' }).click()
+    await expect(page.getByTestId('ayah-sheet')).toHaveCount(0)
+  })
+
+  test('next and previous page buttons turn the page', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/305')
+    await page.getByRole('button', { name: 'Next page' }).click()
+    await expect(page).toHaveURL(/#\/page\/306$/)
+    await expect(page.locator('.ay').first().locator('.mark')).toHaveText('﴿١٢﴾')
+    await page.getByRole('button', { name: 'Previous page' }).click()
+    await expect(page).toHaveURL(/#\/page\/305$/)
+  })
+
+  test('a page that starts mid-surah has no banner, and the first page opens Al-Fatiha', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/306')
+    await expect(page.locator('.ay').first()).toBeVisible()
+    await expect(page.locator('.banner')).toHaveCount(0)
+    await page.goto('/#/page/1')
+    await expect(page.locator('.banner')).toContainText('الفاتحة')
+    await expect(page.locator('.basmala')).toHaveCount(0)
+    await expect(page.locator('.ay')).toHaveCount(7)
+  })
+
+  test('jump to a page by number', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/305')
+    await page.locator('.mb-page').click()
+    await page.getByLabel('Go to page').fill('284')
+    await page.keyboard.press('Enter')
+    await expect(page).toHaveURL(/#\/page\/284$/)
+    await expect(page.locator('.mb-surah')).toContainText('الإسراء')
+  })
+
+  test('the reading mode setting decides how surah links open, and the toggle switches', async ({ page }) => {
+    await useSettings(page, { lang: 'en', readMode: 'page' })
+    await page.goto('/#/ayah/17/24')
+    await expect(page.locator('.mushaf-page')).toHaveAttribute('data-page', '284')
+    await expect(page.locator('.ay.sel')).toHaveCount(1)
+    await page.getByRole('button', { name: 'Verses' }).click()
+    await expect(page).toHaveURL(/#\/verse\/17\/24$/)
+    await expect(page.locator('article#a-24')).toBeVisible()
+    await page.getByRole('button', { name: 'Page' }).click()
+    await expect(page).toHaveURL(/#\/page\/284$/)
+  })
+
+  test('verse links always open verse by verse', async ({ page }) => {
+    await useSettings(page, { lang: 'en', readMode: 'page' })
+    await page.goto('/#/verse/1')
+    await expect(page.locator('article.ayah')).toHaveCount(7)
+  })
+
+  test('swiping right turns to the next page (right-to-left book)', async ({ browser }) => {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true })
+    const page = await context.newPage()
+    await page.addInitScript(() => localStorage.setItem('zekr.settings', JSON.stringify({ lang: 'en' })))
+    await page.goto('http://localhost:4173/#/page/305')
+    await expect(page.locator('.ay').first()).toBeVisible()
+    const swipe = (fromX: number, toX: number) =>
+      page.evaluate(([a, b]) => {
+        const el = document.querySelector('.mushaf-page')!
+        const mk = (type: string, x: number) =>
+          new TouchEvent(type, { bubbles: true, cancelable: true, touches: type === 'touchend' ? [] : [new Touch({ identifier: 1, target: el, clientX: x, clientY: 300 })], changedTouches: [new Touch({ identifier: 1, target: el, clientX: x, clientY: 300 })] })
+        el.dispatchEvent(mk('touchstart', a as number))
+        el.dispatchEvent(mk('touchend', b as number))
+      }, [fromX, toX])
+    await swipe(100, 260)
+    await expect(page).toHaveURL(/#\/page\/306$/)
+    await swipe(260, 100)
+    await expect(page).toHaveURL(/#\/page\/305$/)
+    await context.close()
+  })
+})

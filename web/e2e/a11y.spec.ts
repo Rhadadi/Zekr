@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 
-const pages = ['#/', '#/index', '#/ayah/17/24', '#/daily', '#/search?q=%D8%B1%D8%AD%D9%85%D8%A9', '#/saved', '#/settings', '#/about']
+const pages = ['#/', '#/index', '#/ayah/17/24', '#/page/305', '#/page/1', '#/daily', '#/search?q=%D8%B1%D8%AD%D9%85%D8%A9', '#/saved', '#/settings', '#/about']
 
 for (const theme of ['light', 'sepia', 'dark'] as const) {
   for (const lang of ['en', 'fa'] as const) {

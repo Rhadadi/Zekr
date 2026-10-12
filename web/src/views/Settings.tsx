@@ -53,6 +53,13 @@ export function SettingsView({ meta }: { meta: Meta }) {
           </select>
         </label>
         <label class="field">
+          <span>{t('readingView')}</span>
+          <select value={s.readMode} onChange={(e) => updateSettings({ readMode: e.currentTarget.value as typeof s.readMode })}>
+            <option value="verse">{t('viewVerseFull')}</option>
+            <option value="page">{t('viewPageFull')}</option>
+          </select>
+        </label>
+        <label class="field">
           <span>{t('script')}</span>
           <select value={s.script} onChange={(e) => updateSettings({ script: e.currentTarget.value as Script })}>
             <option value="uthmani">{t('scriptUthmani')}</option>

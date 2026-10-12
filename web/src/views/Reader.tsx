@@ -7,7 +7,9 @@ import { type Meta, ayahIdOf, loadText, loadTranslation } from '../data'
 import { useAsync } from '../hooks'
 import { num, surahName, surahSubtitle, t } from '../i18n'
 import { href } from '../router'
-import { setLastRead, settings } from '../store'
+import { ModeToggle } from '../components/ModeToggle'
+import { pageOf } from '../data'
+import { setLastRead, settings, updateSettings } from '../store'
 
 export function Reader({ meta, surahId, ayah }: { meta: Meta; surahId: number; ayah?: number }) {
   const s = settings.value
@@ -75,6 +77,11 @@ export function Reader({ meta, surahId, ayah }: { meta: Meta; surahId: number; a
   return (
     <>
       <PageHeader title={surahName(surah)} sub={surahSubtitle(surah)} back={href.index} />
+      <ModeToggle current="verse" onPick={(m) => {
+        if (m !== 'page') return
+        updateSettings({ readMode: 'page' })
+        location.hash = href.page(pageOf(meta, ayahIdOf(meta, surahId, Math.min(ayah ?? 1, surah.ayahs))))
+      }} />
       <div class="surah-head">
         <p class="surah-ar" lang="ar" dir="rtl">{surah.ar}</p>
         <p class="muted small">

@@ -27,3 +27,15 @@ describe('parseRoute', () => {
     expect(r.query.get('q')).toBe('رحمة')
   })
 })
+
+describe('page and verse routes', () => {
+  it('parses page numbers', () => {
+    expect(parseRoute('#/page/305')).toMatchObject({ name: 'page', page: 305 })
+    expect(parseRoute('#/page/0').name).toBe('index')
+    expect(parseRoute('#/page/605').name).toBe('index')
+  })
+  it('marks verse links as verse by verse', () => {
+    expect(parseRoute('#/verse/17/24')).toMatchObject({ name: 'reader', surah: 17, ayah: 24, verse: true })
+    expect(parseRoute('#/ayah/17/24').verse).toBe(false)
+  })
+})
