@@ -2,7 +2,7 @@
 
 Zekr is an iPhone app and a web app for reading, listening to and understanding the Quran. Both have the Arabic text, Persian and English translations, recitation and tafsir. The iPhone app also has a Lock Screen widget that shows a new ayah every hour or every day, like the widget in the bottom-left corner of the screenshot. The web app shows the same ayah of the day, so your phone, the web and your family's devices agree.
 
-*Status: decisions made (§7); M0 in progress. Last updated 2026-10-12.*
+*Status: M0 (data, shared rule) and M1 (web app) are built and tested. M2 (iPhone widget) is written and checked on CI; it hasn't been run on a phone yet. See §9. Last updated 2026-10-12.*
 
 ---
 
@@ -26,7 +26,7 @@ Zekr is an iPhone app and a web app for reading, listening to and understanding 
   - Font size, and light, sepia or dark themes.
   - Remembers where you stopped reading, has "go to ayah", and has search. Search works on Arabic without diacritics and on the translations.
 - **Translations:**
-  - Persian: **Safavi** (default), Fooladvand, Khorramshahi, Ayati, Mojtabavi, Bahrampour, Ansarian, Makarem Shirazi, with the rest of Tanzil's 13 available later.
+  - Persian: **Safavi** (default), Fooladvand, Khorramshahi, Ayati, Bahrampour, Ansarian, Makarem Shirazi. Mojtabavi is left out because Tanzil's copy has truncated ayahs (24 are one or two words, e.g. 48:29 is just «محمد»). The rest of Tanzil's list can be added later after the same check.
   - English: **Saheeh International** (default) and Qarai, with the rest of Tanzil's 16 available later. A transliteration is also available.
 - **Recitation:**
   - About 50 recitations, including Minshawi (Murattal and Mujawwad), Husary, Abdul Basit, Tablawi, Parhizgar, Karim Mansoori and Alafasy.
@@ -212,7 +212,7 @@ CI on GitHub checks every change. Because the repo is private, macOS minutes are
 |---|---|
 | English translation | Saheeh International (what your current widget uses); Qarai also included |
 | Persian translation | Safavi (reader, widget and web). Fooladvand is the other pick, and it's what the Persian audio translation reads |
-| Persian translations included | Safavi, Fooladvand, Khorramshahi, Ayati, Mojtabavi, Bahrampour, Ansarian, Makarem |
+| Persian translations included | Safavi, Fooladvand, Khorramshahi, Ayati, Bahrampour, Ansarian, Makarem (Mojtabavi dropped: truncated source) |
 | Reciter | Minshawi Murattal (your choice in Quran Hadi) |
 | Arabic script | Uthmani in the reader; Simple in the widget (the same style as your current widget, and more compact) |
 | App language | Follows the phone (English or Persian) |
@@ -229,3 +229,23 @@ CI on GitHub checks every change. Because the repo is private, macOS minutes are
 - **Privacy:** no data collected, no tracking (App Store privacy label: "Data Not Collected").
 - **The web version is public once hosted.** That means the Tanzil translations are served to anyone, which counts as redistribution. Fine for a private test site; for a public one, get permission or keep the site unlisted behind a login (Cloudflare Access is free). The Al-Mizan text must never be in the public web build unless the publishers agree.
 - **Web hosting:** GitHub Pages isn't available for private repos on the free plan. Cloudflare Pages or Netlify are free and work with private repos; I'll prepare a static build that works on any of them, and you pick when you want a URL.
+
+---
+
+## 9. Where things stand
+
+| Milestone | State |
+|---|---|
+| **M0** Foundation | Done. `tools/build_data.py` (with 16 tests) builds the databases and web data; the shared rotation rule has a spec, a reference implementation and test cases |
+| **M1** Web app | Done and tested here: 33 unit tests and 25 end-to-end tests at phone width, plus a check that real recitation plays. Not hosted yet (§8) |
+| **M2** iPhone widget | Written: `ZekrKit` (27 tests pass on Linux, including the shared rotation cases and daylight-saving cases), the app, the widget and the Xcode project definition. Compiled by CI on macOS; not yet run on a phone |
+| M3 to M6 | Not started |
+
+**Data findings worth knowing**
+- Tanzil's text files put the basmala in front of the first ayah of every surah (except 1 and 9). The data script removes it, so 2:1 is just «الم». The apps show the basmala as a heading and play its recording first when you play a whole surah.
+- Safavi's translation leaves 80:39 empty because it translates 80:38–39 together. The apps show "(translated together with the previous ayah)".
+- Safavi is the most explanatory translation, so fewer ayahs fit the widget in full (1,385 of 6,236, against 1,923 for Fooladvand). The default pool is all ayahs, with long ones trimmed.
+
+**What I haven't verified**
+- Anything on a real iPhone: how the widget looks on your Lock Screen, whether the text fits as estimated, and how the Quran font renders in the app.
+- Persian text in the widget on a device set to Persian.
