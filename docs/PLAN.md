@@ -2,7 +2,7 @@
 
 Zekr is an iPhone app and a web app for reading, listening to and understanding the Quran. Both have the Arabic text, Persian and English translations, recitation and tafsir. The iPhone app also has a Lock Screen widget that shows a new ayah every hour or every day, like the widget in the bottom-left corner of the screenshot. The web app shows the same ayah of the day, so your phone, the web and your family's devices agree.
 
-*Status: M0 (data, shared rule) and M1 (web app) are built and tested. M2 (iPhone widget) is written and checked on CI; it hasn't been run on a phone yet. See §9. Last updated 2026-10-12.*
+*Status: M0 (data, shared rule), M1 (web app, including the mushaf page view) and the first part of M3 (iPhone reader) are built. The iPhone widget and app compile on CI but haven't been run on a phone yet. See §9. Last updated 2026-10-12.*
 
 ---
 
@@ -155,7 +155,7 @@ Each milestone is one pull request you can review.
 The web app comes first because it's the one I can run and check completely in this environment. The iPhone widget follows right after, since it's what you asked for most.
 
 **Later:**
-- Mushaf page view: the 604-page layout with the translation under each line, like Quran Hadi
+- Mushaf page view on the iPhone (the web already has it: `#/page/305`). A line-exact Madani layout would need the KFGQPC page fonts; the web uses flowing text with the same page, juz and surah boundaries
 - Word-by-word meanings
 - Khatm and reading plans
 - iCloud sync
@@ -238,8 +238,11 @@ CI on GitHub checks every change. Because the repo is private, macOS minutes are
 |---|---|
 | **M0** Foundation | Done. `tools/build_data.py` (with 16 tests) builds the databases and web data; the shared rotation rule has a spec, a reference implementation and test cases |
 | **M1** Web app | Done and tested here: 33 unit tests and 25 end-to-end tests at phone width, plus a check that real recitation plays. Not hosted yet (§8) |
-| **M2** iPhone widget | Written: `ZekrKit` (27 tests pass on Linux, including the shared rotation cases and daylight-saving cases), the app, the widget and the Xcode project definition. Built by CI on macOS (Xcode 16.4, iOS 18.5 SDK): the app and widget compile, the widget is embedded, both databases and the widget's App Intents metadata are in the bundle. Not yet run on a phone |
-| M3 to M6 | Not started |
+| **M1b** Web page view | Done and tested: `#/page/N` with surah banner, ornate ayah markers, surah/page/juz header, tap an ayah for its translation, previous/next page, swipe, jump to page, page turns with the recitation. Page and juz data match the Madani mushaf (19:1-11 on page 305, juz 16) |
+| **M2** iPhone widget | Written: `ZekrKit` (45 tests pass on Linux and on macOS, including the shared rotation cases and daylight-saving cases), the widget and the Xcode project definition. Built by CI on macOS (Xcode 16.4, iOS 18.5 SDK): the widget is embedded and has its App Intents metadata. Not yet run on a phone |
+| **M3** iPhone reader | First part written and built by CI: surah and juz index with filter, surah reader with the Amiri Quran font and selectable translations, per-ayah play/save/share/copy, saved ayahs, settings. Still to do: search, the page view, tafsir panel |
+| **M4** iPhone player | The player is already in: queue, basmala, repeat, speed, translation audio, Lock Screen controls. Still to do: downloads for offline listening, and checking gaps between ayahs on a real phone |
+| M5, M6 | Not started |
 
 **Data findings worth knowing**
 - Tanzil's text files put the basmala in front of the first ayah of every surah (except 1 and 9). The data script removes it, so 2:1 is just «الم». The apps show the basmala as a heading and play its recording first when you play a whole surah.
@@ -247,5 +250,5 @@ CI on GitHub checks every change. Because the repo is private, macOS minutes are
 - Safavi is the most explanatory translation, so fewer ayahs fit the widget in full (1,385 of 6,236, against 1,923 for Fooladvand). The default pool is all ayahs, with long ones trimmed.
 
 **What I haven't verified**
-- Anything on a real iPhone: how the widget looks on your Lock Screen, whether the text fits as estimated, and how the Quran font renders in the app.
+- Anything on a real iPhone: how the widget looks on your Lock Screen, whether the text fits as estimated, how the Quran font renders, whether recitation switches between ayahs without a noticeable gap, and the Lock Screen audio controls.
 - Persian text in the widget on a device set to Persian.

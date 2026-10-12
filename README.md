@@ -1,6 +1,6 @@
 # Zekr
 
-A personal Quran app for iPhone and the web: Arabic text, Persian and English translations, recitation, tafsir (planned), and a Lock Screen widget that shows a new ayah every hour or every day.
+A personal Quran app for iPhone and the web: Arabic text (verse by verse or as a mushaf page), Persian and English translations, recitation, tafsir (planned), and a Lock Screen widget that shows a new ayah every hour or every day.
 
 - Plan, decisions and milestones: [docs/PLAN.md](docs/PLAN.md)
 - Persian translations compared: [docs/research/persian-translations.html](docs/research/persian-translations.html)
