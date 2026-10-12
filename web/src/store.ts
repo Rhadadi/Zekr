@@ -1,5 +1,6 @@
 import { signal } from '@preact/signals'
 import type { PlayTo, Script } from './data'
+import { DEFAULT_QURAN_FONT, type QuranFont } from './fonts'
 import type { Period } from './rotation'
 
 export interface DailySettings {
@@ -17,6 +18,8 @@ export interface Settings {
   lang: 'auto' | 'fa' | 'en'
   theme: 'auto' | 'light' | 'sepia' | 'dark'
   script: Script
+  /** Arabic font for the Quran text. */
+  quranFont: QuranFont
   /** 'verse': one ayah at a time with translations. 'page': flowing mushaf page. */
   readMode: 'verse' | 'page'
   arabicSize: number
@@ -40,6 +43,7 @@ export const defaultSettings: Settings = {
   lang: 'auto',
   theme: 'auto',
   script: 'uthmani',
+  quranFont: DEFAULT_QURAN_FONT,
   readMode: 'verse',
   arabicSize: 30,
   trSize: 17,

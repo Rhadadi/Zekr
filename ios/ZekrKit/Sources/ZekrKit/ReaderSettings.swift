@@ -6,6 +6,8 @@ public struct ReaderSettings: Codable, Equatable, Sendable {
     /// Translation ids shown under each ayah, in this order.
     public var translations: [String] = ["fa.safavi"]
     public var useUthmaniScript = true
+    /// A `QuranFont` id.
+    public var quranFontID = QuranFont.hafs.id
     public var arabicSize = 28.0
     public var translationSize = 17.0
     public var reciterID = Reciter.minshawi.id
@@ -20,7 +22,7 @@ public struct ReaderSettings: Codable, Equatable, Sendable {
     public init() {}
 
     private enum CodingKeys: String, CodingKey {
-        case translations, useUthmaniScript, arabicSize, translationSize, reciterID, speed, repeatCount, playTo, audioTranslationID, lastAudioTranslationID
+        case translations, useUthmaniScript, quranFontID, arabicSize, translationSize, reciterID, speed, repeatCount, playTo, audioTranslationID, lastAudioTranslationID
     }
 
     public init(from decoder: Decoder) throws {
@@ -28,6 +30,7 @@ public struct ReaderSettings: Codable, Equatable, Sendable {
         let d = ReaderSettings()
         translations = try c.decodeIfPresent([String].self, forKey: .translations) ?? d.translations
         useUthmaniScript = try c.decodeIfPresent(Bool.self, forKey: .useUthmaniScript) ?? d.useUthmaniScript
+        quranFontID = try c.decodeIfPresent(String.self, forKey: .quranFontID) ?? d.quranFontID
         arabicSize = try c.decodeIfPresent(Double.self, forKey: .arabicSize) ?? d.arabicSize
         translationSize = try c.decodeIfPresent(Double.self, forKey: .translationSize) ?? d.translationSize
         reciterID = try c.decodeIfPresent(String.self, forKey: .reciterID) ?? d.reciterID
@@ -54,6 +57,7 @@ public struct ReaderSettings: Codable, Equatable, Sendable {
     }
 
     public var script: ArabicScript { useUthmaniScript ? .uthmani : .simple }
+    public var quranFont: QuranFont { QuranFont.named(quranFontID) }
     public var reciter: Reciter { Reciter.all.first { $0.id == reciterID } ?? .minshawi }
     public var audioTranslation: AudioTranslation? { AudioTranslation.all.first { $0.id == audioTranslationID } }
 

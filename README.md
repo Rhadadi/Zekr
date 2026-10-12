@@ -65,4 +65,4 @@ Tests for the shared Swift code (no Xcode project needed): `cd ios/ZekrKit && sw
 
 ## Credits
 
-Quran text and translations: [Tanzil Project](https://tanzil.net) (text unchanged; translations for non-commercial use). Recitation: [EveryAyah.com](https://everyayah.com). Fonts: Amiri Quran and Vazirmatn (SIL Open Font License).
+Quran text and translations: [Tanzil Project](https://tanzil.net) (text unchanged; translations for non-commercial use). Recitation: [EveryAyah.com](https://everyayah.com). Fonts: KFGQPC Hafs and Naskh (King Fahd Glorious Quran Printing Complex, via Tanzil), Me-Quran (Meor Ridzuan, non-commercial use), Scheherazade New, Amiri Quran and Vazirmatn (SIL Open Font License); see `web/public/fonts/LICENSES.txt`.

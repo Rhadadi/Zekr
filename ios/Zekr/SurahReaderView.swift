@@ -25,7 +25,7 @@ struct SurahReaderView: View {
                     if let content {
                         if let basmala = content.basmala {
                             Text(basmala)
-                                .font(.custom("AmiriQuran-Regular", size: settings.arabicSize))
+                                .font(.quran(settings.quranFont, size: settings.arabicSize))
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 12)
                         }
@@ -63,7 +63,7 @@ struct SurahReaderView: View {
     private func header(_ surah: Surah) -> some View {
         VStack(spacing: 6) {
             Text(surah.nameArabic)
-                .font(.custom("AmiriQuran-Regular", size: 34))
+                .font(.quran(model.settings.settings.quranFont, size: 34))
             Text("\(surah.isMeccan ? model.text(.meccan) : model.text(.medinan)) · \(LocalizedText.ayahCount(surah.ayahCount, language: model.language))")
                 .font(.footnote)
                 .foregroundStyle(.secondary)

@@ -60,7 +60,7 @@ targets:
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
         UIBackgroundModes: [audio]
-        UIAppFonts: [AmiriQuran-Regular.ttf]
+        UIAppFonts: [KFGQPC-Hafs.otf, KFGQPC-Naskh.otf, MeQuran.otf, ScheherazadeNew-Regular.ttf, AmiriQuran-Regular.ttf]
         ITSAppUsesNonExemptEncryption: false
         CFBundleURLTypes:
           - CFBundleURLName: $(ZEKR_BUNDLE_ID)

@@ -63,6 +63,13 @@ test('the site works from a sub-path, installs its service worker and runs offli
   await context.setOffline(true)
   await page.reload()
   await expect(page.locator('.ay')).toHaveCount(11)
+  // the Quran font comes from the precache too
+  await expect
+    .poll(() => page.evaluate(async () => {
+      await document.fonts.ready
+      return [...document.fonts].some((f) => f.family.replace(/"/g, '') === 'Zekr Hafs' && f.status === 'loaded')
+    }))
+    .toBe(true)
   expect(failed.filter((f) => !f.includes('favicon'))).toEqual([])
 })
 

@@ -68,6 +68,7 @@ struct QuranIndexView: View {
 }
 
 private struct SurahRow: View {
+    @Environment(AppModel.self) private var model
     let surah: Surah
     let language: String
 
@@ -85,7 +86,7 @@ private struct SurahRow: View {
             }
             Spacer(minLength: 8)
             Text(surah.nameArabic)
-                .font(.custom("AmiriQuran-Regular", size: 22))
+                .font(.quran(model.settings.settings.quranFont, size: 22))
                 .foregroundStyle(.secondary)
         }
         .padding(.vertical, 4)

@@ -103,6 +103,27 @@ test.describe('reader', () => {
     await expect(page.locator('article#a-24')).toContainText('بال فروتنی')
   })
 
+  test('Quran text uses KFGQPC Hafs by default, and another font can be picked in Settings', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    const arFont = () => page.locator('article#a-24 .ar').evaluate((e) => getComputedStyle(e).fontFamily)
+    const loaded = (family: string) => page.evaluate(async (f) => {
+      await document.fonts.ready
+      return [...document.fonts].some((x) => x.family.replace(/"/g, '') === f && x.status === 'loaded')
+    }, family)
+    await page.goto('/#/ayah/17/24')
+    await expect.poll(arFont).toMatch(/^"?Zekr Hafs/)
+    await expect.poll(() => loaded('Zekr Hafs')).toBe(true)
+
+    await page.goto('/#/settings')
+    await page.getByLabel('Quran font').selectOption({ label: 'Me-Quran' })
+    await expect(page.locator('.sample .ar')).toHaveCSS('font-family', /^"?Zekr Me Quran/)
+    await page.goto('/#/ayah/17/24')
+    await expect.poll(arFont).toMatch(/^"?Zekr Me Quran/)
+    await expect.poll(() => loaded('Zekr Me Quran')).toBe(true)
+    await page.reload()
+    await expect.poll(arFont).toMatch(/^"?Zekr Me Quran/)
+  })
+
   test('play button asks for the reciter\'s file for that ayah', async ({ page }) => {
     const played = await trackAudio(page)
     await useSettings(page, { lang: 'en' })

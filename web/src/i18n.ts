@@ -70,6 +70,7 @@ const strings = {
     script: 'Arabic script',
     scriptUthmani: 'Uthmani',
     scriptSimple: 'Simple',
+    quranFont: 'Quran font',
     arabicSize: 'Arabic size',
     trSize: 'Translation size',
     translations: 'Translations',
@@ -127,7 +128,7 @@ const strings = {
     aboutText:
       'Zekr is a personal Quran app. It has no account, no ads and no tracking; your settings and saved ayahs stay in this browser.',
     creditsText:
-      'Quran text and translations: Tanzil Project (tanzil.net). The text is unchanged; translations are for non-commercial use. Recitation: EveryAyah.com. Fonts: Amiri Quran and Vazirmatn (SIL Open Font License).',
+      'Quran text and translations: Tanzil Project (tanzil.net). The text is unchanged; translations are for non-commercial use. Recitation: EveryAyah.com. Fonts: KFGQPC Hafs and Naskh (King Fahd Complex), Me-Quran (Meor Ridzuan), Scheherazade New, Amiri Quran and Vazirmatn (SIL Open Font License).',
     now: 'now',
     min: '{n} min',
     hours: '{n} h',
@@ -204,6 +205,7 @@ const strings = {
     script: 'خط عربی',
     scriptUthmani: 'عثمانی',
     scriptSimple: 'ساده',
+    quranFont: 'قلم قرآن',
     arabicSize: 'اندازهٔ متن عربی',
     trSize: 'اندازهٔ ترجمه',
     translations: 'ترجمه‌ها',
@@ -260,7 +262,7 @@ const strings = {
     aboutText:
       'ذکر یک برنامهٔ شخصی قرآن است. حساب کاربری، تبلیغ و ردیابی ندارد؛ تنظیمات و آیه‌های نشان‌شده فقط در همین مرورگر می‌مانند.',
     creditsText:
-      'متن قرآن و ترجمه‌ها: پروژهٔ تنزیل (tanzil.net). متن بدون تغییر است و ترجمه‌ها برای استفادهٔ غیرتجاری‌اند. قرائت: EveryAyah.com. قلم‌ها: امیری قرآن و وزیرمتن (مجوز SIL Open Font License).',
+      'متن قرآن و ترجمه‌ها: پروژهٔ تنزیل (tanzil.net). متن بدون تغییر است و ترجمه‌ها برای استفادهٔ غیرتجاری‌اند. قرائت: EveryAyah.com. قلم‌ها: حفص و نسخ مجمع ملک فهد، می‌قرآن (معیر رضوان)، شهرزاد، امیری قرآن و وزیرمتن (مجوز SIL Open Font License).',
     now: 'اکنون',
     min: '{n} دقیقه',
     hours: '{n} ساعت',

@@ -37,6 +37,11 @@ struct SettingsView: View {
                     Text(model.text(.scriptUthmani)).tag(true)
                     Text(model.text(.scriptSimple)).tag(false)
                 }
+                Picker(model.text(.quranFont), selection: settings.binding(\.quranFontID)) {
+                    ForEach(QuranFont.all) { font in
+                        Text(font.name).tag(font.id)
+                    }
+                }
                 VStack(alignment: .leading) {
                     Text(model.text(.arabicSize))
                     Slider(value: settings.binding(\.arabicSize), in: 22...48, step: 1)
@@ -46,7 +51,7 @@ struct SettingsView: View {
                     Slider(value: settings.binding(\.translationSize), in: 14...26, step: 1)
                 }
                 Text("بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ")
-                    .font(.custom("AmiriQuran-Regular", size: s.arabicSize))
+                    .font(.quran(s.quranFont, size: s.arabicSize))
                     .frame(maxWidth: .infinity)
             }
 
