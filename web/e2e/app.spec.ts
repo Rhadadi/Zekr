@@ -6,11 +6,13 @@ import { ayahForSlot } from '../src/rotation'
 async function trackAudio(page: Page): Promise<() => Promise<string[]>> {
   await page.route('**/everyayah.com/**', (route) => route.abort())
   await page.addInitScript(() => {
-    const w = window as unknown as { __played: string[] }
+    const w = window as unknown as { __played: string[]; __audio: HTMLMediaElement[] }
     w.__played = []
+    w.__audio = []
     const play = HTMLMediaElement.prototype.play
     HTMLMediaElement.prototype.play = function () {
       w.__played.push(this.src)
+      if (!w.__audio.includes(this)) w.__audio.push(this)
       return play.call(this)
     }
   })
@@ -139,6 +141,7 @@ test.describe('search, saved, settings', () => {
   test('saving an ayah keeps it after a reload', async ({ page }) => {
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/ayah/17/24')
+    await page.locator('article#a-24').getByRole('button', { name: 'More' }).click()
     await page.locator('article#a-24').getByRole('button', { name: 'Save ayah' }).click()
     await page.goto('/#/saved')
     await page.reload()
@@ -297,5 +300,65 @@ test.describe('mushaf page view', () => {
     await swipe(260, 100)
     await expect(page).toHaveURL(/#\/page\/305$/)
     await context.close()
+  })
+})
+
+// Pretend the current recording finished, as the browser would at the end of the file.
+async function finishRecording(page: Page) {
+  await page.evaluate(() => (window as unknown as { __audio: HTMLMediaElement[] }).__audio[0]!.dispatchEvent(new Event('ended')))
+}
+
+test.describe('what plays, and seeing it', () => {
+  test('the play button on the ayah of the day plays only that ayah', async ({ page }) => {
+    const played = await trackAudio(page)
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/')
+    await page.getByTestId('daily-card').getByRole('button', { name: 'Play this ayah' }).click()
+    await expect.poll(async () => (await played()).length).toBe(1)
+    await finishRecording(page)
+    await page.waitForTimeout(300)
+    expect(await played()).toHaveLength(1)
+  })
+
+  test('in the reader, playback goes on to the next ayah and highlights it', async ({ page }) => {
+    const played = await trackAudio(page)
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/ayah/17/24')
+    await page.locator('article#a-24').getByRole('button', { name: 'Play' }).click()
+    await expect.poll(async () => (await played()).length).toBe(1)
+    await finishRecording(page)
+    await expect.poll(async () => (await played()).at(-1)).toBe('https://everyayah.com/data/Minshawy_Murattal_128kbps/017025.mp3')
+    await expect(page.locator('article#a-25')).toHaveClass(/playing/)
+    await expect(page.locator('.player')).toContainText('17:25')
+  })
+
+  test('the player bar takes you to the ayah being recited', async ({ page }) => {
+    await trackAudio(page)
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/')
+    await page.getByTestId('daily-card').getByRole('button', { name: 'Play this ayah' }).click()
+    const id = await page.getByTestId('daily-card').getAttribute('data-ayah-id')
+    await page.getByRole('link', { name: /Go to the ayah being recited/ }).click()
+    await expect(page).toHaveURL(/#\/ayah\/\d+\/\d+$/)
+    await expect(page.locator(`article[data-id="${id}"]`)).toHaveClass(/playing|focused/)
+  })
+
+  test('home shows only the ayah of the day and where you left off', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/')
+    await expect(page.getByTestId('daily-card')).toBeVisible()
+    await expect(page.locator('.continue-row')).toContainText('Start with Al-Fatiha')
+    await expect(page.locator('main .tile')).toHaveCount(0)
+    await expect(page.locator('main')).not.toContainText('Changes in')
+  })
+
+  test('ayah actions are tucked behind More', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/surah/1')
+    const first = page.locator('article#a-1')
+    await expect(first.getByRole('button', { name: 'Copy' })).toHaveCount(0)
+    await first.getByRole('button', { name: 'More' }).click()
+    await expect(first.getByRole('button', { name: 'Copy' })).toBeVisible()
+    await expect(first.getByRole('button', { name: 'Share' })).toBeVisible()
   })
 })

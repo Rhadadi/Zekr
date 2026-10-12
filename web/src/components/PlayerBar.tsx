@@ -2,6 +2,7 @@ import { useEffect, useState } from 'preact/hooks'
 import { next, player, previous, stop, toggle } from '../audio'
 import { type Meta, locate } from '../data'
 import { ayahRef, t } from '../i18n'
+import { href } from '../router'
 import { Icon } from './Icon'
 import { PlaybackOptions } from './PlaybackOptions'
 
@@ -20,10 +21,10 @@ export function PlayerBar({ meta }: { meta: Meta }) {
   return (
     <>
       <div class="player" role="region" aria-label={t('recitation')} data-status={p.status}>
-        <div class="player-info">
+        <a class="player-info" href={href.ayah(surah, ayah)} aria-label={`${t('nowReciting')}: ${ayahRef(meta.surahs[surah - 1]!, ayah)}`}>
           <strong>{ayahRef(meta.surahs[surah - 1]!, ayah)}</strong>
           <span class="muted small">{p.status === 'error' ? t('audioError') : p.phase === 'translation' ? t('audioTranslation') : p.phase === 'basmala' ? 'بسم الله' : ''}</span>
-        </div>
+        </a>
         <div class="player-controls" dir="ltr">
           <button class="icon-btn" onClick={previous} aria-label={t('previous')}><Icon name="prev" size={20} /></button>
           <button class="icon-btn big" onClick={toggle} aria-label={playing ? t('pause') : t('play')}>

@@ -114,10 +114,10 @@ export function playSurah(surahId: number) {
 }
 
 /** Tap on an ayah's play button: pause/resume if it is the current ayah, otherwise start there. */
-export function toggleAyah(ayahId: number) {
+export function toggleAyah(ayahId: number, scope?: PlayTo) {
   const p = player.value
   if (p && p.ayahId === ayahId && p.status !== 'error') toggle()
-  else playFrom(ayahId)
+  else playFrom(ayahId, scope)
 }
 
 export function toggle() {
