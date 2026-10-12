@@ -54,6 +54,7 @@ public enum Str: CaseIterable {
     case credits
     case mergedTranslation
     case audioError
+    case translationAudio
 
     public func text(language: String) -> String {
         language == "fa" ? fa : en
@@ -116,6 +117,7 @@ public enum Str: CaseIterable {
         case .credits: return "Quran text and translations: Tanzil Project (tanzil.net). The text is unchanged; translations are for non-commercial use. Recitation: EveryAyah.com. Font: Amiri Quran (SIL Open Font License)."
         case .mergedTranslation: return "(translated together with the previous ayah)"
         case .audioError: return "Could not play this recording."
+        case .translationAudio: return "Translation audio"
         }
     }
 
@@ -174,6 +176,7 @@ public enum Str: CaseIterable {
         case .credits: return "متن قرآن و ترجمه‌ها: پروژهٔ تنزیل (tanzil.net). متن بدون تغییر است و ترجمه‌ها برای استفادهٔ غیرتجاری‌اند. قرائت: EveryAyah.com. قلم: امیری قرآن (مجوز SIL Open Font License)."
         case .mergedTranslation: return "(ترجمهٔ این آیه همراه آیهٔ قبل آمده است)"
         case .audioError: return "پخش این فایل صوتی ممکن نشد."
+        case .translationAudio: return "ترجمهٔ گویا"
         }
     }
 }

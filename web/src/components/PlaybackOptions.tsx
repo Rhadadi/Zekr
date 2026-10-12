@@ -44,6 +44,7 @@ export function PlaybackOptions() {
           <option value="off">{t('off')}</option>
           {audioTranslations.map((a) => <option value={a.id} key={a.id}>{a[l]}</option>)}
         </select>
+        <span class="muted small hint">{t('translationAudioHint')}</span>
       </label>
       <label class="field row">
         <input type="checkbox" checked={s.autoScroll} onChange={(e) => updateSettings({ autoScroll: e.currentTarget.checked })} />

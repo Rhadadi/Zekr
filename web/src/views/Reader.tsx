@@ -8,6 +8,7 @@ import { useAsync } from '../hooks'
 import { num, surahName, surahSubtitle, t } from '../i18n'
 import { href } from '../router'
 import { ModeToggle } from '../components/ModeToggle'
+import { TranslationAudioToggle } from '../components/TranslationAudioToggle'
 import { pageOf } from '../data'
 import { setLastRead, settings, updateSettings } from '../store'
 
@@ -90,6 +91,7 @@ export function Reader({ meta, surahId, ayah }: { meta: Meta; surahId: number; a
         <button class="btn primary" onClick={() => playSurah(surahId)}>
           <Icon name="play" size={18} /> {t('playSurah')}
         </button>
+        <TranslationAudioToggle />
       </div>
       {data.error ? <LoadError retry={data.retry} /> : !data.value ? <Loading /> : (
         <div class="ayahs" ref={listRef}>

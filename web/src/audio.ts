@@ -155,7 +155,10 @@ effect(() => {
   audio.playbackRate = s.speed
   if (cursor && meta) {
     plan = { ...currentPlan(endOf(meta, cursor.ayahId, s.playTo)) }
-    if (player.value) player.value = { ...player.value, end: plan.end }
+    // peek(): read the player without subscribing to it. Subscribing would make every ayah change re-run this
+    // effect, which writes the player again: a cycle that stopped playback after a setting changed mid-recitation.
+    const view = player.peek()
+    if (view) player.value = { ...view, end: plan.end }
   }
 })
 

@@ -364,3 +364,11 @@ input[type='checkbox'] { width: 20px; height: 20px; accent-color: var(--accent);
 a.player-info { color: var(--ink); text-decoration: none; }
 /* Sticky headers cover the side gutters too, so text scrolling underneath never peeks out at the edges. */
 .top, .mushaf-bar { margin-inline: -16px; padding-inline: 16px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 6px 14px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; font-size: 0.9rem;
+}
+.chip.on { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.icon-btn.active { color: var(--accent); }
+.field > .hint { font-weight: 400; }
+.player-controls .icon-btn { width: 40px; }

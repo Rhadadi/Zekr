@@ -30,6 +30,8 @@ export interface Settings {
   playTo: PlayTo
   /** Play a translation recording after each ayah ('off' or an audio translation id). */
   audioTranslation: string
+  /** The translation recording last switched on, so the quick switch brings it back. */
+  lastAudioTranslation: string
   autoScroll: boolean
   daily: DailySettings
 }
@@ -47,6 +49,7 @@ export const defaultSettings: Settings = {
   repeat: 1,
   playTo: 'surah',
   audioTranslation: 'off',
+  lastAudioTranslation: '',
   autoScroll: true,
   daily: { period: 86400, pool: 'all', show: 'fa', fa: 'fa.safavi', en: 'en.sahih', salt: 0 },
 }

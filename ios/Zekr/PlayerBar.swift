@@ -24,6 +24,14 @@ struct PlayerBar: View {
                     Image(systemName: player.isPlaying ? "pause.fill" : "play.fill").font(.title2).frame(width: 36)
                 }
                 Button { player.next() } label: { Image(systemName: "forward.fill") }
+                Button {
+                    model.settings.update { $0.toggleTranslationAudio(language: model.language) }
+                } label: {
+                    Image(systemName: model.settings.settings.audioTranslationID == nil ? "text.bubble" : "text.bubble.fill")
+                        .foregroundStyle(model.settings.settings.audioTranslationID == nil ? Color.secondary : Color.accentColor)
+                }
+                .accessibilityLabel(model.text(.translationAudio))
+                .accessibilityAddTraits(model.settings.settings.audioTranslationID == nil ? [] : .isSelected)
                 Button { player.stop() } label: { Image(systemName: "xmark") }
             }
             .buttonStyle(.plain)

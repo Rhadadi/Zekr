@@ -74,6 +74,7 @@ struct SurahReaderView: View {
             }
             .buttonStyle(.borderedProminent)
             .padding(.top, 4)
+            TranslationAudioButton()
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)

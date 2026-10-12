@@ -14,11 +14,13 @@ public struct ReaderSettings: Codable, Equatable, Sendable {
     public var playTo = PlayTo.surah
     /// An `AudioTranslation` id, or nil for none.
     public var audioTranslationID: String?
+    /// The translation recording last switched on, so the quick switch brings it back.
+    public var lastAudioTranslationID: String?
 
     public init() {}
 
     private enum CodingKeys: String, CodingKey {
-        case translations, useUthmaniScript, arabicSize, translationSize, reciterID, speed, repeatCount, playTo, audioTranslationID
+        case translations, useUthmaniScript, arabicSize, translationSize, reciterID, speed, repeatCount, playTo, audioTranslationID, lastAudioTranslationID
     }
 
     public init(from decoder: Decoder) throws {
@@ -33,6 +35,22 @@ public struct ReaderSettings: Codable, Equatable, Sendable {
         repeatCount = try c.decodeIfPresent(Int.self, forKey: .repeatCount) ?? d.repeatCount
         playTo = (try? c.decodeIfPresent(PlayTo.self, forKey: .playTo)) ?? d.playTo
         audioTranslationID = try c.decodeIfPresent(String.self, forKey: .audioTranslationID)
+        lastAudioTranslationID = try c.decodeIfPresent(String.self, forKey: .lastAudioTranslationID)
+    }
+
+    /// One tap to hear the translation after each ayah, one tap to stop. Brings back the recording chosen last;
+    /// the first time, Fooladvand for Persian and Saheeh International for English.
+    public mutating func toggleTranslationAudio(language: String) {
+        if let current = audioTranslationID {
+            lastAudioTranslationID = current
+            audioTranslationID = nil
+            return
+        }
+        if let last = lastAudioTranslationID, AudioTranslation.all.contains(where: { $0.id == last }) {
+            audioTranslationID = last
+        } else {
+            audioTranslationID = language == "fa" ? "fa.fooladvand" : "en.sahih"
+        }
     }
 
     public var script: ArabicScript { useUthmaniScript ? .uthmani : .simple }
