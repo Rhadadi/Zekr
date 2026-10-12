@@ -2,7 +2,7 @@
 
 Zekr is an iPhone app for reading, listening to and understanding the Quran. It has the Arabic text, Persian and English translations, recitation and tafsir. It also has a Lock Screen widget that shows a new ayah every hour or every day, like the widget in the bottom-left corner of the screenshot.
 
-*Status: proposal for review. Last updated 2026-10-12.*
+*Status: decisions made (§7); next step is M0. Last updated 2026-10-12.*
 
 ---
 
@@ -130,7 +130,7 @@ Each milestone is one pull request you can review.
 
 | # | Milestone | What you get |
 |---|---|---|
-| **M0** | Foundation | Project skeleton (app + widget + ZekrKit); data script and `quran.sqlite` (Arabic, Saheeh, Makarem); CI passing; credits page |
+| **M0** | Foundation | Project skeleton (app + widget + ZekrKit); data script and `quran.sqlite` (Arabic, Saheeh, Qarai and the Persian translations above); CI passing; credits page |
 | **M1** | Widget | Lock Screen and Home Screen widget that changes hourly or daily, with its settings. Tapping opens a simple ayah screen with audio |
 | **M2** | Reader | Index (surah/juz/hizb), verse view with translations, translator picker, search, bookmarks and favorites, Persian and English UI |
 | **M3** | Player | Reciters, ranges, repeats, speed, highlighting, background playback with Lock Screen controls, offline downloads, audio translation |
@@ -153,37 +153,62 @@ The widget comes right after the foundation because it's what you asked for most
 
 ## 6. Getting it on your iPhone
 
-iOS apps can only be built on a Mac, so one of these is needed:
+You have a MacBook Air M1, so Zekr is built and installed from your Mac:
 
-- **A: You have a Mac with Xcode.**
-  1. Run `brew install xcodegen && xcodegen && open Zekr.xcodeproj`.
-  2. Connect the iPhone and press Run.
+1. Install Xcode from the Mac App Store, then run `brew install xcodegen`.
+2. In Xcode, open Settings → Accounts and add your Apple ID. This creates a free "Personal Team".
+3. In the repo, run `xcodegen`, then `open Zekr.xcodeproj`.
+4. Connect your iPhone, turn on Developer Mode (Settings → Privacy & Security), and press Run.
 
-  A free Apple ID works, but the app has to be reinstalled from Xcode every 7 days. The Apple Developer Program ($99 a year) removes that limit and allows TestFlight.
-- **B: You don't have a Mac.**
-  1. Join the Apple Developer Program.
-  2. Create an App Store Connect API key and save it as GitHub repository secrets.
-  3. CI builds each merged change and uploads it to TestFlight. You install it from the TestFlight app on your iPhone.
+**Free Apple ID limits:**
+- The app stops opening after 7 days. Pressing Run again in Xcode fixes it.
+- Each phone has to be connected to your Mac to install the app. That makes sharing with family awkward.
 
-  Because the repo is private, each minute of macOS CI counts as 10 minutes of GitHub's free allowance. So CI runs only on pull requests.
+**Joining the Apple Developer Program ($99 a year)** removes both limits. Family members install through TestFlight with no cable, and it's required for the App Store anyway. Join when you're ready to share it.
+
+During development, the app uses a separate bundle ID (`com.rhadadi.zekr.dev`). That keeps the real ID free for the App Store release.
+
+CI on GitHub checks every change. Because the repo is private, macOS minutes are limited, so the macOS build runs only when needed.
 
 ---
 
 ## 7. Decisions
 
-**I need these from you:**
-1. Do you have a Mac, and are you in the Apple Developer Program? This decides path A or B.
-2. Is the app just for you and your family, or for the App Store?
-3. Which tafsir(s) matter most to you? Nemooneh isn't openly available. Do you have a source for it?
+**Your answers (2026-10-12):**
+- **Build path:** your Mac with a free Apple ID for now. Join the Apple Developer Program before sharing with family or releasing.
+- **Audience:** you and your family first, then the App Store. Because of the App Store goal, every text source needs permission before release (see §8).
+- **Tafsir:** Al-Mizan (Tabatabai).
+  - No open digital edition exists. I didn't find any JSON, SQLite or Tanzil/QUL version.
+  - The Persian translation (Musavi Hamadani) is published by Daftar-e Entesharat-e Eslami (Jame'eh Modarresin, Qom). It's sold as an e-book (for example on Fidibo).
+  - The English translation (Rizvi for volumes 1–13, Tawheed Institute Australia for 14–40) is partly on al-islam.org.
+  - Plan: build the tafsir panel so it can show Al-Mizan by passage (it explains ayahs in groups). Then:
+    - for personal and family use, import a copy we have the right to use
+    - before the App Store, ask the publishers (Jame'eh Modarresin for Persian, Tawheed Institute for English) for permission
+    - until permission is granted, the App Store build links to the passage online instead of including the text
+- **Persian translation:** not Makarem. The candidates are compared on real ayahs in [`research/persian-translations.html`](research/persian-translations.html):
+  - **Safavi**, *ترجمه قرآن بر اساس المیزان*: a translation based on Al-Mizan's reading, and a winner of Iran's Book of the Year award. It's fluent and explains as it goes, but it's about 30% longer, so fewer ayahs fit the widget (about 1,350 compared with about 1,870).
+  - **Fooladvand**: accurate and concise, widely used, and it has a matching Persian audio translation (read by Hedayatfar).
+  - Also good: Khorramshahi (literary and concise) and Ayati (literary, no brackets).
+  - **Default: Safavi in the reader, because it matches Al-Mizan. Fooladvand in the widget and the audio translation.** You can switch either one in one tap.
 
-**Defaults I'll use unless you say otherwise:**
+**Defaults unless you say otherwise:**
 
 | Setting | Default |
 |---|---|
-| English translation | Saheeh International (what your current widget uses) |
-| Persian translation | Makarem Shirazi |
+| English translation | Saheeh International (what your current widget uses); Qarai also included |
+| Persian translation | Safavi (reader), Fooladvand (widget and audio) |
+| Persian translations included | Safavi, Fooladvand, Khorramshahi, Ayati, Mojtabavi, Bahrampour, Ansarian, Makarem |
 | Reciter | Minshawi Murattal (your choice in Quran Hadi) |
-| Arabic script | Uthmani |
+| Arabic script | Uthmani in the reader; Simple in the widget (the same style as your current widget, and more compact) |
 | App language | Follows the phone (English or Persian) |
 | Minimum iOS | 17 |
-| Bundle ID | `com.<you>.zekr` |
+| Bundle ID | `com.rhadadi.zekr.dev` while developing; `com.rhadadi.zekr` for the App Store |
+
+---
+
+## 8. Before the App Store
+
+- **Tanzil translations:** they're for non-commercial use. Ask permission from each translator's publisher, or keep the app free with a clear credit and link to Tanzil.
+- **Al-Mizan:** written permission from the publishers, or keep the link-out.
+- **EveryAyah audio, fonts:** check the terms. The fonts used are under the SIL Open Font License.
+- **Privacy:** no data collected, no tracking (App Store privacy label: "Data Not Collected").
