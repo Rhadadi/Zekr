@@ -43,3 +43,13 @@ final class StringsTests: XCTestCase {
         }
     }
 }
+
+final class NumberTextTests: XCTestCase {
+    func testAyahCountAndJuzTitle() {
+        XCTAssertEqual(LocalizedText.ayahCount(7, language: "en"), "7 ayahs")
+        XCTAssertEqual(LocalizedText.ayahCount(1, language: "en"), "1 ayah")
+        XCTAssertEqual(LocalizedText.ayahCount(286, language: "fa"), "۲۸۶ آیه")
+        XCTAssertEqual(LocalizedText.juzTitle(16, language: "en"), "Juz 16")
+        XCTAssertEqual(LocalizedText.juzTitle(16, language: "fa"), "جزء ۱۶")
+    }
+}

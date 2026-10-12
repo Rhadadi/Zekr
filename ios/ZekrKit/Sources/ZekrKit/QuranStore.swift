@@ -80,6 +80,72 @@ public final class QuranStore {
         return ids
     }
 
+    // MARK: Reading (the full database only; the widget database has no page or juz columns)
+
+    public struct AyahRow: Equatable, Sendable {
+        public let id: Int
+        public let number: Int
+        public let arabic: String
+    }
+
+    /// Every ayah of a surah, in order.
+    public func ayahs(inSurah surah: Int, script: ArabicScript = .uthmani) throws -> [AyahRow] {
+        let column = (script == .uthmani && hasUthmani) ? "text_uthmani" : "text_simple"
+        return try db.query("SELECT id, number, \(column) FROM ayah WHERE surah = ? ORDER BY number", [.int(surah)]) {
+            AyahRow(id: $0.int(0), number: $0.int(1), arabic: $0.text(2))
+        }
+    }
+
+    /// One translation for every ayah of a surah, in order ('' where the translator merged two ayahs).
+    public func translationTexts(inSurah surah: Int, translationID: String) throws -> [String] {
+        try db.query(
+            """
+            SELECT t.text FROM translation_text t JOIN ayah a ON a.id = t.ayah_id
+            WHERE t.translation_id = ? AND a.surah = ? ORDER BY a.number
+            """,
+            [.text(translationID), .int(surah)]
+        ) { $0.text(0) }
+    }
+
+    /// The first ayah of each of the 30 juz.
+    public func juzStarts() throws -> [(juz: Int, ayahID: Int)] {
+        try db.query("SELECT juz, MIN(id) FROM ayah GROUP BY juz ORDER BY juz") { (juz: $0.int(0), ayahID: $0.int(1)) }
+    }
+
+    public enum Segment: String, Sendable {
+        case page
+        case juz
+        case hizbQuarter = "hizb_quarter"
+    }
+
+    /// The segment number (page 1-604, juz 1-30, hizb quarter 1-240) an ayah is in.
+    public func number(of segment: Segment, ayahID id: Int) throws -> Int {
+        guard let n = try db.query("SELECT \(segment.rawValue) FROM ayah WHERE id = ?", [.int(id)], map: { $0.int(0) }).first else {
+            throw StoreError.missing("ayah \(id)")
+        }
+        return n
+    }
+
+    /// The last ayah id in the same page, juz or hizb quarter as `id`.
+    public func lastAyahID(inSame segment: Segment, as id: Int) throws -> Int {
+        let n = try number(of: segment, ayahID: id)
+        return try db.query("SELECT MAX(id) FROM ayah WHERE \(segment.rawValue) = ?", [.int(n)]) { $0.int(0) }.first ?? id
+    }
+
+    /// Last ayah id of the stretch of recitation that starts at `id`.
+    public func endOfPlayback(from id: Int, to scope: PlayTo) throws -> Int {
+        switch scope {
+        case .ayah: return id
+        case .quran: return totalAyahs
+        case .surah:
+            let s = surah(try location(ofAyahID: id).surah)
+            return s.firstAyahID + s.ayahCount - 1
+        case .page: return try lastAyahID(inSame: .page, as: id)
+        case .juz: return try lastAyahID(inSame: .juz, as: id)
+        case .rub: return try lastAyahID(inSame: .hizbQuarter, as: id)
+        }
+    }
+
     public func metaValue(_ key: String) throws -> String? {
         try db.query("SELECT value FROM meta WHERE key = ?", [.text(key)]) { $0.text(0) }.first
     }

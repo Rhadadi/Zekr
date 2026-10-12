@@ -64,3 +64,52 @@ final class StoreTests: XCTestCase {
         XCTAssertThrowsError(try QuranStore(databaseURL: URL(fileURLWithPath: "/nonexistent/db.sqlite")))
     }
 }
+
+final class ReadingQueriesTests: XCTestCase {
+    private func store() throws -> QuranStore { try QuranStore(databaseURL: try Repo.database(Repo.fullDB)) }
+
+    func testSurahAyahsAndTranslations() throws {
+        let s = try store()
+        let rows = try s.ayahs(inSurah: 17)
+        XCTAssertEqual(rows.count, 111)
+        XCTAssertEqual(rows.first?.number, 1)
+        XCTAssertEqual(rows.map(\.id), Array(s.surah(17).firstAyahID..<(s.surah(17).firstAyahID + 111)))
+        XCTAssertTrue(rows[23].arabic.contains("رَّبِّ"))
+        let safavi = try s.translationTexts(inSurah: 17, translationID: "fa.safavi")
+        XCTAssertEqual(safavi.count, 111)
+        XCTAssertEqual(safavi[23], try s.translation(ayahID: rows[23].id, translationID: "fa.safavi"))
+        XCTAssertEqual(try s.ayahs(inSurah: 1, script: .simple).count, 7)
+    }
+
+    func testJuzStarts() throws {
+        let s = try store()
+        let starts = try s.juzStarts()
+        XCTAssertEqual(starts.map(\.juz), Array(1...30))
+        XCTAssertEqual(starts[0].ayahID, 1)
+        XCTAssertEqual(starts[15].ayahID, s.ayahID(surah: 18, ayah: 75)) // juz 16 starts at 18:75
+    }
+
+    func testPagesMatchTheMadaniMushaf() throws {
+        let s = try store()
+        let first = s.ayahID(surah: 19, ayah: 1)
+        XCTAssertEqual(try s.number(of: .page, ayahID: first), 305)
+        XCTAssertEqual(try s.number(of: .juz, ayahID: first), 16)
+        XCTAssertEqual(try s.lastAyahID(inSame: .page, as: first), s.ayahID(surah: 19, ayah: 11))
+        XCTAssertEqual(try s.number(of: .page, ayahID: totalAyahs), 604)
+    }
+
+    func testEndOfPlayback() throws {
+        let s = try store()
+        let id = s.ayahID(surah: 19, ayah: 3)
+        XCTAssertEqual(try s.endOfPlayback(from: id, to: .ayah), id)
+        XCTAssertEqual(try s.endOfPlayback(from: id, to: .page), s.ayahID(surah: 19, ayah: 11))
+        XCTAssertEqual(try s.endOfPlayback(from: id, to: .surah), s.ayahID(surah: 19, ayah: 98))
+        XCTAssertEqual(try s.endOfPlayback(from: id, to: .quran), totalAyahs)
+        let juzEnd = try s.endOfPlayback(from: id, to: .juz)
+        XCTAssertEqual(try s.number(of: .juz, ayahID: juzEnd), 16)
+        XCTAssertEqual(try s.number(of: .juz, ayahID: juzEnd + 1), 17)
+        let rub = try s.endOfPlayback(from: id, to: .rub)
+        XCTAssertGreaterThanOrEqual(rub, id)
+        XCTAssertLessThan(rub, juzEnd + 1)
+    }
+}

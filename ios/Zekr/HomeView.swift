@@ -8,7 +8,9 @@ struct HomeView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 if let today = model.today {
-                    NavigationLink(value: AyahRoute(surah: today.surah.id, ayah: today.ayahNumber)) {
+                    Button {
+                        model.open(surah: today.surah.id, ayah: today.ayahNumber)
+                    } label: {
                         TodayCard(display: today, language: model.language)
                     }
                     .buttonStyle(.plain)
@@ -34,7 +36,7 @@ private struct TodayCard: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.tint)
             Text(display.arabic)
-                .font(.system(size: 28))
+                .font(.custom("AmiriQuran-Regular", size: 28))
                 .lineSpacing(10)
                 .multilineTextAlignment(.leading)
                 .frame(maxWidth: .infinity, alignment: .leading)

@@ -17,6 +17,14 @@ public enum LocalizedText {
             : "Surah \(surah.nameTransliteration), \(ref)"
     }
 
+    public static func ayahCount(_ n: Int, language: String) -> String {
+        language == "fa" ? "\(digits(String(n), language: language)) آیه" : (n == 1 ? "1 ayah" : "\(n) ayahs")
+    }
+
+    public static func juzTitle(_ n: Int, language: String) -> String {
+        language == "fa" ? "جزء \(digits(String(n), language: language))" : "Juz \(n)"
+    }
+
     /// The device's language code, "fa" or "en" (anything else counts as English).
     public static var deviceLanguage: String {
         let code = Locale.preferredLanguages.first.map { String($0.prefix(2)) } ?? "en"
