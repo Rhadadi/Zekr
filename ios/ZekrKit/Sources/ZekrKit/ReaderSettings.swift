@@ -1,0 +1,54 @@
+import Foundation
+
+/// Reading and recitation settings, saved as JSON in UserDefaults. Missing keys fall back to the defaults,
+/// so a newer app can add settings without losing the saved ones.
+public struct ReaderSettings: Codable, Equatable, Sendable {
+    /// Translation ids shown under each ayah, in this order.
+    public var translations: [String] = ["fa.safavi"]
+    public var useUthmaniScript = true
+    public var arabicSize = 28.0
+    public var translationSize = 17.0
+    public var reciterID = Reciter.minshawi.id
+    public var speed = 1.0
+    public var repeatCount = 1
+    public var playTo = PlayTo.surah
+    /// An `AudioTranslation` id, or nil for none.
+    public var audioTranslationID: String?
+
+    public init() {}
+
+    private enum CodingKeys: String, CodingKey {
+        case translations, useUthmaniScript, arabicSize, translationSize, reciterID, speed, repeatCount, playTo, audioTranslationID
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let d = ReaderSettings()
+        translations = try c.decodeIfPresent([String].self, forKey: .translations) ?? d.translations
+        useUthmaniScript = try c.decodeIfPresent(Bool.self, forKey: .useUthmaniScript) ?? d.useUthmaniScript
+        arabicSize = try c.decodeIfPresent(Double.self, forKey: .arabicSize) ?? d.arabicSize
+        translationSize = try c.decodeIfPresent(Double.self, forKey: .translationSize) ?? d.translationSize
+        reciterID = try c.decodeIfPresent(String.self, forKey: .reciterID) ?? d.reciterID
+        speed = try c.decodeIfPresent(Double.self, forKey: .speed) ?? d.speed
+        repeatCount = try c.decodeIfPresent(Int.self, forKey: .repeatCount) ?? d.repeatCount
+        playTo = (try? c.decodeIfPresent(PlayTo.self, forKey: .playTo)) ?? d.playTo
+        audioTranslationID = try c.decodeIfPresent(String.self, forKey: .audioTranslationID)
+    }
+
+    public var script: ArabicScript { useUthmaniScript ? .uthmani : .simple }
+    public var reciter: Reciter { Reciter.all.first { $0.id == reciterID } ?? .minshawi }
+    public var audioTranslation: AudioTranslation? { AudioTranslation.all.first { $0.id == audioTranslationID } }
+
+    public static let defaultsKey = "zekr.readerSettings"
+
+    public static func load(from defaults: UserDefaults = .standard) -> ReaderSettings {
+        guard let data = defaults.data(forKey: defaultsKey), let s = try? JSONDecoder().decode(ReaderSettings.self, from: data) else {
+            return ReaderSettings()
+        }
+        return s
+    }
+
+    public func save(to defaults: UserDefaults = .standard) {
+        if let data = try? JSONEncoder().encode(self) { defaults.set(data, forKey: Self.defaultsKey) }
+    }
+}

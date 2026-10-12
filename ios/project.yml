@@ -1,0 +1,119 @@
+# Xcode project definition for XcodeGen (https://github.com/yonaskolb/XcodeGen).
+# Generate with:  cd ios && xcodegen
+name: Zekr
+options:
+  bundleIdPrefix: com.rhadadi
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+configFiles:
+  Debug: Config/Base.xcconfig
+  Release: Config/Base.xcconfig
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1,2"
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+packages:
+  ZekrKit:
+    path: ZekrKit
+targets:
+  Zekr:
+    type: application
+    platform: iOS
+    sources:
+      - path: Zekr
+        excludes:
+          - Resources
+      - path: Zekr/Resources
+        buildPhase: resources
+        excludes:
+          - ".gitkeep"
+    preBuildScripts:
+      - name: Check Quran database
+        basedOnDependencyAnalysis: false
+        script: |
+          test -f "$SRCROOT/Zekr/Resources/quran.sqlite" || { echo "error: quran.sqlite is missing. Run: python3 tools/build_data.py"; exit 1; }
+    dependencies:
+      - package: ZekrKit
+      - target: ZekrWidgets
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(ZEKR_BUNDLE_ID)
+        PRODUCT_NAME: Zekr
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        GENERATE_INFOPLIST_FILE: NO
+    info:
+      path: Zekr/Info.plist
+      properties:
+        CFBundleDisplayName: Zekr
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleLocalizations: [en, fa]
+        CFBundleDevelopmentRegion: en
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UIBackgroundModes: [audio]
+        UIAppFonts: [AmiriQuran-Regular.ttf]
+        ITSAppUsesNonExemptEncryption: false
+        CFBundleURLTypes:
+          - CFBundleURLName: $(ZEKR_BUNDLE_ID)
+            CFBundleURLSchemes: [zekr]
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+  ZekrWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: ZekrWidgets
+        excludes:
+          - Resources
+      - path: ZekrWidgets/Resources
+        buildPhase: resources
+        excludes:
+          - ".gitkeep"
+    preBuildScripts:
+      - name: Check widget database
+        basedOnDependencyAnalysis: false
+        script: |
+          test -f "$SRCROOT/ZekrWidgets/Resources/widget.sqlite" || { echo "error: widget.sqlite is missing. Run: python3 tools/build_data.py"; exit 1; }
+    dependencies:
+      - package: ZekrKit
+      - sdk: SwiftUI.framework
+      - sdk: WidgetKit.framework
+      - sdk: AppIntents.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(ZEKR_BUNDLE_ID).widgets
+        PRODUCT_NAME: ZekrWidgets
+        GENERATE_INFOPLIST_FILE: NO
+        SKIP_INSTALL: YES
+    info:
+      path: ZekrWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: Zekr
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleLocalizations: [en, fa]
+        CFBundleDevelopmentRegion: en
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+schemes:
+  Zekr:
+    build:
+      targets:
+        Zekr: all
+    run:
+      config: Debug
+    archive:
+      config: Release

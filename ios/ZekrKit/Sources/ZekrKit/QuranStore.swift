@@ -1,0 +1,152 @@
+import Foundation
+
+public enum StoreError: Error, CustomStringConvertible {
+    case missing(String)
+
+    public var description: String {
+        switch self {
+        case .missing(let what): return "Not found: \(what)"
+        }
+    }
+}
+
+/// Reads the Quran databases that `tools/build_data.py` builds (`quran.sqlite` for the app, `widget.sqlite` for the widget).
+public final class QuranStore {
+    private let db: SQLiteDatabase
+    public let surahs: [Surah]
+    private let hasUthmani: Bool
+
+    public init(databaseURL: URL) throws {
+        db = try SQLiteDatabase(url: databaseURL)
+        surahs = try db.query(
+            "SELECT id, ayah_count, first_ayah_id, name_ar, name_fa, name_tr, name_en, revelation FROM surah ORDER BY id"
+        ) { r in
+            Surah(
+                id: r.int(0), ayahCount: r.int(1), firstAyahID: r.int(2), nameArabic: r.text(3), nameFarsi: r.text(4),
+                nameTransliteration: r.text(5), nameEnglish: r.text(6), isMeccan: r.text(7) == "Meccan"
+            )
+        }
+        guard surahs.count == 114 else { throw StoreError.missing("114 surahs (found \(surahs.count))") }
+        hasUthmani = try db.query("PRAGMA table_info(ayah)") { $0.text(1) }.contains("text_uthmani")
+    }
+
+    /// Opens a bundled database by resource name, e.g. `QuranStore(resource: "widget", in: .main)`.
+    public convenience init(resource name: String, in bundle: Bundle) throws {
+        guard let url = bundle.url(forResource: name, withExtension: "sqlite") else {
+            throw StoreError.missing("\(name).sqlite in the app bundle")
+        }
+        try self.init(databaseURL: url)
+    }
+
+    public func surah(_ id: Int) -> Surah { surahs[id - 1] }
+
+    public func ayahID(surah: Int, ayah: Int) -> Int { surahs[surah - 1].firstAyahID + ayah - 1 }
+
+    public func location(ofAyahID id: Int) throws -> AyahLocation {
+        guard (1...totalAyahs).contains(id) else { throw StoreError.missing("ayah id \(id)") }
+        // surahs are in order of first ayah id: take the last one that starts at or before `id`
+        let s = surahs.last(where: { $0.firstAyahID <= id })!
+        return AyahLocation(surah: s.id, ayah: id - s.firstAyahID + 1)
+    }
+
+    /// Arabic text of an ayah. The widget database only has the simple script, so `.uthmani` falls back to it there.
+    public func arabic(ayahID id: Int, script: ArabicScript = .uthmani) throws -> String {
+        let column = (script == .uthmani && hasUthmani) ? "text_uthmani" : "text_simple"
+        guard let text = try db.query("SELECT \(column) FROM ayah WHERE id = ?", [.int(id)], map: { $0.text(0) }).first else {
+            throw StoreError.missing("ayah \(id)")
+        }
+        return text
+    }
+
+    /// A translation of an ayah. Empty where the translator merged two ayahs (Safavi 80:39).
+    public func translation(ayahID id: Int, translationID: String) throws -> String {
+        guard let text = try db.query(
+            "SELECT text FROM translation_text WHERE translation_id = ? AND ayah_id = ?", [.text(translationID), .int(id)],
+            map: { $0.text(0) }
+        ).first else { throw StoreError.missing("translation \(translationID) for ayah \(id)") }
+        return text
+    }
+
+    public func translations() throws -> [TranslationInfo] {
+        try db.query("SELECT id, lang, name, translator FROM translation ORDER BY sort") {
+            TranslationInfo(id: $0.text(0), language: $0.text(1), name: $0.text(2), translator: $0.text(3))
+        }
+    }
+
+    /// Ayah ids a rotation draws from, ascending: "all" or "fits.<translation id>".
+    public func pool(named name: String) throws -> [Int] {
+        let ids = try db.query("SELECT ayah_id FROM pool WHERE name = ? ORDER BY position", [.text(name)]) { $0.int(0) }
+        if ids.isEmpty { throw StoreError.missing("pool \(name)") }
+        return ids
+    }
+
+    // MARK: Reading (the full database only; the widget database has no page or juz columns)
+
+    public struct AyahRow: Equatable, Sendable {
+        public let id: Int
+        public let number: Int
+        public let arabic: String
+    }
+
+    /// Every ayah of a surah, in order.
+    public func ayahs(inSurah surah: Int, script: ArabicScript = .uthmani) throws -> [AyahRow] {
+        let column = (script == .uthmani && hasUthmani) ? "text_uthmani" : "text_simple"
+        return try db.query("SELECT id, number, \(column) FROM ayah WHERE surah = ? ORDER BY number", [.int(surah)]) {
+            AyahRow(id: $0.int(0), number: $0.int(1), arabic: $0.text(2))
+        }
+    }
+
+    /// One translation for every ayah of a surah, in order ('' where the translator merged two ayahs).
+    public func translationTexts(inSurah surah: Int, translationID: String) throws -> [String] {
+        try db.query(
+            """
+            SELECT t.text FROM translation_text t JOIN ayah a ON a.id = t.ayah_id
+            WHERE t.translation_id = ? AND a.surah = ? ORDER BY a.number
+            """,
+            [.text(translationID), .int(surah)]
+        ) { $0.text(0) }
+    }
+
+    /// The first ayah of each of the 30 juz.
+    public func juzStarts() throws -> [(juz: Int, ayahID: Int)] {
+        try db.query("SELECT juz, MIN(id) FROM ayah GROUP BY juz ORDER BY juz") { (juz: $0.int(0), ayahID: $0.int(1)) }
+    }
+
+    public enum Segment: String, Sendable {
+        case page
+        case juz
+        case hizbQuarter = "hizb_quarter"
+    }
+
+    /// The segment number (page 1-604, juz 1-30, hizb quarter 1-240) an ayah is in.
+    public func number(of segment: Segment, ayahID id: Int) throws -> Int {
+        guard let n = try db.query("SELECT \(segment.rawValue) FROM ayah WHERE id = ?", [.int(id)], map: { $0.int(0) }).first else {
+            throw StoreError.missing("ayah \(id)")
+        }
+        return n
+    }
+
+    /// The last ayah id in the same page, juz or hizb quarter as `id`.
+    public func lastAyahID(inSame segment: Segment, as id: Int) throws -> Int {
+        let n = try number(of: segment, ayahID: id)
+        return try db.query("SELECT MAX(id) FROM ayah WHERE \(segment.rawValue) = ?", [.int(n)]) { $0.int(0) }.first ?? id
+    }
+
+    /// Last ayah id of the stretch of recitation that starts at `id`.
+    public func endOfPlayback(from id: Int, to scope: PlayTo) throws -> Int {
+        switch scope {
+        case .ayah: return id
+        case .quran: return totalAyahs
+        case .surah:
+            let s = surah(try location(ofAyahID: id).surah)
+            return s.firstAyahID + s.ayahCount - 1
+        case .page: return try lastAyahID(inSame: .page, as: id)
+        case .juz: return try lastAyahID(inSame: .juz, as: id)
+        case .rub: return try lastAyahID(inSame: .hizbQuarter, as: id)
+        }
+    }
+
+    public func metaValue(_ key: String) throws -> String? {
+        try db.query("SELECT value FROM meta WHERE key = ?", [.text(key)]) { $0.text(0) }.first
+    }
+}

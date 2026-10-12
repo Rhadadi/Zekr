@@ -1,0 +1,174 @@
+import { useEffect, useRef, useState } from 'preact/hooks'
+import { player } from '../audio'
+import { AyahSheet } from '../components/AyahSheet'
+import { Icon } from '../components/Icon'
+import { ModeToggle } from '../components/ModeToggle'
+import { LoadError, Loading } from '../components/Page'
+import { type Meta, juzOf, loadText, loadTranslation, locate, pageOf, pageRange } from '../data'
+import { useAsync } from '../hooks'
+import { num, t } from '../i18n'
+import { href } from '../router'
+import { setLastRead, settings, updateSettings } from '../store'
+
+const ARABIC_INDIC = '٠١٢٣٤٥٦٧٨٩'
+/** Ayah numbers inside the text use the traditional Arabic-Indic digits, as printed mushafs do. */
+const marker = (n: number) => String(n).replace(/\d/g, (d) => ARABIC_INDIC[Number(d)] as string)
+
+export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: number; focusId?: number }) {
+  const s = settings.value
+  const { first, last } = pageRange(meta, pageNo)
+  const trKey = s.translations.join(',')
+  const data = useAsync(async () => {
+    const ids = s.translations.filter((id) => meta.translations.some((x) => x.id === id))
+    const [ar, ...trs] = await Promise.all([loadText(s.script), ...ids.map((id) => loadTranslation(id))])
+    return { ar, trs, ids }
+  }, [s.script, trKey])
+
+  const [selected, setSelected] = useState<number | undefined>(focusId)
+  const [jumping, setJumping] = useState(false)
+  const touch = useRef<{ x: number; y: number } | null>(null)
+  const playingId = player.value?.ayahId
+
+  const goTo = (p: number) => {
+    if (p >= 1 && p <= 604) location.hash = href.page(p)
+  }
+
+  // New page: start at the top, with the requested ayah selected.
+  useEffect(() => {
+    setSelected(focusId)
+    setJumping(false)
+    const firstSurah = locate(meta, first)
+    setLastRead(firstSurah.surah, firstSurah.ayah)
+    if (focusId === undefined) window.scrollTo(0, 0)
+  }, [pageNo, focusId])
+
+  // Bring the selected ayah into view, above the translation panel.
+  useEffect(() => {
+    if (selected === undefined || !data.value) return
+    document.querySelector(`.ay[data-id="${selected}"]`)?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+  }, [selected, !!data.value])
+
+  // While reciting, turn the page when the recitation moves on, but only if the reader was following along.
+  const followed = useRef<number | undefined>(undefined)
+  useEffect(() => {
+    const prev = followed.current
+    followed.current = playingId
+    if (playingId === undefined || prev === undefined) return
+    if (pageOf(meta, prev) === pageNo && pageOf(meta, playingId) !== pageNo) location.replace(href.page(pageOf(meta, playingId)))
+  }, [playingId])
+
+  const surahOfPage = meta.surahs[locate(meta, first).surah - 1]!
+  const toVerse = () => {
+    const at = locate(meta, selected ?? first)
+    updateSettings({ readMode: 'verse' })
+    location.hash = href.verse(at.surah, at.ayah)
+  }
+
+  const flow: preact.ComponentChildren[] = []
+  let run: preact.ComponentChildren[] = []
+  const flush = () => {
+    if (run.length) flow.push(<p class="flow" lang="ar" dir="rtl" key={`f${flow.length}`} style={{ fontSize: `${Math.round(s.arabicSize * 0.85)}px` }}>{run}</p>)
+    run = []
+  }
+  if (data.value) {
+    for (let id = first; id <= last; id++) {
+      const at = locate(meta, id)
+      if (at.ayah === 1) {
+        flush()
+        const surah = meta.surahs[at.surah - 1]!
+        flow.push(
+          <div class="banner" key={`b${at.surah}`} role="heading" aria-level={2} lang="ar" dir="rtl">
+            <span class="banner-name">سورة {surah.ar}</span>
+          </div>,
+        )
+        if (at.surah !== 1 && at.surah !== 9) {
+          flow.push(<p class="basmala" lang="ar" dir="rtl" key={`s${at.surah}`} style={{ fontSize: `${Math.round(s.arabicSize * 0.85)}px` }}>{meta.basmala[s.script]}</p>)
+        }
+      }
+      run.push(
+        <span
+          key={id}
+          class={`ay${selected === id ? ' sel' : ''}${playingId === id ? ' playing' : ''}`}
+          data-id={id}
+          role="button"
+          tabIndex={0}
+          onClick={() => setSelected(selected === id ? undefined : id)}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), setSelected(selected === id ? undefined : id))}
+        >
+          {data.value.ar[id - 1]} <span class="mark">﴿{marker(at.ayah)}﴾</span>
+        </span>,
+        ' ',
+      )
+    }
+    flush()
+  }
+
+  const selectedTranslations =
+    selected !== undefined && data.value
+      ? data.value.ids.map((trId, k) => ({
+          info: meta.translations.find((x) => x.id === trId)!,
+          text: data.value!.trs[k]![selected - 1] as string,
+        }))
+      : []
+
+  return (
+    <>
+      <header class="mushaf-bar" dir="rtl">
+        <span class="mb-surah" lang="ar">سورة {surahOfPage.ar}</span>
+        {jumping ? (
+          <form
+            class="mb-jump"
+            onSubmit={(e) => {
+              e.preventDefault()
+              const v = Number(new FormData(e.currentTarget).get('page'))
+              if (Number.isInteger(v)) goTo(v)
+              setJumping(false)
+            }}
+          >
+            <input name="page" type="number" min={1} max={604} defaultValue={pageNo} autofocus aria-label={t('goToPage')} inputMode="numeric" />
+          </form>
+        ) : (
+          <button class="mb-page" onClick={() => setJumping(true)} aria-label={`${t('goToPage')}: ${t('pageN', { n: pageNo })}`}>
+            {num(pageNo)}
+          </button>
+        )}
+        <span class="mb-juz">{t('juzN', { n: juzOf(meta, first) })}</span>
+      </header>
+      <ModeToggle current="page" onPick={(m) => (m === 'verse' ? toVerse() : undefined)} />
+      <div
+        class={`mushaf-page${selected !== undefined ? ' has-sheet' : ''}`}
+        data-page={pageNo}
+        onTouchStart={(e) => {
+          const p = e.touches[0]
+          touch.current = p ? { x: p.clientX, y: p.clientY } : null
+        }}
+        onTouchEnd={(e) => {
+          const start = touch.current
+          const end = e.changedTouches[0]
+          touch.current = null
+          if (!start || !end) return
+          const dx = end.clientX - start.x
+          if (Math.abs(dx) > 70 && Math.abs(end.clientY - start.y) < 45) goTo(pageNo + (dx > 0 ? 1 : -1)) // right-to-left book: swipe right = next page
+        }}
+      >
+        {data.error ? <LoadError retry={data.retry} /> : !data.value ? <Loading /> : flow}
+      </div>
+      <nav class="pager" aria-label={t('readPage')}>
+        <button class="btn" disabled={pageNo >= 604} onClick={() => goTo(pageNo + 1)}>
+          <span class="chev-next"><Icon name="chevron" size={18} /></span> {t('nextPage')}
+        </button>
+        <span class="muted small">{t('pageN', { n: pageNo })} / {num(604)}</span>
+        <button class="btn" disabled={pageNo <= 1} onClick={() => goTo(pageNo - 1)}>
+          {t('prevPage')} <span class="chev-prev"><Icon name="chevron" size={18} /></span>
+        </button>
+      </nav>
+      {selected !== undefined && data.value ? (
+        <AyahSheet meta={meta} id={selected} ar={data.value.ar[selected - 1] as string} translations={selectedTranslations}
+          playing={playingId === selected && (player.value?.status === 'playing' || player.value?.status === 'loading')}
+          onClose={() => setSelected(undefined)} />
+      ) : (
+        !jumping && data.value && <p class="muted small tip pager-tip">{t('tapAyah')}</p>
+      )}
+    </>
+  )
+}

@@ -1,0 +1,8 @@
+// Copy this file to Signing.local.xcconfig (same folder) and fill it in. That file is not committed.
+//
+// Your Team ID: Xcode > Settings > Accounts > select your Apple ID > Team (10 characters), or
+// developer.apple.com/account > Membership details.
+DEVELOPMENT_TEAM = ABCDE12345
+
+// The bundle ID must be unique to your team. Uncomment and change it if Xcode says it is taken.
+// ZEKR_BUNDLE_ID = com.yourname.zekr
