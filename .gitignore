@@ -1,0 +1,12 @@
+data/raw/
+build/
+ios/Zekr/Resources/quran.sqlite
+ios/ZekrWidgets/Resources/widget.sqlite
+ios/*.xcodeproj/
+web/public/data/
+web/node_modules/
+web/dist/
+node_modules/
+.DS_Store
+.build/
+__pycache__/
