@@ -137,17 +137,25 @@ export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: numb
     setJumping(false)
   }, [pageNo, focusId, !!data.value])
 
-  // The page in view drives the header and "where you left off".
+  // The page in view drives the header and "where you left off": the page at 30% down the screen.
   useEffect(() => {
     if (!data.value) return
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) if (e.isIntersecting) setCurrent(Number((e.target as HTMLElement).dataset.page))
-      },
-      { rootMargin: '-30% 0px -69% 0px' },
-    )
-    document.querySelectorAll('.mpage').forEach((el) => observer.observe(el))
-    return () => observer.disconnect()
+    let frame = 0
+    const look = () => {
+      frame = 0
+      const el = document.elementFromPoint(window.innerWidth / 2, window.innerHeight * 0.3)?.closest<HTMLElement>('.mpage')
+      if (el?.dataset.page) setCurrent(Number(el.dataset.page))
+    }
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(look)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+      cancelAnimationFrame(frame)
+    }
   }, [!!data.value])
   useEffect(() => {
     const at = locate(meta, pageRange(meta, current).first)
