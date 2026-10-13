@@ -50,7 +50,7 @@ export function Daily({ meta }: { meta: Meta }) {
 
   return (
     <>
-      <PageHeader title={t('dailyTitle')} back={href.home} />
+      <PageHeader title={t('dailyTitle')} back={href.today} />
       <DailyCard meta={meta} />
       <p class="muted small tip">{t('dailyHelp')}</p>
 

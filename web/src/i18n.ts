@@ -13,7 +13,8 @@ export const lang = computed<Lang>(() => {
 const strings = {
   en: {
     appName: 'Zekr',
-    navHome: 'Home',
+    navToday: 'Today',
+    back: 'Back',
     navIndex: 'Quran',
     more: 'More',
     translationAudio: 'Translation audio',
@@ -150,11 +151,15 @@ const strings = {
     goToPage: 'Go to page',
     close: 'Close',
     openVerseView: 'Open in verse view',
-    tapAyah: 'Tap an ayah to see its translation.',
+    tapAyah: 'Tap an ayah for its translation, or the page for reading options.',
+    pageOptions: 'Reading options',
+    playFromPage: 'Play from this page',
+    allSettings: 'All settings',
   },
   fa: {
     appName: 'ذکر',
-    navHome: 'خانه',
+    navToday: 'امروز',
+    back: 'بازگشت',
     navIndex: 'قرآن',
     more: 'بیشتر',
     translationAudio: 'ترجمهٔ گویا',
@@ -290,7 +295,10 @@ const strings = {
     goToPage: 'رفتن به صفحه',
     close: 'بستن',
     openVerseView: 'نمایش آیه‌به‌آیه',
-    tapAyah: 'برای دیدن ترجمه روی یک آیه بزنید.',
+    tapAyah: 'برای ترجمه روی یک آیه بزنید، و برای تنظیمات خواندن روی صفحه.',
+    pageOptions: 'تنظیمات خواندن',
+    playFromPage: 'پخش از این صفحه',
+    allSettings: 'همهٔ تنظیمات',
   },
 } as const
 

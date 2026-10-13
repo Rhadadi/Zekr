@@ -118,7 +118,8 @@ STYLE_OF = {("span", "aya"): "q", ("em", ""): "e", ("span", "hadith"): "d"}
 
 
 def clean(text: str) -> str:
-    return unicodedata.normalize("NFC", re.sub(r"\s+", " ", text))
+    """One space between words, Persian digits, NFC."""
+    return unicodedata.normalize("NFC", re.sub(r"\s+", " ", text)).translate(PERSIAN_DIGITS)
 
 
 class SectionParser(HTMLParser):

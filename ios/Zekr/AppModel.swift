@@ -23,7 +23,8 @@ enum QuranRoute: Hashable {
 
 @Observable
 final class AppModel {
-    var tab: AppTab = .home
+    /// The app opens on the Quran, where you left off.
+    var tab: AppTab = .quran
     var quranPath: [QuranRoute] = []
 
     let language = LocalizedText.deviceLanguage
@@ -47,9 +48,31 @@ final class AppModel {
             if let entry = try provider.entries(config: config, from: Date(), count: 1).first {
                 today = try provider.display(ayahID: entry.ayahID, config: config, script: settings.settings.script)
             }
+            let last = Self.loadLastRead()
+            quranPath = [route(surah: last.surah, ayah: last.ayah > 1 ? last.ayah : nil, select: false)]
         } catch {
             loadError = "\(error)"
         }
+    }
+
+    // MARK: Where you left off
+
+    private static let lastReadKey = "zekr.lastRead"
+
+    private static func loadLastRead() -> AyahLocation {
+        let saved = UserDefaults.standard.array(forKey: lastReadKey) as? [Int] ?? []
+        guard saved.count == 2, (1...114).contains(saved[0]), saved[1] >= 1 else { return AyahLocation(surah: 1, ayah: 1) }
+        return AyahLocation(surah: saved[0], ayah: saved[1])
+    }
+
+    func saveLastRead(surah: Int, ayah: Int) {
+        UserDefaults.standard.set([surah, ayah], forKey: Self.lastReadKey)
+    }
+
+    /// A page counts as read from its first ayah.
+    func saveLastRead(page: MushafPage?) {
+        guard let page, let store, let location = try? store.location(ofAyahID: page.ayahIDs.lowerBound) else { return }
+        saveLastRead(surah: location.surah, ayah: location.ayah)
     }
 
     func open(surah: Int, ayah: Int?) {

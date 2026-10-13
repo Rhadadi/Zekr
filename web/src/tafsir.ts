@@ -1,6 +1,7 @@
 // Al-Mizan, when the data was built with `build_data.py --almizan-web` (private builds only; the
 // public site never has it, see docs/PLAN.md §8). Format: tools/almizan.py.
 import { signal } from '@preact/signals'
+import { loadMeta } from './data'
 
 export type RunStyle = 'q' | 'e' | 'd'
 /** [text], [text, style] or [footnote number, 'n']. */
@@ -36,10 +37,11 @@ export const tafsirIndex = signal<TafsirIndex | false | null>(null)
 let checking: Promise<TafsirIndex | false> | null = null
 
 export function checkTafsir(): Promise<TafsirIndex | false> {
-  checking ??= fetch(`${base}data/almizan/index.json`)
-    .then(async (res) => {
-      const type = res.headers.get('content-type') ?? ''
-      if (!res.ok || !type.includes('json')) return false as const
+  checking ??= loadMeta()
+    .then(async (meta) => {
+      if (!meta.tafsir?.includes('almizan')) return false as const
+      const res = await fetch(`${base}data/almizan/index.json?v=${meta.version}`)
+      if (!res.ok) return false as const
       return (await res.json()) as TafsirIndex
     })
     .catch(() => false as const)
@@ -56,7 +58,8 @@ export function sectionIdFor(index: TafsirIndex, ayahId: number): string | undef
 }
 
 export async function loadSection(id: string): Promise<TafsirSection> {
-  const res = await fetch(`${base}data/almizan/${id}.json`)
+  const meta = await loadMeta()
+  const res = await fetch(`${base}data/almizan/${id}.json?v=${meta.version}`)
   if (!res.ok) throw new Error(`Could not load tafsir ${id} (${res.status})`)
   return (await res.json()) as TafsirSection
 }

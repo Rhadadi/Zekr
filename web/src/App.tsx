@@ -7,7 +7,7 @@ import { ayahIdOf, loadMeta, pageOf } from './data'
 import { useAsync } from './hooks'
 import { t } from './i18n'
 import { type RouteName, href, route } from './router'
-import { settings } from './store'
+import { lastRead, settings } from './store'
 import { toast } from './toast'
 import { About } from './views/About'
 import { Daily } from './views/Daily'
@@ -22,8 +22,8 @@ import { TafsirView } from './views/Tafsir'
 import { checkTafsir } from './tafsir'
 
 const NAV: { name: RouteName; href: string; icon: IconName; label: () => string }[] = [
-  { name: 'home', href: href.home, icon: 'home', label: () => t('navHome') },
   { name: 'index', href: href.index, icon: 'list', label: () => t('navIndex') },
+  { name: 'home', href: href.today, icon: 'sun', label: () => t('navToday') },
   { name: 'search', href: href.search(), icon: 'search', label: () => t('navSearch') },
   { name: 'saved', href: href.saved, icon: 'bookmark', label: () => t('navBookmarks') },
   { name: 'settings', href: href.settings, icon: 'settings', label: () => t('navSettings') },
@@ -38,7 +38,7 @@ export function App() {
     }
   }, [meta.value])
   const r = route.value
-  const active: RouteName = r.name === 'reader' || r.name === 'page' || r.name === 'tafsir' ? 'index' : r.name === 'daily' ? 'home' : r.name === 'about' ? 'settings' : r.name
+  const active: RouteName = r.name === 'start' || r.name === 'reader' || r.name === 'page' || r.name === 'tafsir' ? 'index' : r.name === 'daily' ? 'home' : r.name === 'about' ? 'settings' : r.name
 
   let view
   if (meta.error) view = <LoadError retry={meta.retry} />
@@ -46,6 +46,16 @@ export function App() {
   else {
     const m = meta.value
     switch (r.name) {
+      case 'start': {
+        // The Quran where you left off, in the reading view chosen in Settings.
+        const last = lastRead.peek() ?? { surah: 1, ayah: 1 }
+        const surah = m.surahs[last.surah - 1] ?? m.surahs[0]!
+        const id = ayahIdOf(m, surah.id, Math.min(last.ayah, surah.ayahs))
+        view = settings.value.readMode === 'page'
+          ? <PageReader key="page" meta={m} pageNo={pageOf(m, id)} />
+          : <Reader key={`${surah.id}`} meta={m} surahId={surah.id} ayah={last.ayah > 1 ? last.ayah : undefined} />
+        break
+      }
       case 'reader':
         if (!r.verse && settings.value.readMode === 'page') {
           const surah = m.surahs[r.surah! - 1]!

@@ -1,6 +1,6 @@
 import { signal } from '@preact/signals'
 
-export type RouteName = 'home' | 'index' | 'reader' | 'page' | 'tafsir' | 'daily' | 'search' | 'saved' | 'settings' | 'about'
+export type RouteName = 'start' | 'home' | 'index' | 'reader' | 'page' | 'tafsir' | 'daily' | 'search' | 'saved' | 'settings' | 'about'
 
 export interface Route {
   name: RouteName
@@ -37,6 +37,8 @@ export function parseRoute(hash: string): Route {
       if (page && page >= 1 && page <= 604) return { name: 'page', page, query }
       return { name: 'index', query }
     }
+    case 'today':
+      return { name: 'home', query }
     case 'index':
     case 'daily':
     case 'search':
@@ -45,7 +47,8 @@ export function parseRoute(hash: string): Route {
     case 'about':
       return { name: parts[0], query }
     default:
-      return { name: 'home', query }
+      // Opening the app shows the Quran, where you left off.
+      return { name: 'start', query }
   }
 }
 
@@ -57,7 +60,10 @@ window.addEventListener('hashchange', () => {
 })
 
 export const href = {
-  home: '#/',
+  /** The Quran, where you left off. */
+  start: '#/',
+  /** The ayah of the day. */
+  today: '#/today',
   index: '#/index',
   juz: '#/index?tab=juz',
   daily: '#/daily',

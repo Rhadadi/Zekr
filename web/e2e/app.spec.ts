@@ -29,7 +29,7 @@ test.describe('ayah of the day', () => {
   test('home shows the ayah the shared rule picks for the current day', async ({ page }) => {
     await page.clock.setFixedTime(new Date('2025-10-12T12:00:00Z'))
     await useSettings(page, { lang: 'en' })
-    await page.goto('/#/')
+    await page.goto('/#/today')
     const card = page.getByTestId('daily-card')
     await expect(card).toBeVisible()
     const all = Array.from({ length: 6236 }, (_, i) => i + 1)
@@ -195,7 +195,7 @@ test.describe('search, saved, settings', () => {
 })
 
 test.describe('layout', () => {
-  for (const path of ['#/', '#/index', '#/surah/1', '#/daily', '#/search', '#/saved', '#/settings', '#/about']) {
+  for (const path of ['#/', '#/today', '#/index', '#/surah/1', '#/daily', '#/search', '#/saved', '#/settings', '#/about']) {
     test(`no sideways scrolling at phone width: ${path}`, async ({ page }) => {
       await useSettings(page, { lang: 'fa' })
       await page.goto('/' + path)
@@ -208,7 +208,7 @@ test.describe('layout', () => {
 
 test('works offline after the first visit', async ({ page, context }) => {
   await useSettings(page, { lang: 'en' })
-  await page.goto('/#/')
+  await page.goto('/#/today')
   await expect(page.getByTestId('daily-card')).toBeVisible()
   // wait until the service worker has installed and precached the data
   await expect
@@ -333,7 +333,7 @@ test.describe('what plays, and seeing it', () => {
   test('the play button on the ayah of the day plays only that ayah', async ({ page }) => {
     const played = await trackAudio(page)
     await useSettings(page, { lang: 'en' })
-    await page.goto('/#/')
+    await page.goto('/#/today')
     await page.getByTestId('daily-card').getByRole('button', { name: 'Play this ayah' }).click()
     await expect.poll(async () => (await played()).length).toBe(1)
     await finishRecording(page)
@@ -356,7 +356,7 @@ test.describe('what plays, and seeing it', () => {
   test('the player bar takes you to the ayah being recited', async ({ page }) => {
     await trackAudio(page)
     await useSettings(page, { lang: 'en' })
-    await page.goto('/#/')
+    await page.goto('/#/today')
     await page.getByTestId('daily-card').getByRole('button', { name: 'Play this ayah' }).click()
     const id = await page.getByTestId('daily-card').getAttribute('data-ayah-id')
     await page.getByRole('link', { name: /Go to the ayah being recited/ }).click()
@@ -366,7 +366,7 @@ test.describe('what plays, and seeing it', () => {
 
   test('home shows only the ayah of the day and where you left off', async ({ page }) => {
     await useSettings(page, { lang: 'en' })
-    await page.goto('/#/')
+    await page.goto('/#/today')
     await expect(page.getByTestId('daily-card')).toBeVisible()
     await expect(page.locator('.continue-row')).toContainText('Start with Al-Fatiha')
     await expect(page.locator('main .tile')).toHaveCount(0)
@@ -463,9 +463,13 @@ test.describe('Al-Mizan tafsir', () => {
     // A made-up section in the format tools/almizan.py writes; the real text is never in the public build.
     test.use({ serviceWorkers: 'block' })
     test.beforeEach(async ({ page }) => {
-      await page.route('**/data/almizan/index.json', (route) =>
+      await page.route('**/data/meta.json*', async (route) => {
+        const response = await route.fetch()
+        route.fulfill({ response, json: { ...(await response.json()), tafsir: ['almizan'] } })
+      })
+      await page.route('**/data/almizan/index.json*', (route) =>
         route.fulfill({ json: { source: 'test', sections: [['19_1-15', 1, 6236]] } }))
-      await page.route('**/data/almizan/19_1-15.json', (route) =>
+      await page.route('**/data/almizan/19_1-15.json*', (route) =>
         route.fulfill({
           json: {
             id: '19_1-15', surah: 19, from: 1, to: 15, title: 'سوره مریم آیه‌های ۱ تا ۱۵',
@@ -505,5 +509,59 @@ test.describe('Al-Mizan tafsir', () => {
       await expect(page).toHaveURL(/#\/tafsir\/19\/3$/)
       await expect(page.locator('article.tafsir .tf-h').first()).toHaveText('ترجمه آیات')
     })
+  })
+})
+
+test.describe('opening the app', () => {
+  test('shows the Quran, not the ayah of the day: Al-Fatiha the first time', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/')
+    await expect(page.locator('article#a-1')).toBeVisible()
+    await expect(page.getByTestId('daily-card')).toHaveCount(0)
+    await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Quran' })).toHaveAttribute('aria-current', 'page')
+    await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Today' }).click()
+    await expect(page.getByTestId('daily-card')).toBeVisible()
+  })
+
+  test('then where you left off, in the page view if that is your reading view', async ({ page }) => {
+    await useSettings(page, { lang: 'en', readMode: 'page' })
+    await page.addInitScript(() => localStorage.setItem('zekr.lastRead', JSON.stringify({ surah: 19, ayah: 5 })))
+    await page.goto('/')
+    await expect(page.locator('.mushaf-page')).toHaveAttribute('data-page', '305')
+  })
+})
+
+test.describe('page view: tapping and pressing', () => {
+  test('the open ayah panel follows the recitation, with one highlight', async ({ page }) => {
+    const played = await trackAudio(page)
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/305')
+    await page.locator('.ay').first().click()
+    const sheet = page.getByTestId('ayah-sheet')
+    await expect(sheet).toContainText('19:1')
+    await sheet.getByRole('button', { name: 'Play' }).click()
+    await expect.poll(async () => (await played()).length).toBe(1)
+    await finishRecording(page)
+    await expect(sheet).toContainText('19:2')
+    await expect(sheet.locator('.tr')).toContainText('زکری')
+    await expect(page.locator('.ay.sel')).toHaveCount(1)
+    await expect(page.locator('.ay.sel')).toHaveAttribute('data-id', String(await page.locator('.ay').nth(1).getAttribute('data-id')))
+    await expect(page.locator('.ay.playing')).toHaveCount(0)
+  })
+
+  test('tapping the page opens reading options; a long press on an ayah opens its panel, not the browser menu', async ({ page }) => {
+    await useSettings(page, { lang: 'en', translations: ['en.sahih'] })
+    await page.goto('/#/page/305')
+    await expect(page.locator('.mushaf-page')).toHaveCSS('user-select', 'none')
+    await page.locator('.banner').click()
+    const options = page.getByTestId('page-options')
+    await expect(options).toContainText('Page 305')
+    await options.getByLabel('Quran font').selectOption({ label: 'Amiri Quran' })
+    await expect(page.locator('.flow').first()).toHaveCSS('font-family', /^"?Zekr Amiri/)
+    await page.locator('.banner').click()
+    await expect(options).toHaveCount(0)
+
+    await page.locator('.ay').nth(2).dispatchEvent('contextmenu')
+    await expect(page.getByTestId('ayah-sheet')).toContainText('19:3')
   })
 })

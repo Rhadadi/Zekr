@@ -454,7 +454,7 @@ def build_sqlite(path: Path, *, surahs, marks, texts, translations, pools, versi
     db.close()
 
 
-def build_web(out: Path, *, surahs, marks, texts, translations, pools, version: str):
+def build_web(out: Path, *, surahs, marks, texts, translations, pools, version: str, tafsir: list[str] | None = None):
     if out.exists():
         shutil.rmtree(out)
     order = [(s.id, n) for s in surahs for n in range(1, s.ayahs + 1)]
@@ -481,6 +481,8 @@ def build_web(out: Path, *, surahs, marks, texts, translations, pools, version: 
                 {"id": tid, "lang": i["lang"], "name": i["name"], "translator": i["translator"], "dir": i["dir"], "widget": i["widget"]}
                 for tid, i in translations.items()
             ],
+            # tafsirs in data/<id>/ (private builds only; the public site has none)
+            "tafsir": tafsir or [],
         },
     )
 
@@ -555,6 +557,8 @@ def main(argv=None) -> int:
 
     BASMALA.update(uthmani=texts["uthmani"][(1, 1)], simple=texts["simple"][(1, 1)])
     pools = build_pools(surahs, texts["simple"], translations)
+    if args.almizan_web:
+        hashes["almizan-web"] = "1"  # a build with the tafsir gets its own data version
     version = hashlib.sha256(json.dumps(hashes, sort_keys=True).encode()).hexdigest()[:12]
     print(f"ok: {len(surahs)} surahs, {AYAH_COUNT} ayahs, {len(translations)} translations, data version {version}")
     for name in ("all", "fits.fa.safavi", "fits.fa.fooladvand", "fits.en.sahih"):
@@ -565,7 +569,7 @@ def main(argv=None) -> int:
     kw = dict(surahs=surahs, marks=marks, texts=texts, translations=translations, pools=pools, version=version)
     build_sqlite(args.ios_db, widget=False, **kw)
     build_sqlite(args.widget_db, widget=True, **kw)
-    build_web(args.web_dir, **kw)
+    build_web(args.web_dir, tafsir=["almizan"] if args.almizan_web else None, **kw)
     for p in (args.ios_db, args.widget_db):
         print(f"wrote {p.relative_to(ROOT)} ({p.stat().st_size / 1e6:.1f} MB)")
     if args.almizan or args.almizan_web:
@@ -578,8 +582,6 @@ def main(argv=None) -> int:
         if args.almizan_web:
             almizan.build_web(args.web_dir, sections)
             print(f"wrote {args.web_dir.relative_to(ROOT)}/almizan/ (private build: do not deploy publicly)")
-    elif (args.web_dir / "almizan").exists():
-        shutil.rmtree(args.web_dir / "almizan")  # never leave it in a build that did not ask for it
     total = sum(f.stat().st_size for f in args.web_dir.rglob("*.json"))
     print(f"wrote {args.web_dir.relative_to(ROOT)}/ ({total / 1e6:.1f} MB of JSON)")
     return 0

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
-import { player } from '../audio'
+import { player, playFrom } from '../audio'
 import { AyahSheet } from '../components/AyahSheet'
 import { Icon } from '../components/Icon'
 import { ModeToggle } from '../components/ModeToggle'
+import { PageOptions } from '../components/PageOptions'
 import { LoadError, Loading } from '../components/Page'
 import { type Meta, juzOf, loadText, loadTranslation, locate, pageOf, pageRange } from '../data'
 import { useAsync } from '../hooks'
@@ -25,17 +26,24 @@ export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: numb
   }, [s.script, trKey])
 
   const [selected, setSelected] = useState<number | undefined>(focusId)
+  const [options, setOptions] = useState(false)
   const [jumping, setJumping] = useState(false)
-  const touch = useRef<{ x: number; y: number } | null>(null)
+  const touch = useRef<{ x: number; y: number; timer?: number; long?: boolean } | null>(null)
   const playingId = player.value?.ayahId
+  // Whether the ayah panel is open, as of the last render (read inside effects).
+  const panelOpen = useRef(false)
+  panelOpen.current = selected !== undefined
 
   const goTo = (p: number) => {
     if (p >= 1 && p <= 604) location.hash = href.page(p)
   }
 
-  // New page: start at the top, with the requested ayah selected.
+  // New page: start at the top, with the requested ayah selected. If the panel was open during a
+  // recitation that turned the page, it stays open on the ayah being recited.
   useEffect(() => {
-    setSelected(focusId)
+    const follow = panelOpen.current && playingId !== undefined && pageOf(meta, playingId) === pageNo
+    setSelected(focusId ?? (follow ? playingId : undefined))
+    setOptions(false)
     setJumping(false)
     const firstSurah = locate(meta, first)
     setLastRead(firstSurah.surah, firstSurah.ayah)
@@ -49,13 +57,28 @@ export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: numb
   }, [selected, !!data.value])
 
   // While reciting, turn the page when the recitation moves on, but only if the reader was following along.
+  // An open ayah panel moves on with the recitation, so it always shows the ayah being heard.
   const followed = useRef<number | undefined>(undefined)
   useEffect(() => {
     const prev = followed.current
     followed.current = playingId
+    if (playingId !== undefined && panelOpen.current) setSelected(playingId)
     if (playingId === undefined || prev === undefined) return
     if (pageOf(meta, prev) === pageNo && pageOf(meta, playingId) !== pageNo) location.replace(href.page(pageOf(meta, playingId)))
   }, [playingId])
+
+  /** Long press: on an ayah, its panel; elsewhere, the reading options. */
+  const pressAt = (target: EventTarget | null) => {
+    const el = target instanceof Element ? target.closest<HTMLElement>('.ay') : null
+    const id = el ? Number(el.dataset.id) : undefined
+    if (id) {
+      setOptions(false)
+      setSelected(id)
+    } else {
+      setSelected(undefined)
+      setOptions(true)
+    }
+  }
 
   const surahOfPage = meta.surahs[locate(meta, first).surah - 1]!
   const toVerse = () => {
@@ -88,11 +111,16 @@ export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: numb
       run.push(
         <span
           key={id}
-          class={`ay${selected === id ? ' sel' : ''}${playingId === id ? ' playing' : ''}`}
+          class={`ay${selected === id ? ' sel' : ''}${selected === undefined && playingId === id ? ' playing' : ''}`}
           data-id={id}
           role="button"
           tabIndex={0}
-          onClick={() => setSelected(selected === id ? undefined : id)}
+          onClick={(e) => {
+            e.stopPropagation()
+            if (touch.current?.long) return
+            setOptions(false)
+            setSelected(selected === id ? undefined : id)
+          }}
           onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), setSelected(selected === id ? undefined : id))}
         >
           {data.value.ar[id - 1]} <span class="mark">﴿{marker(at.ayah)}﴾</span>
@@ -136,17 +164,40 @@ export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: numb
       </header>
       <ModeToggle current="page" onPick={(m) => (m === 'verse' ? toVerse() : undefined)} />
       <div
-        class={`mushaf-page${selected !== undefined ? ' has-sheet' : ''}`}
+        class={`mushaf-page${selected !== undefined || options ? ' has-sheet' : ''}`}
         data-page={pageNo}
+        // Tap the page (not an ayah) for reading options; tap again to close what is open.
+        onClick={() => {
+          if (touch.current?.long) return
+          if (selected !== undefined) setSelected(undefined)
+          else setOptions(!options)
+        }}
+        // A long press (or right click) opens Zekr's own options instead of the browser's menu.
+        onContextMenu={(e) => {
+          e.preventDefault()
+          pressAt(e.target)
+        }}
         onTouchStart={(e) => {
           const p = e.touches[0]
-          touch.current = p ? { x: p.clientX, y: p.clientY } : null
+          if (!p) return
+          const target = e.target
+          touch.current = { x: p.clientX, y: p.clientY, timer: window.setTimeout(() => {
+            if (touch.current) touch.current.long = true
+            pressAt(target)
+          }, 500) }
+        }}
+        onTouchMove={(e) => {
+          const start = touch.current
+          const p = e.touches[0]
+          if (start && p && Math.hypot(p.clientX - start.x, p.clientY - start.y) > 10) clearTimeout(start.timer)
         }}
         onTouchEnd={(e) => {
           const start = touch.current
           const end = e.changedTouches[0]
-          touch.current = null
-          if (!start || !end) return
+          if (start) clearTimeout(start.timer)
+          // keep the record a moment so the click that follows a long press is ignored
+          window.setTimeout(() => { if (touch.current === start) touch.current = null }, 0)
+          if (!start || !end || start.long) return
           const dx = end.clientX - start.x
           if (Math.abs(dx) > 70 && Math.abs(end.clientY - start.y) < 45) goTo(pageNo + (dx > 0 ? 1 : -1)) // right-to-left book: swipe right = next page
         }}
@@ -162,7 +213,9 @@ export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: numb
           {t('prevPage')} <span class="chev-prev"><Icon name="chevron" size={18} /></span>
         </button>
       </nav>
-      {selected !== undefined && data.value ? (
+      {options && data.value ? (
+        <PageOptions pageNo={pageNo} juz={juzOf(meta, first)} onPlay={() => { setOptions(false); playFrom(first) }} onVerseView={toVerse} onClose={() => setOptions(false)} />
+      ) : selected !== undefined && data.value ? (
         <AyahSheet meta={meta} id={selected} ar={data.value.ar[selected - 1] as string} translations={selectedTranslations}
           playing={playingId === selected && (player.value?.status === 'playing' || player.value?.status === 'loading')}
           onClose={() => setSelected(undefined)} />

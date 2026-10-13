@@ -316,9 +316,7 @@ input[type='checkbox'] { width: 20px; height: 20px; accent-color: var(--accent);
   font-family: var(--font-quran); line-height: 2.15; text-align: justify; text-justify: inter-word; margin: 6px 0; word-spacing: 0.05em;
 }
 .ay { cursor: pointer; border-radius: 6px; padding: 2px 3px; scroll-margin-top: 110px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
-.ay.sel { background: var(--sel); }
 .ay.playing { background: var(--hl); }
-.ay.sel.playing { background: var(--sel); box-shadow: 0 0 0 2px var(--gold); }
 .mark { color: var(--accent); font-size: 0.7em; margin-inline: 0.1em; white-space: nowrap; unicode-bidi: isolate; }
 .banner {
   position: relative; margin: 18px 6px 8px; padding: 6px 14px; text-align: center; font-family: var(--font-quran); font-size: 1.5rem;
@@ -396,3 +394,11 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .tafsir sup.fn { font-size: 0.65em; color: var(--muted); margin-inline-start: 1px; }
 .tf-notes { border-top: 1px solid var(--line); margin-top: 18px; font-size: 0.8em; color: var(--muted); }
 .tf-notes h3 { font-size: 1em; color: var(--ink); }
+
+/* Page view: Zekr's own menus instead of the browser's text-selection menu */
+.mushaf-page { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.ay.sel { background: var(--hl); }
+.options-body { display: grid; gap: 12px; padding-top: 6px; }
+.options-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.options-row .btn { display: inline-flex; align-items: center; gap: 6px; }
+.page-options { max-height: 60dvh; }

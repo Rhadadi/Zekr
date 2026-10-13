@@ -12,7 +12,7 @@ public enum Str: CaseIterable {
     case addWidgetTitle
     case addWidgetSteps
     case widgetNote
-    case tabHome
+    case tabToday
     case tabQuran
     case tabSaved
     case tabSettings
@@ -68,6 +68,7 @@ public enum Str: CaseIterable {
     case tapAyah
     case nextPage
     case prevPage
+    case playFromPage
     case tafsir
     case almizan
     case tafsirParts
@@ -93,7 +94,7 @@ public enum Str: CaseIterable {
         case .addWidgetSteps:
             return "1. Touch and hold the Lock Screen, then tap Customize.\n2. Choose Lock Screen and tap the widget area.\n3. Search for Zekr and add “Ayah”.\n4. Tap the widget, then Edit Widget, to choose how often it changes and what it shows."
         case .widgetNote: return "It uses the same rule as the web version, so both show the same ayah with the same options."
-        case .tabHome: return "Home"
+        case .tabToday: return "Today"
         case .tabQuran: return "Quran"
         case .tabSaved: return "Saved"
         case .tabSettings: return "Settings"
@@ -146,9 +147,10 @@ public enum Str: CaseIterable {
         case .goTo: return "Go"
         case .cancel: return "Cancel"
         case .close: return "Close"
-        case .tapAyah: return "Tap an ayah to see its translation."
+        case .tapAyah: return "Tap an ayah for its translation, or the page for reading options."
         case .nextPage: return "Next page"
         case .prevPage: return "Previous page"
+        case .playFromPage: return "Play from this page"
         case .tafsir: return "Tafsir"
         case .almizan: return "Al-Mizan"
         case .tafsirParts: return "Go to part"
@@ -170,7 +172,7 @@ public enum Str: CaseIterable {
         case .addWidgetSteps:
             return "۱. روی صفحهٔ قفل نگه دارید و «سفارشی‌سازی» را بزنید.\n۲. «صفحهٔ قفل» را انتخاب و روی بخش ویجت‌ها بزنید.\n۳. «Zekr» را جستجو و «Ayah» را اضافه کنید.\n۴. روی ویجت بزنید و «ویرایش ویجت» را انتخاب کنید تا هر چند وقت یک‌بار عوض شود و چه چیزی نشان دهد."
         case .widgetNote: return "این ویجت همان قاعدهٔ نسخهٔ وب را دارد؛ با تنظیمات یکسان، هر دو یک آیه را نشان می‌دهند."
-        case .tabHome: return "خانه"
+        case .tabToday: return "امروز"
         case .tabQuran: return "قرآن"
         case .tabSaved: return "نشان‌شده"
         case .tabSettings: return "تنظیمات"
@@ -223,9 +225,10 @@ public enum Str: CaseIterable {
         case .goTo: return "برو"
         case .cancel: return "انصراف"
         case .close: return "بستن"
-        case .tapAyah: return "برای دیدن ترجمه روی یک آیه بزنید."
+        case .tapAyah: return "برای ترجمه روی یک آیه بزنید، و برای تنظیمات خواندن روی صفحه."
         case .nextPage: return "صفحهٔ بعد"
         case .prevPage: return "صفحهٔ قبل"
+        case .playFromPage: return "پخش از این صفحه"
         case .tafsir: return "تفسیر"
         case .almizan: return "المیزان"
         case .tafsirParts: return "رفتن به بخش"

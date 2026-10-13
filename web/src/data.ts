@@ -39,6 +39,8 @@ export interface Meta {
   pages: number[]
   sajdas: { surah: number; ayah: number; id: number; type: string }[]
   translations: TranslationInfo[]
+  /** Tafsirs this build includes (private builds only). */
+  tafsir?: string[]
 }
 
 export interface PoolsFile {

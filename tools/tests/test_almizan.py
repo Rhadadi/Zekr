@@ -15,7 +15,7 @@ AYAH_COUNTS = [
 
 # Made-up text in the source's markup (not from Al-Mizan).
 SAMPLE = (
-    '<h2 class="sura">سوره نمونه</h2><h3 class="ayas">سوره نمونه آیه‌های ۱ تا ۲</h3><code class="section" rel="99_1-2"/>'
+    '<h2 class="sura">سوره نمونه 12 آیه</h2><h3 class="ayas">سوره نمونه آیه‌های ۱ تا ۲</h3><code class="section" rel="99_1-2"/>'
     '<h3>ترجمه آیات</h3> <p> <span class="trans" rel="99_1">یک.  «۱» </span><span class="trans" rel="99_2">دو. <code class="page" rel="1,2"/> «۲» </span></p>'
     '<h3>بیان آیات‌ <span class="title" rel="99_1 99_2">موضوع <span class="aya" rel="99_1" data-words="1-2">قل هو</span></span> </h3>'
     '<p> کلمه <em rel="x" data-sentence="1:2">هو</em> در اینجا<span class="footnote" rel="1" title="کتاب &lt;em&gt;الف&lt;/em&gt;، ج ۱">*</span>   معنا دارد. </p>'
@@ -60,6 +60,9 @@ class Parse(unittest.TestCase):
         self.assertEqual(self.sec["blocks"][5]["r"], [["کلمه "], ["هو", "e"], [" در اینجا"], [1, "n"], [" معنا دارد."]])
         self.assertEqual(self.sec["blocks"][6]["r"], [["و در حدیث: "], ["از امام متن حدیث", "d"], [2, "n"], ["."]])
         self.assertEqual(self.sec["notes"], ["کتاب الف، ج ۱", "منبع دوم"])
+
+    def test_persian_digits(self):
+        self.assertEqual(self.sec["blocks"][0]["r"], [["سوره نمونه ۱۲ آیه"]])
 
     def test_plain_length(self):
         self.assertGreater(almizan.plain_length(self.sec), 40)

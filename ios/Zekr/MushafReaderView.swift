@@ -1,24 +1,34 @@
 import SwiftUI
+import UIKit
 import ZekrKit
 
-/// The Quran as mushaf pages: flowing Arabic text, page by page. Tap an ayah for its translation and actions;
-/// swipe right for the next page (a right-to-left book). Same layout as the web page view.
+/// The Quran as mushaf pages: flowing Arabic text, page by page. Tap or press an ayah for its translation
+/// and actions; tap the page for reading options; swipe right for the next page (a right-to-left book).
+/// Same behaviour as the web page view.
 struct MushafReaderView: View {
     @Environment(AppModel.self) private var model
     @State private var page: Int
-    @State private var selected: SelectedAyah?
+    /// The ayah in the panel. While the panel is open during a recitation, it follows the ayah being recited.
+    @State private var selectedID: Int?
+    @State private var panel: Panel?
     @State private var forward = true
     @State private var jumping = false
     @State private var jumpText = ""
 
-    struct SelectedAyah: Identifiable {
-        let id: Int
+    enum Panel: String, Identifiable {
+        case ayah
+        case options
+        var id: String { rawValue }
     }
 
     init(page: Int, focus: Int?) {
         _page = State(initialValue: min(max(page, 1), MushafPage.count))
-        _selected = State(initialValue: focus.map { SelectedAyah(id: $0) })
+        _selectedID = State(initialValue: focus)
+        _panel = State(initialValue: focus == nil ? nil : .ayah)
     }
+
+    /// One highlight at a time: the ayah in the open panel, otherwise the one being recited.
+    private var highlighted: Int? { panel == .ayah ? selectedID : model.player.playingAyahID }
 
     var body: some View {
         let settings = model.settings.settings
@@ -27,9 +37,12 @@ struct MushafReaderView: View {
             if let content {
                 MushafPageView(
                     page: content,
-                    highlighted: selected?.id,
-                    playing: model.player.playingAyahID,
-                    onTap: { selected = SelectedAyah(id: $0) },
+                    highlighted: highlighted,
+                    onAyah: { id in
+                        selectedID = id
+                        panel = .ayah
+                    },
+                    onPage: { panel = panel == nil ? .options : nil },
                     onNext: { turn(to: page + 1) },
                     onPrevious: { turn(to: page - 1) }
                 )
@@ -55,17 +68,31 @@ struct MushafReaderView: View {
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    model.switchReadMode(to: .verse, at: selected?.id ?? content?.ayahIDs.lowerBound ?? 1)
+                    model.switchReadMode(to: .verse, at: selectedID ?? content?.ayahIDs.lowerBound ?? 1)
                 } label: {
                     Image(systemName: "list.bullet")
                 }
                 .accessibilityLabel(model.text(.viewVerseFull))
             }
         }
-        .sheet(item: $selected) { ayah in
-            AyahSheet(ayahID: ayah.id)
-                .environment(model)
-                .presentationDetents([.medium, .large])
+        .sheet(item: $panel) { which in
+            Group {
+                switch which {
+                case .ayah:
+                    if let selectedID { AyahSheet(ayahID: selectedID) }
+                case .options:
+                    PageOptionsSheet(page: page, juz: content?.juz ?? 1) {
+                        panel = nil
+                        if let first = content?.ayahIDs.lowerBound { model.player.play(from: first) }
+                    } onVerseView: {
+                        panel = nil
+                        model.switchReadMode(to: .verse, at: content?.ayahIDs.lowerBound ?? 1)
+                    }
+                }
+            }
+            .environment(model)
+            .presentationDetents([.medium, .large])
+            .presentationBackgroundInteraction(.enabled(upThrough: .medium))
         }
         .alert(model.text(.goToPage), isPresented: $jumping) {
             TextField("1–604", text: $jumpText).keyboardType(.numberPad)
@@ -74,12 +101,17 @@ struct MushafReaderView: View {
             }
             Button(model.text(.cancel), role: .cancel) {}
         }
-        // While reciting, turn the page when the recitation moves on, if the reader was on the page being recited.
+        .onAppear { model.saveLastRead(page: content) }
+        .onChange(of: page) { _, _ in model.saveLastRead(page: try? model.store?.page(page)) }
+        // While reciting: an open ayah panel moves on with the recitation, and the page turns when the
+        // recitation moves past it (if the reader was on the page being recited).
         .onChange(of: model.player.playingAyahID) { old, new in
-            guard let old, let new, let store = model.store,
+            guard let new else { return }
+            if panel == .ayah { selectedID = new }
+            guard let old, let store = model.store,
                   let oldPage = try? store.pageNumber(ofAyahID: old), let newPage = try? store.pageNumber(ofAyahID: new),
                   oldPage == page, newPage != page else { return }
-            turn(to: newPage)
+            turn(to: newPage, keepPanel: true)
         }
     }
 
@@ -101,20 +133,20 @@ struct MushafReaderView: View {
         .accessibilityLabel("\(LocalizedText.pageTitle(content.number, language: model.language)), \(model.text(.goToPage))")
     }
 
-    private func turn(to n: Int) {
+    private func turn(to n: Int, keepPanel: Bool = false) {
         guard (1...MushafPage.count).contains(n), n != page else { return }
-        selected = nil
+        if !keepPanel { panel = nil }
         forward = n > page
         withAnimation(.easeInOut(duration: 0.25)) { page = n }
     }
 }
 
-/// One page's text. Each ayah is a link (`zekr-ayah://<id>`) inside one paragraph per surah, so the text flows like a printed page.
+/// One page: banners, basmala and the ayahs as one flowing, justified paragraph per surah.
 private struct MushafPageView: View {
     let page: MushafPage
     let highlighted: Int?
-    let playing: Int?
-    let onTap: (Int) -> Void
+    let onAyah: (Int) -> Void
+    let onPage: () -> Void
     let onNext: () -> Void
     let onPrevious: () -> Void
     @Environment(AppModel.self) private var model
@@ -133,18 +165,17 @@ private struct MushafPageView: View {
                             .padding(.vertical, 8)
                             .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.accentColor, lineWidth: 1.5))
                             .padding(.top, 8)
+                            .contentShape(Rectangle())
+                            .onTapGesture(perform: onPage)
                             .accessibilityAddTraits(.isHeader)
                     case let .basmala(text):
                         Text(text)
                             .font(.quran(settings.quranFont, size: size))
                             .frame(maxWidth: .infinity)
+                            .contentShape(Rectangle())
+                            .onTapGesture(perform: onPage)
                     case let .ayahs(run):
-                        Text(paragraph(run))
-                            .font(.quran(settings.quranFont, size: size))
-                            .lineSpacing(size * 0.55)
-                            .tint(.primary)
-                            .multilineTextAlignment(.leading)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                        MushafTextView(ayahs: run, font: settings.quranFont, size: size, highlighted: highlighted, onAyah: onAyah, onPage: onPage)
                     }
                 }
                 pager.padding(.top, 12)
@@ -156,29 +187,6 @@ private struct MushafPageView: View {
             .padding(.vertical, 8)
             .environment(\.layoutDirection, .rightToLeft)
         }
-        .environment(\.openURL, OpenURLAction { url in
-            guard url.scheme == "zekr-ayah", let id = Int(url.host() ?? "") else { return .systemAction }
-            onTap(id)
-            return .handled
-        })
-    }
-
-    private func paragraph(_ run: [MushafPage.Ayah]) -> AttributedString {
-        var text = AttributedString()
-        for ayah in run {
-            var words = AttributedString(ayah.arabic)
-            words.link = URL(string: "zekr-ayah://\(ayah.id)")
-            if ayah.id == highlighted {
-                words.backgroundColor = Color.yellow.opacity(0.3)
-            } else if ayah.id == playing {
-                words.backgroundColor = Color.accentColor.opacity(0.18)
-            }
-            var mark = AttributedString(" " + MushafPage.marker(ayah.number) + " ")
-            mark.foregroundColor = Color.accentColor
-            text += words
-            text += mark
-        }
-        return text
     }
 
     /// Next page on the left, as in a right-to-left book.
@@ -200,11 +208,144 @@ private struct MushafPageView: View {
     }
 }
 
+/// The ayahs of one surah on a page, as a justified right-to-left paragraph. A plain (non-selectable) text view,
+/// so a tap or a long press goes to Zekr (the ayah's panel, or the reading options) instead of iOS menus.
+private struct MushafTextView: UIViewRepresentable {
+    let ayahs: [MushafPage.Ayah]
+    let font: QuranFont
+    let size: Double
+    let highlighted: Int?
+    let onAyah: (Int) -> Void
+    let onPage: () -> Void
+
+    static let ayahKey = NSAttributedString.Key("zekr.ayah")
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    func makeUIView(context: Context) -> UITextView {
+        let view = UITextView(usingTextLayoutManager: false)
+        view.isEditable = false
+        view.isSelectable = false
+        view.isScrollEnabled = false
+        view.backgroundColor = .clear
+        view.textContainerInset = .zero
+        view.textContainer.lineFragmentPadding = 0
+        view.semanticContentAttribute = .forceRightToLeft
+        view.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        view.addGestureRecognizer(UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.tapped(_:))))
+        let press = UILongPressGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.tapped(_:)))
+        press.minimumPressDuration = 0.4
+        view.addGestureRecognizer(press)
+        view.isAccessibilityElement = true
+        return view
+    }
+
+    func updateUIView(_ view: UITextView, context: Context) {
+        context.coordinator.parent = self
+        view.attributedText = text()
+        view.accessibilityLabel = ayahs.map(\.arabic).joined(separator: " ")
+    }
+
+    func sizeThatFits(_ proposal: ProposedViewSize, uiView: UITextView, context: Context) -> CGSize? {
+        let width = proposal.width ?? uiView.window?.windowScene?.screen.bounds.width ?? 390
+        let fitted = uiView.sizeThatFits(CGSize(width: width, height: .greatestFiniteMagnitude))
+        return CGSize(width: width, height: ceil(fitted.height))
+    }
+
+    private func text() -> NSAttributedString {
+        let uiFont = UIFont(name: font.postScriptName, size: size * font.scale) ?? .systemFont(ofSize: size)
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.alignment = .justified
+        paragraph.baseWritingDirection = .rightToLeft
+        paragraph.lineSpacing = size * 0.55
+        let base: [NSAttributedString.Key: Any] = [.font: uiFont, .paragraphStyle: paragraph, .foregroundColor: UIColor.label]
+        let accent = UIColor(named: "AccentColor") ?? .systemGreen
+        let out = NSMutableAttributedString()
+        for ayah in ayahs {
+            var words = base
+            words[Self.ayahKey] = ayah.id
+            if ayah.id == highlighted { words[.backgroundColor] = UIColor.systemYellow.withAlphaComponent(0.3) }
+            out.append(NSAttributedString(string: ayah.arabic, attributes: words))
+            var mark = base
+            mark[Self.ayahKey] = ayah.id
+            mark[.foregroundColor] = accent
+            out.append(NSAttributedString(string: " " + MushafPage.marker(ayah.number) + " ", attributes: mark))
+        }
+        return out
+    }
+
+    final class Coordinator: NSObject {
+        var parent: MushafTextView
+
+        init(_ parent: MushafTextView) { self.parent = parent }
+
+        @objc func tapped(_ gesture: UIGestureRecognizer) {
+            guard let view = gesture.view as? UITextView else { return }
+            if let press = gesture as? UILongPressGestureRecognizer, press.state != .began { return }
+            if let id = ayahID(at: gesture.location(in: view), in: view) {
+                parent.onAyah(id)
+            } else {
+                parent.onPage()
+            }
+        }
+
+        /// The ayah under a point, or nil for the blank space around the text.
+        private func ayahID(at point: CGPoint, in view: UITextView) -> Int? {
+            let layout = view.layoutManager
+            let container = view.textContainer
+            let glyph = layout.glyphIndex(for: point, in: container)
+            guard glyph < layout.numberOfGlyphs,
+                  layout.boundingRect(forGlyphRange: NSRange(location: glyph, length: 1), in: container).insetBy(dx: -6, dy: -6).contains(point)
+            else { return nil }
+            let index = layout.characterIndexForGlyph(at: glyph)
+            return view.textStorage.attribute(MushafTextView.ayahKey, at: index, effectiveRange: nil) as? Int
+        }
+    }
+}
+
 private struct TrailingIconLabelStyle: LabelStyle {
     func makeBody(configuration: Configuration) -> some View {
         HStack(spacing: 4) {
             configuration.title
             configuration.icon
+        }
+    }
+}
+
+/// What tapping the page shows: play from here, the Quran font and size, and the way to verse by verse.
+private struct PageOptionsSheet: View {
+    let page: Int
+    let juz: Int
+    let onPlay: () -> Void
+    let onVerseView: () -> Void
+    @Environment(AppModel.self) private var model
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        let settings = model.settings
+        NavigationStack {
+            Form {
+                Section {
+                    Button(action: onPlay) { Label(model.text(.playFromPage), systemImage: "play.fill") }
+                    Button(action: onVerseView) { Label(model.text(.viewVerseFull), systemImage: "list.bullet") }
+                }
+                Section {
+                    Picker(model.text(.quranFont), selection: settings.binding(\.quranFontID)) {
+                        ForEach(QuranFont.all) { Text($0.name).tag($0.id) }
+                    }
+                    VStack(alignment: .leading) {
+                        Text(model.text(.arabicSize))
+                        Slider(value: settings.binding(\.arabicSize), in: 22...48, step: 1)
+                    }
+                }
+            }
+            .navigationTitle("\(LocalizedText.pageTitle(page, language: model.language)) · \(LocalizedText.juzTitle(juz, language: model.language))")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(model.text(.close)) { dismiss() }
+                }
+            }
         }
     }
 }

@@ -6,7 +6,7 @@ export function PageHeader({ title, sub, back, actions }: { title: string; sub?:
   return (
     <header class="top">
       {back ? (
-        <a class="icon-btn back" href={back} aria-label={t('navHome')}>
+        <a class="icon-btn back" href={back} aria-label={t('back')}>
           <Icon name="chevron" />
         </a>
       ) : (
