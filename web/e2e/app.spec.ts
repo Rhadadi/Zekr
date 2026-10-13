@@ -614,6 +614,7 @@ test.describe('page view: recitation, tapping and pressing', () => {
     await useSettings(page, { lang: 'en', translations: ['en.sahih'] })
     await page.goto('/#/page/305')
     await expect(page.locator('.mushaf-flow')).toHaveCSS('user-select', 'none')
+    await page.waitForTimeout(800) // the view holds the page in place for a moment while the text settles
     await page.locator('#page-305 .banner').click()
     const options = page.getByTestId('page-options')
     await expect(options).toContainText(/Page 30[45]/)
