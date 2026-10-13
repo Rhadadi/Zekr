@@ -19,6 +19,7 @@ import { SearchView } from './views/Search'
 import { Saved } from './views/Saved'
 import { SettingsView } from './views/Settings'
 import { TafsirView } from './views/Tafsir'
+import { CommentaryView, IntroView } from './views/Commentary'
 import { checkTafsir } from './tafsir'
 
 const NAV: { name: RouteName; href: string; icon: IconName; label: () => string }[] = [
@@ -38,7 +39,7 @@ export function App() {
     }
   }, [meta.value])
   const r = route.value
-  const active: RouteName = r.name === 'start' || r.name === 'reader' || r.name === 'page' || r.name === 'tafsir' ? 'index' : r.name === 'daily' ? 'home' : r.name === 'about' ? 'settings' : r.name
+  const active: RouteName = r.name === 'start' || r.name === 'reader' || r.name === 'page' || r.name === 'tafsir' || r.name === 'commentary' || r.name === 'intro' ? 'index' : r.name === 'daily' ? 'home' : r.name === 'about' ? 'settings' : r.name
 
   let view
   if (meta.error) view = <LoadError retry={meta.retry} />
@@ -66,6 +67,8 @@ export function App() {
         }
         break
       case 'page': view = <PageReader key="page" meta={m} pageNo={r.page!} />; break
+      case 'commentary': view = <CommentaryView key={`${r.surah}:${r.ayah}`} meta={m} surah={r.surah!} ayah={r.ayah!} />; break
+      case 'intro': view = <IntroView key={r.surah} meta={m} surah={r.surah!} />; break
       case 'tafsir': view = <TafsirView meta={m} surah={r.surah!} ayah={r.ayah!} />; break
       case 'index': view = <IndexView meta={m} tab={r.query.get('tab') === 'juz' ? 'juz' : 'surah'} />; break
       case 'daily': view = <Daily meta={m} />; break

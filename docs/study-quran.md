@@ -27,7 +27,14 @@ npm ci
 npm run dev -- --host 127.0.0.1
 ```
 
-The iPhone output is `ios/Zekr/Resources/quran.sqlite`. Build the app using the existing Xcode instructions. In either app's Settings, choose **The Study Quran** under English translations. The reader shows a surah introduction control and per-ayah tafsir controls. The iPhone mushaf sheet and web mushaf sheet also expose tafsir. Existing recitation continues to use the same ayah IDs.
+The iPhone output is `ios/Zekr/Resources/quran.sqlite`. Build the app using the existing Xcode instructions. In either app's Settings, choose **The Study Quran** under English translations (the verse translation, kept separate from the commentary).
+
+Where the commentary appears (same design on the website and the iPhone):
+
+- **Verse view:** one chip, "Commentary on 2:1–5", under the first ayah of each note. A note shared by several ayahs shows once, not under every ayah; overlapping notes each get a chip. An ayah the book does not comment on separately shows nothing.
+- **Ayah card** (tap an ayah in the page view): one chip for every note that covers that ayah.
+- **Commentary screen** (`#/commentary/<surah>/<ayah>`, a sheet on the iPhone): the notes, a strip of the ayahs they explain, links from cross-references, and the neighbouring notes.
+- **Surah introduction** (`#/intro/<surah>`): a row at the top of each surah in verse view opens it on its own screen. Existing recitation continues to use the same ayah IDs.
 
 The web app loads notes by surah when opened. Search has an additional **Search The Study Quran tafsir** panel. **Download for offline** downloads the translations, all introductions and all commentary chapters; audio retains its existing streaming/download behavior. The iPhone commentary sheet also supports full-text search.
 

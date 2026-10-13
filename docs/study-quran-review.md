@@ -26,3 +26,18 @@ Structural checks and sampled PDF review do not certify every word. There are 73
 Review against the latest Zekr changes (including PR #3 if still relevant). This branch starts from commit `d78354f`; preserve both integrations when resolving conflicts. Run the default build and public CI checks independently, then use private data for source fidelity and interactive iPhone checks. Keep the book text out of public GitHub and GitHub Pages. Choose a private hosting destination with the owner before publishing a private web build.
 
 See [integration instructions](study-quran.md) and [schema](study-quran-schema.sql).
+
+## Review notes (October 13, 2026)
+
+Reviewed by a second Claude session in the cloud, **without the book**: code, structure, integration and tests only.
+
+Done:
+- Merged this branch with the latest Zekr (PR #3: continuous page view, Al-Mizan, fonts, surah header). Four conflicts (`build_data.py`, `data.ts`, `Reader.tsx`, `styles.css`) were additive; both integrations are kept. `build_data.py --study-quran` and `--almizan` / `--almizan-web` work together.
+- **Design:** the per-ayah "Tafsir · The Study Quran" box repeated under every ayah, including each ayah of a shared note. Replaced with chips at the first ayah of a note, an ayah-card chip list, a commentary screen and an introduction screen (see study-quran.md). The details-panels are gone; the search panel is unchanged.
+- **Book text kept out of the public repository:** two Swift tests, the smoke script and a Python fixture quoted sentences from the book. They are now structural checks (non-empty, differs from other translations, links, search finds a word) that run on any package. Verbatim wording is checked only against the private package, with digests.
+- **Fixture:** `tools/tests/study_fixture.py` builds a complete made-up package (real schema, filler text, shared and overlapping notes, an ayah with no commentary, an unnumbered "quoted header" note). `test_study_integration.py` runs the adapter on it; the Swift tests that need a package run on it too.
+- **Public build guards:** CI and the Pages deploy fail if `data/tafsir`, `data/intro`, `data/almizan`, a `studyQuran` entry in `meta.json`, or a PDF is in a public build.
+
+Checked here: 41 Python tests (5 need the private package), 45 web unit tests, 69 web end-to-end tests (made-up text via mocked files), 65 Swift tests with the made-up package (61 without), public build free of study content.
+
+Not checked, needs the Mac and the PDF: every word of the translation, introductions and commentary against the book; the 73 recorded source observations; real file sizes (search loads all 114 commentary files); the interactive iPhone app; offline use with the real data. Do not treat the structural checks as proof of fidelity.

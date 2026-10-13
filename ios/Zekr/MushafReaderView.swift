@@ -343,6 +343,7 @@ private struct AyahBox: View {
             .foregroundStyle(.secondary)
             ScrollView {
                 VStack(alignment: .leading, spacing: 8) {
+                    StudyChips(ayahID: ayahID, all: true)
                     ForEach(translations, id: \.info.id) { item in
                         VStack(alignment: .leading, spacing: 2) {
                             if translations.count > 1 {

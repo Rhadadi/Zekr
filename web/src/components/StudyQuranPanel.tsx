@@ -1,14 +1,16 @@
 import { useState } from 'preact/hooks'
+import { Icon } from './Icon'
+import { t } from '../i18n'
 import { type Meta, locate } from '../data'
 import { useAsync } from '../hooks'
 import { href } from '../router'
-import { entriesForAyah, loadAllStudyEntries, loadStudyIntroduction, loadStudyTafsir, searchStudyEntries,
+import { entriesForAyah, loadAllStudyEntries, loadStudyTafsir, searchStudyEntries,
   type StudyEntry } from '../studyQuran'
 
-function Paragraphs({ text }: { text: string }) {
+export function Paragraphs({ text }: { text: string }) {
   return <>{text.split(/\n\n+/).map((p, i) => <p key={i}>{p}</p>)}</>
 }
-function Note({ entry }: { entry: StudyEntry }) {
+export function Note({ entry }: { entry: StudyEntry }) {
   const range = entry.first_ayah === entry.last_ayah ? String(entry.first_ayah) : `${entry.first_ayah}–${entry.last_ayah}`
   return <section class="study-note" data-entry={entry.id}>
     <h4>{entry.coverage_kind === 'quoted_header' ? 'Source passage' : 'Commentary'} · {entry.surah_id}:{range}</h4>
@@ -20,31 +22,39 @@ function Note({ entry }: { entry: StudyEntry }) {
   </section>
 }
 
-export function StudyQuranPanel({ meta, ayahID }: { meta: Meta; ayahID: number }) {
-  const [open, setOpen] = useState(false)
-  const { surah } = locate(meta, ayahID)
-  const data = useAsync(async () => open ? entriesForAyah(await loadStudyTafsir(meta, surah), ayahID) : null,
-    [open, ayahID, meta.version])
-  if (!meta.studyQuran) return null
-  return <details class="study-panel" lang="en" dir="ltr" onToggle={(e) => setOpen(e.currentTarget.open)}>
-    <summary>Tafsir · The Study Quran</summary>
-    {open ? data.error ? <p role="alert">Could not load commentary. <button onClick={data.retry}>Retry</button></p>
-      : data.loading ? <p role="status">Loading commentary…</p>
-        : data.value?.length ? data.value.map((entry) => <Note key={entry.id} entry={entry} />)
-          : <p>No separately numbered commentary entry for this ayah in this source.</p> : null}
-  </details>
+/** One chip per commentary group: "Commentary on 2:1–5". On a verse row it shows only at the first ayah of a group; in the
+ * ayah panel (`all`) it shows every note that covers the ayah. Notes shared by several ayahs are one chip, one note. */
+export function StudyChips({ meta, ayahID, all = false }: { meta: Meta; ayahID: number; all?: boolean }) {
+  const { surah, ayah } = locate(meta, ayahID)
+  const data = useAsync(async () => (meta.studyQuran ? loadStudyTafsir(meta, surah) : null), [surah, meta.version])
+  if (!meta.studyQuran || !data.value) return null
+  const entries = entriesForAyah(data.value, ayahID).filter((e) => all || e.first_ayah === ayah)
+  if (!entries.length) return null
+  return (
+    <div class="study-chips">
+      {entries.map((e) => (
+        <a key={e.id} class="study-chip" href={href.commentary(surah, e.first_ayah)} data-entry={e.id}>
+          <Icon name="speech" size={16} />
+          {t('commentaryOn')} {surah}:{rangeLabel(e)}
+        </a>
+      ))}
+    </div>
+  )
 }
 
-export function StudyIntroductionPanel({ meta, surah }: { meta: Meta; surah: number }) {
-  const [open, setOpen] = useState(false)
-  const data = useAsync(async () => open ? loadStudyIntroduction(meta, surah) : null,[open,surah,meta.version])
+/** The row at the top of a surah that opens the introduction. */
+export function StudyIntroLink({ meta, surah }: { meta: Meta; surah: number }) {
   if (!meta.studyQuran) return null
-  return <details class="study-panel" lang="en" dir="ltr" onToggle={(e) => setOpen(e.currentTarget.open)}>
-    <summary>Surah introduction · The Study Quran</summary>
-    {open ? data.error ? <p role="alert">Could not load introduction. <button onClick={data.retry}>Retry</button></p>
-      : data.loading ? <p role="status">Loading introduction…</p>
-        : data.value ? <><Paragraphs text={data.value.text} /><p class="muted small">PDF pages {data.value.pages.join(', ')}</p></> : null : null}
-  </details>
+  return (
+    <a class="study-intro-link" href={href.intro(surah)}>
+      <Icon name="book" size={22} />
+      <span>
+        <strong>{t('aboutSurah')}</strong>
+        <small class="muted">{t('studyQuranName')}</small>
+      </span>
+      <span class="chev-fwd"><Icon name="chevron" size={18} /></span>
+    </a>
+  )
 }
 
 export function StudySearchPanel({ meta, query }: { meta: Meta; query: string }) {
@@ -62,3 +72,5 @@ export function StudySearchPanel({ meta, query }: { meta: Meta; query: string })
       </> : null : null}
   </details>
 }
+
+export const rangeLabel = (e: StudyEntry) => (e.first_ayah === e.last_ayah ? String(e.first_ayah) : `${e.first_ayah}–${e.last_ayah}`)

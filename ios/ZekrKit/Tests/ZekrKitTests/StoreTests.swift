@@ -68,6 +68,7 @@ final class StoreTests: XCTestCase {
 }
 
 final class StudyQuranQueriesTests: XCTestCase {
+    /// Runs on the private package or on the made-up one from tools/tests/study_fixture.py.
     private func privateStore() throws -> QuranStore {
         let store = try QuranStore(databaseURL: try Repo.database(Repo.fullDB))
         guard store.hasStudyQuran else { throw XCTSkip("Private Study Quran content is not supplied") }
@@ -77,8 +78,11 @@ final class StudyQuranQueriesTests: XCTestCase {
     func testVerseTranslationAndIntroduction() throws {
         let store = try privateStore()
         let id = store.ayahID(surah: 2, ayah: 255)
-        XCTAssertTrue(try store.translation(ayahID: id, translationID: "en.study_quran").hasPrefix("God, there is no god but He"))
-        XCTAssertTrue(try XCTUnwrap(store.studyQuranIntroduction(surahID: 114)).contains("For some issues relating to al-Nās"))
+        // Structure only: the exact wording of the book is checked privately, never in this public repository.
+        let study = try store.translation(ayahID: id, translationID: "en.study_quran")
+        XCTAssertFalse(study.isEmpty)
+        XCTAssertNotEqual(study, try store.translation(ayahID: id, translationID: "en.sahih"), "the book is its own translation")
+        XCTAssertFalse(try XCTUnwrap(store.studyQuranIntroduction(surahID: 114)).isEmpty)
     }
 
     func testSharedAndOverlappingCommentary() throws {

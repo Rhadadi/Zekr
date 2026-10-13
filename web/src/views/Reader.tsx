@@ -10,7 +10,7 @@ import { href } from '../router'
 import { SurahBanner } from '../components/SurahBanner'
 import { TranslationAudioToggle } from '../components/TranslationAudioToggle'
 import { setLastRead, settings } from '../store'
-import { StudyIntroductionPanel } from '../components/StudyQuranPanel'
+import { StudyIntroLink } from '../components/StudyQuranPanel'
 
 export function Reader({ meta, surahId, ayah }: { meta: Meta; surahId: number; ayah?: number }) {
   const s = settings.value
@@ -88,7 +88,7 @@ export function Reader({ meta, surahId, ayah }: { meta: Meta; surahId: number; a
         </button>
         <TranslationAudioToggle />
       </div>
-      {meta.studyQuran ? <StudyIntroductionPanel key={surahId} meta={meta} surah={surahId} /> : null}
+      <StudyIntroLink meta={meta} surah={surahId} />
       {data.error ? <LoadError retry={data.retry} /> : !data.value ? <Loading /> : (
         <div class="ayahs" ref={listRef}>
           {showBasmala ? (

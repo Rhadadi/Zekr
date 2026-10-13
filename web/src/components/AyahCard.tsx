@@ -9,7 +9,7 @@ import { copyText, ayahLink, ayahText, shareText } from '../share'
 import { isBookmarked, settings, toggleBookmark } from '../store'
 import { tafsirIndex } from '../tafsir'
 import { Icon } from './Icon'
-import { StudyQuranPanel } from './StudyQuranPanel'
+import { StudyChips } from './StudyQuranPanel'
 
 export interface TranslationText {
   info: TranslationInfo
@@ -96,7 +96,7 @@ function AyahCardView({ meta, id, ar, translations, playing, focused, showRef, q
           </p>
         </div>
       ))}
-      {meta.studyQuran ? <StudyQuranPanel meta={meta} ayahID={id} /> : null}
+      {meta.studyQuran ? <StudyChips meta={meta} ayahID={id} /> : null}
     </article>
   )
 }

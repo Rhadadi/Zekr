@@ -1,6 +1,6 @@
 import { signal } from '@preact/signals'
 
-export type RouteName = 'start' | 'home' | 'index' | 'reader' | 'page' | 'tafsir' | 'daily' | 'search' | 'saved' | 'settings' | 'about'
+export type RouteName = 'start' | 'home' | 'index' | 'reader' | 'page' | 'tafsir' | 'commentary' | 'intro' | 'daily' | 'search' | 'saved' | 'settings' | 'about'
 
 export interface Route {
   name: RouteName
@@ -25,6 +25,16 @@ export function parseRoute(hash: string): Route {
     case 'verse': {
       const surah = num(parts[1])
       if (surah && surah >= 1 && surah <= 114) return { name: 'reader', surah, ayah: num(parts[2]), verse: parts[0] === 'verse', query }
+      return { name: 'index', query }
+    }
+    case 'commentary': {
+      const surah = num(parts[1])
+      if (surah && surah >= 1 && surah <= 114) return { name: 'commentary', surah, ayah: num(parts[2]) ?? 1, query }
+      return { name: 'index', query }
+    }
+    case 'intro': {
+      const surah = num(parts[1])
+      if (surah && surah >= 1 && surah <= 114) return { name: 'intro', surah, query }
       return { name: 'index', query }
     }
     case 'tafsir': {
@@ -76,5 +86,9 @@ export const href = {
   /** Always verse by verse. */
   verse: (s: number, a?: number) => (a ? `#/verse/${s}/${a}` : `#/verse/${s}`),
   page: (p: number) => `#/page/${p}`,
+  /** The Study Quran's commentary on an ayah (and the other ayahs its note covers). */
+  commentary: (s: number, a: number) => `#/commentary/${s}/${a}`,
+  /** The Study Quran's introduction to a surah. */
+  intro: (s: number) => `#/intro/${s}`,
   tafsir: (s: number, a: number) => `#/tafsir/${s}/${a}`,
 }

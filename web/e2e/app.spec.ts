@@ -648,3 +648,76 @@ test.describe('page view on a phone', () => {
     await expect(page.getByLabel('Translation on the page')).toHaveCount(0)
   })
 })
+
+test.describe('The Study Quran (private content, made-up text here)', () => {
+  // Ayah ids of surah 2 are 7 + number. Notes: 1–5, 6–10, 11–15 and an overlapping 11–12.
+  const entry = (eid: string, first: number, last: number, order: number) => ({
+    id: eid, surah_id: 2, note_label: `${first}`, first_ayah: first, last_ayah: last, coverage_kind: 'explicit_note', lemma_text: '',
+    text: `[Made-up note ${first}–${last}.] See 2:${first}.`, html: '', pages: [100 + order],
+    ayah_ids: Array.from({ length: last - first + 1 }, (_, i) => 7 + first + i),
+    references: [{ raw: `2:${first}`, target_kind: 'ayah', target_surah: 2, first_ayah: first, last_ayah: first }],
+  })
+  const entries = [entry('a', 1, 5, 1), entry('b', 6, 10, 2), entry('c', 11, 15, 3), entry('d', 11, 12, 4)]
+  const byAyah: Record<string, string[]> = {}
+  for (const e of entries) for (const a of e.ayah_ids) (byAyah[String(a)] ??= []).push(e.id)
+
+  test.beforeEach(async ({ page }) => {
+    await page.route('**/data/meta.json*', async (route) => {
+      const response = await route.fetch()
+      route.fulfill({ response, json: { ...(await response.json()), studyQuran: { id: 'study_quran', name: 'The Study Quran', pdfSha256: 'x', importVersion: 't' } } })
+    })
+    // routes registered later win, so the general one goes first
+    await page.route('**/data/tafsir/study_quran/*.json*', (route) => route.fulfill({ json: { surah: 1, entries: [], byAyah: {} } }))
+    await page.route('**/data/tafsir/study_quran/2.json*', (route) => route.fulfill({ json: { surah: 2, entries, byAyah } }))
+    await page.route('**/data/intro/study_quran/2.json*', (route) =>
+      route.fulfill({ json: { text: '[Made-up introduction.]\n\nSecond paragraph.', html: '', pages: [90, 91] } }))
+  })
+  test.use({ serviceWorkers: 'block' })
+
+  test('verse view: one chip where a note starts, none repeated under the ayahs it also covers', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/verse/2')
+    await expect(page.locator('article#a-1 .study-chip')).toHaveText(/Commentary on 2:1–5/)
+    for (const n of [2, 3, 4, 5]) await expect(page.locator(`article#a-${n} .study-chip`)).toHaveCount(0)
+    await expect(page.locator('article#a-6 .study-chip')).toHaveText(/2:6–10/)
+    // two notes start at 11: the shared 11–15 and the overlapping 11–12
+    await expect(page.locator('article#a-11 .study-chip')).toHaveCount(2)
+    await expect(page.locator('article#a-12 .study-chip')).toHaveCount(0)
+    await expect(page.locator('details.study-panel')).toHaveCount(0)
+  })
+
+  test('the chip opens the commentary screen: the notes, the ayahs they explain, and neighbouring notes', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/verse/2')
+    await page.locator('article#a-6 .study-chip').click()
+    await expect(page).toHaveURL(/#\/commentary\/2\/6$/)
+    const c = page.locator('article.commentary')
+    await expect(c.locator('.study-note')).toHaveCount(1)
+    await expect(c).toContainText('[Made-up note 6–10.]')
+    await expect(c.locator('.comm-nums a')).toHaveText(['6', '7', '8', '9', '10'])
+    await expect(c.getByRole('link', { name: /Previous note · 2:1–5/ })).toBeVisible()
+    await expect(c.getByRole('link', { name: /Next note · 2:11–15/ })).toBeVisible()
+    await c.getByRole('link', { name: /Next note/ }).click()
+    await expect(page.locator('article.commentary .study-note')).toHaveCount(2) // 11–15 and the overlapping 11–12
+  })
+
+  test('the introduction has its own row and screen', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/verse/2')
+    await page.getByRole('link', { name: /About this surah/ }).click()
+    await expect(page).toHaveURL(/#\/intro\/2$/)
+    await expect(page.locator('article.commentary')).toContainText('[Made-up introduction.]')
+    await page.getByRole('link', { name: /Start reading 2:1/ }).click()
+    await expect(page).toHaveURL(/#\/verse\/2\/1$/)
+  })
+
+  test('page view: the ayah card lists the notes that cover the ayah, as chips', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/2')
+    await page.waitForTimeout(800)
+    await page.locator('#page-2 .ay').nth(3).click() // 2:4 (the page starts at 2:1 here)
+    const card = page.locator('.ayah-popup')
+    await expect(card.locator('.study-chip')).toHaveText(/Commentary on 2:1–5/)
+    await expect(card.locator('details')).toHaveCount(0)
+  })
+})
