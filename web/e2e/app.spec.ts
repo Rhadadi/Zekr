@@ -274,8 +274,8 @@ test.describe('mushaf page view', () => {
     await expect(page.locator('#page-284 .ay').first()).toBeInViewport()
   })
 
-  test('tapping an ayah shows its translation in a box at the side', async ({ page }) => {
-    await useSettings(page, { lang: 'en' })
+  test('tapping an ayah shows its translation in a box at the side, when chosen', async ({ page }) => {
+    await useSettings(page, { lang: 'en', pageBox: 'left' })
     await page.goto('/#/page/305')
     await page.locator('#page-305 .ay').nth(1).click()
     const box = page.getByTestId('side-box')
@@ -312,7 +312,7 @@ test.describe('mushaf page view', () => {
   })
 
   test('over the ayah: a mouse shows the translation on hover, a tap keeps it', async ({ page }) => {
-    await useSettings(page, { lang: 'en', pageTranslation: 'popup' })
+    await useSettings(page, { lang: 'en', pageBox: 'popup' })
     await page.goto('/#/page/305')
     await page.waitForTimeout(800) // the view holds the page in place for a moment while the text settles
     const ayah = page.locator('#page-305 .ay').nth(3)
@@ -547,6 +547,7 @@ test.describe('opening the app', () => {
     await page.goto('/')
     await expect(page.locator('article#a-1')).toBeVisible()
     await expect(page.getByTestId('daily-card')).toHaveCount(0)
+    await page.getByRole('button', { name: 'Menu' }).click()
     await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Quran' })).toHaveAttribute('aria-current', 'page')
     await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Today' }).click()
     await expect(page.getByTestId('daily-card')).toBeVisible()
@@ -629,23 +630,62 @@ test.describe('page view: recitation, tapping and pressing', () => {
 })
 
 test.describe('page view on a phone', () => {
-  test('never has a side box: the translation is a card under the ayah, and the text keeps its full width', async ({ page }) => {
-    await useSettings(page, { lang: 'en', pageTranslation: 'left' })
+  test('the translation is a box at the bottom by default; the text keeps its width and the ayah stays clear of the box', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
     await page.goto('/#/page/1')
     await page.waitForTimeout(800)
     const before = (await page.locator('#page-1 .flow').first().boundingBox())!
     const ayah = page.locator('#page-1 .ay').nth(2)
     await ayah.click()
-    await expect(page.getByTestId('side-box')).toHaveCount(0)
-    const card = page.locator('.ayah-popup')
-    await expect(card).toContainText('1:3')
+    const box = page.getByTestId('side-box')
+    await expect(box).toContainText('1:3')
+    const b = (await box.boundingBox())!
+    const vp = page.viewportSize()!
+    expect(b.y + b.height).toBeGreaterThan(vp.height - 30) // docked at the bottom
+    await expect.poll(async () => (await ayah.boundingBox())!.y + (await ayah.boundingBox())!.height).toBeLessThan(b.y)
     const after = (await page.locator('#page-1 .flow').first().boundingBox())!
     expect(after.width).toBeGreaterThanOrEqual(before.width - 1)
-    const a = (await ayah.boundingBox())!
-    const c = (await card.boundingBox())!
-    expect(Math.abs(c.y - (a.y + a.height))).toBeLessThan(80)
+    // left and right boxes are for wide screens: the phone's settings only offer bottom and over-the-ayah
     await page.goto('/#/settings')
-    await expect(page.getByLabel('Translation on the page')).toHaveCount(0)
+    await expect(page.getByLabel('Translation on the page').locator('option')).toHaveText(['In a box at the bottom', 'Over the ayah (hover or tap)'])
+  })
+
+  test('over the ayah, as a card, when chosen', async ({ page }) => {
+    await useSettings(page, { lang: 'en', pageBox: 'popup' })
+    await page.goto('/#/page/1')
+    await page.waitForTimeout(800)
+    await page.locator('#page-1 .ay').nth(2).click()
+    await expect(page.getByTestId('side-box')).toHaveCount(0)
+    await expect(page.locator('.ayah-popup')).toContainText('1:3')
+  })
+
+  test('no bottom bar: one small menu button at the top left opens Quran, Today, Search, Saved and Settings', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/settings')
+    await expect(page.locator('.bottom-nav')).toHaveCount(0)
+    const btn = page.getByRole('button', { name: 'Menu' })
+    const r = (await btn.boundingBox())!
+    expect(r.x).toBeLessThan(20)
+    expect(r.y).toBeLessThan(20)
+    expect(r.width).toBeLessThanOrEqual(44)
+    await btn.click()
+    const nav = page.getByRole('navigation', { name: 'Main' })
+    await expect(nav.getByRole('link')).toHaveText(['Quran', 'Today', 'Search', 'Saved', 'Settings'])
+    await expect(nav.getByRole('link', { name: 'Settings' })).toHaveAttribute('aria-current', 'page')
+    await nav.getByRole('link', { name: 'Search' }).click()
+    await expect(page).toHaveURL(/#\/search$/)
+    await expect(nav).toHaveCount(0) // closes after a choice
+  })
+
+  test('the end of each line is not clipped: the page has room for the glyphs that overhang', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/3')
+    await page.waitForTimeout(800)
+    const pad = await page.locator('#page-3').evaluate((e) => parseFloat(getComputedStyle(e).paddingRight))
+    expect(pad).toBeGreaterThanOrEqual(8)
+    const flow = (await page.locator('#page-3 .flow').first().boundingBox())!
+    const page3 = (await page.locator('#page-3').boundingBox())!
+    expect(page3.x + page3.width).toBeGreaterThan(flow.x + flow.width + 4)
   })
 })
 
@@ -716,7 +756,7 @@ test.describe('The Study Quran (private content, made-up text here)', () => {
     await page.goto('/#/page/2')
     await page.waitForTimeout(800)
     await page.locator('#page-2 .ay').nth(3).click() // 2:4 (the page starts at 2:1 here)
-    const card = page.locator('.ayah-popup')
+    const card = page.getByTestId('side-box')
     await expect(card.locator('.study-chip')).toHaveText(/Commentary on 2:1–5/)
     await expect(card.locator('details')).toHaveCount(0)
   })

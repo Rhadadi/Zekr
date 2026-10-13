@@ -9,7 +9,7 @@ import { type Meta, juzOf, loadText, loadTranslation, locate, pageRange } from '
 import { useAsync, useWide } from '../hooks'
 import { num, t } from '../i18n'
 import { href } from '../router'
-import { setLastRead, settings, updateSettings } from '../store'
+import { type PageTranslation, setLastRead, settings, updateSettings } from '../store'
 
 const ARABIC_INDIC = '٠١٢٣٤٥٦٧٨٩'
 /** Ayah numbers inside the text use the traditional Arabic-Indic digits, as printed mushafs do. */
@@ -83,9 +83,12 @@ export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: numb
   const popRef = useRef<HTMLDivElement>(null)
   const touch = useRef<{ x: number; y: number; timer?: number; long?: boolean } | null>(null)
   const playingId = player.value?.ayahId
-  // Phones show the translation as a card under the ayah; the side box is for wide screens.
+  const boxBottomRef = useRef(false)
+  // The translation shows in a box at the bottom (the default), in a box in the left or right margin (wide screens
+  // only), or in a card over the page under its ayah.
   const wide = useWide()
-  const popup = !wide || s.pageTranslation === 'popup'
+  const place: PageTranslation = !wide && (s.pageBox === 'left' || s.pageBox === 'right') ? 'bottom' : s.pageBox
+  const popup = place === 'popup'
   const selected = panel?.kind === 'ayah' ? panel.id : undefined
   // One highlight at a time: the ayah being shown, otherwise the one being recited.
   const highlight = selected ?? playingId
@@ -168,7 +171,7 @@ export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: numb
     if (playingId === undefined) return
     if (panel?.kind === 'ayah') setPanel({ kind: 'ayah', id: playingId })
     if (settings.peek().autoScroll) {
-      document.querySelector(`.ay[data-id="${playingId}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      document.querySelector(`.ay[data-id="${playingId}"]`)?.scrollIntoView({ block: boxBottomRef.current ? 'start' : 'center', behavior: 'smooth' })
     }
   }, [playingId])
 
@@ -233,7 +236,8 @@ export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: numb
     panel?.kind === 'options' ? (
       <PageOptions wide={wide} pageNo={current} juz={juzOf(meta, pageRange(meta, current).first)} onPlay={() => { setPanel(null); playFrom(pageRange(meta, current).first) }} onVerseView={toVerse} onClose={() => setPanel(null)} />
     ) : selected !== undefined && !popup ? ayahPanel(selected, 'box') : null
-  const side = s.pageTranslation === 'right' ? 'right' : 'left'
+  const side = place === 'popup' ? 'bottom' : place
+  boxBottomRef.current = box !== null && side === 'bottom'
 
   // Opening or closing the box narrows or widens the text, which reflows the pages: keep the ayah in view.
   const boxOpen = box !== null
@@ -242,8 +246,28 @@ export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: numb
     if (boxWas.current === boxOpen) return
     boxWas.current = boxOpen
     const id = selected ?? playingId
-    if (id !== undefined) scrollTo(() => document.querySelector(`.ay[data-id="${id}"]`), 'center')
+    // a box at the bottom covers the lower part of the screen: put the ayah near the top instead of the middle
+    if (id !== undefined) scrollTo(() => document.querySelector(`.ay[data-id="${id}"]`), side === 'bottom' ? 'start' : 'center')
   })
+
+  // Room under the page for a box at the bottom, so nothing is hidden behind it.
+  const boxRef = useRef<HTMLElement>(null)
+  useLayoutEffect(() => {
+    const el = boxRef.current
+    const root = document.documentElement
+    if (!el || side !== 'bottom') {
+      root.style.removeProperty('--box-h')
+      return
+    }
+    const set = () => root.style.setProperty('--box-h', `${el.offsetHeight}px`)
+    set()
+    const observer = new ResizeObserver(set)
+    observer.observe(el)
+    return () => {
+      observer.disconnect()
+      root.style.removeProperty('--box-h')
+    }
+  }, [boxOpen, side])
 
   const surahOfPage = meta.surahs[locate(meta, pageRange(meta, current).first).surah - 1]!
   return (
@@ -341,7 +365,7 @@ export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: numb
           )}
           {popupId !== undefined ? ayahPanel(popupId, 'popup') : null}
         </div>
-        {box ? <aside class={`side-box side-${side}`} data-testid="side-box">{box}</aside> : null}
+        {box ? <aside ref={boxRef} class={`side-box side-${side}`} data-testid="side-box">{box}</aside> : null}
       </div>
     </>
   )

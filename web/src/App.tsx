@@ -1,12 +1,11 @@
 import { useEffect } from 'preact/hooks'
 import { initAudio } from './audio'
-import { Icon, type IconName } from './components/Icon'
+import { MainMenu } from './components/MainMenu'
 import { LoadError, Loading } from './components/Page'
 import { PlayerBar } from './components/PlayerBar'
 import { ayahIdOf, loadMeta, pageOf } from './data'
 import { useAsync } from './hooks'
-import { t } from './i18n'
-import { type RouteName, href, route } from './router'
+import { type RouteName, route } from './router'
 import { lastRead, settings } from './store'
 import { toast } from './toast'
 import { About } from './views/About'
@@ -21,14 +20,6 @@ import { SettingsView } from './views/Settings'
 import { TafsirView } from './views/Tafsir'
 import { CommentaryView, IntroView } from './views/Commentary'
 import { checkTafsir } from './tafsir'
-
-const NAV: { name: RouteName; href: string; icon: IconName; label: () => string }[] = [
-  { name: 'index', href: href.index, icon: 'list', label: () => t('navIndex') },
-  { name: 'home', href: href.today, icon: 'sun', label: () => t('navToday') },
-  { name: 'search', href: href.search(), icon: 'search', label: () => t('navSearch') },
-  { name: 'saved', href: href.saved, icon: 'bookmark', label: () => t('navBookmarks') },
-  { name: 'settings', href: href.settings, icon: 'settings', label: () => t('navSettings') },
-]
 
 export function App() {
   const meta = useAsync(loadMeta, [])
@@ -84,14 +75,7 @@ export function App() {
     <div class="app">
       <main id="main">{view}</main>
       {meta.value ? <PlayerBar meta={meta.value} /> : null}
-      <nav class="bottom-nav" aria-label="Main">
-        {NAV.map((n) => (
-          <a key={n.name} href={n.href} class={active === n.name ? 'on' : ''} aria-current={active === n.name ? 'page' : undefined}>
-            <Icon name={n.icon} />
-            <span>{n.label()}</span>
-          </a>
-        ))}
-      </nav>
+      <MainMenu active={active} />
       {toast.value ? <div class="toast" role="status">{toast.value}</div> : null}
     </div>
   )

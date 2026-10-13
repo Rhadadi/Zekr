@@ -62,14 +62,15 @@ export function SettingsView({ meta }: { meta: Meta }) {
             <option value="page">{t('viewPageFull')}</option>
           </select>
         </label>
-        {wide ? <label class="field">
+        <label class="field">
           <span>{t('pageTranslation')}</span>
-          <select value={s.pageTranslation} onChange={(e) => updateSettings({ pageTranslation: e.currentTarget.value as PageTranslation })}>
-            <option value="left">{t('pageTranslationLeft')}</option>
-            <option value="right">{t('pageTranslationRight')}</option>
+          <select value={wide || s.pageBox === 'popup' ? s.pageBox : 'bottom'} onChange={(e) => updateSettings({ pageBox: e.currentTarget.value as PageTranslation })}>
+            <option value="bottom">{t('pageTranslationBottom')}</option>
+            {wide ? <option value="left">{t('pageTranslationLeft')}</option> : null}
+            {wide ? <option value="right">{t('pageTranslationRight')}</option> : null}
             <option value="popup">{t('pageTranslationPopup')}</option>
           </select>
-        </label> : null}
+        </label>
         <label class="field">
           <span>{t('script')}</span>
           <select value={s.script} onChange={(e) => updateSettings({ script: e.currentTarget.value as Script })}>

@@ -39,14 +39,15 @@ export function PageOptions({ wide, pageNo, juz, onPlay, onVerseView, onClose }:
             {QURAN_FONTS.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
           </select>
         </label>
-        {wide ? <label class="field">
+        <label class="field">
           <span>{t('pageTranslation')}</span>
-          <select value={s.pageTranslation} onChange={(e) => updateSettings({ pageTranslation: e.currentTarget.value as PageTranslation })}>
-            <option value="left">{t('pageTranslationLeft')}</option>
-            <option value="right">{t('pageTranslationRight')}</option>
+          <select value={wide || s.pageBox === 'popup' ? s.pageBox : 'bottom'} onChange={(e) => updateSettings({ pageBox: e.currentTarget.value as PageTranslation })}>
+            <option value="bottom">{t('pageTranslationBottom')}</option>
+            {wide ? <option value="left">{t('pageTranslationLeft')}</option> : null}
+            {wide ? <option value="right">{t('pageTranslationRight')}</option> : null}
             <option value="popup">{t('pageTranslationPopup')}</option>
           </select>
-        </label> : null}
+        </label>
         <label class="field row">
           <input type="checkbox" checked={s.autoScroll} onChange={(e) => updateSettings({ autoScroll: e.currentTarget.checked })} />
           <span>{t('autoScroll')}</span>

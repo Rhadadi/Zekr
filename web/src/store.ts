@@ -15,7 +15,7 @@ export interface DailySettings {
 }
 
 /** Where the page view shows an ayah's translation: in a box in the left or right margin, or over the page under the ayah (on hover, or on tap). */
-export type PageTranslation = 'left' | 'right' | 'popup'
+export type PageTranslation = 'bottom' | 'left' | 'right' | 'popup'
 
 export interface Settings {
   lang: 'auto' | 'fa' | 'en'
@@ -25,7 +25,7 @@ export interface Settings {
   quranFont: QuranFont
   /** 'verse': one ayah at a time with translations. 'page': flowing mushaf page. */
   readMode: 'verse' | 'page'
-  pageTranslation: PageTranslation
+  pageBox: PageTranslation
   arabicSize: number
   trSize: number
   /** Translation ids shown in the reader, in order. */
@@ -49,7 +49,7 @@ export const defaultSettings: Settings = {
   script: 'uthmani',
   quranFont: DEFAULT_QURAN_FONT,
   readMode: 'verse',
-  pageTranslation: 'left',
+  pageBox: 'bottom',
   arabicSize: 30,
   trSize: 17,
   translations: ['fa.safavi'],

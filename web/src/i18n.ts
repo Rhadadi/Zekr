@@ -14,6 +14,8 @@ const strings = {
   en: {
     appName: 'Zekr',
     navToday: 'Today',
+    menu: 'Menu',
+    pageTranslationBottom: 'In a box at the bottom',
     back: 'Back',
     navIndex: 'Quran',
     more: 'More',
@@ -171,6 +173,8 @@ const strings = {
   fa: {
     appName: 'ذکر',
     navToday: 'امروز',
+    menu: 'منو',
+    pageTranslationBottom: 'در کادری در پایین',
     back: 'بازگشت',
     navIndex: 'قرآن',
     more: 'بیشتر',
