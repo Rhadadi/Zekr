@@ -4,6 +4,7 @@ import { player, playFrom } from '../audio'
 import { AyahPanel } from '../components/AyahPanel'
 import { LoadError, Loading } from '../components/Page'
 import { PageOptions } from '../components/PageOptions'
+import { SurahBanner } from '../components/SurahBanner'
 import { type Meta, juzOf, loadText, loadTranslation, locate, pageRange } from '../data'
 import { useAsync } from '../hooks'
 import { num, t } from '../i18n'
@@ -43,11 +44,7 @@ const MushafPage = memo(function MushafPage({ meta, n, ar, basmala, size, highli
     if (at.ayah === 1) {
       flush()
       const surah = meta.surahs[at.surah - 1]!
-      out.push(
-        <div class="banner" key={`b${at.surah}`} role="heading" aria-level={2} lang="ar" dir="rtl">
-          <span class="banner-name">سورة {surah.ar}</span>
-        </div>,
-      )
+      out.push(<SurahBanner key={`b${at.surah}`} name={surah.ar} />)
       if (at.surah !== 1 && at.surah !== 9) {
         out.push(<p class="basmala" lang="ar" dir="rtl" key={`s${at.surah}`} style={{ fontSize: `${size}px` }}>{basmala}</p>)
       }

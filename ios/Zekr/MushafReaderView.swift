@@ -185,15 +185,10 @@ private struct MushafPageView: View {
                 ForEach(Array(page.blocks.enumerated()), id: \.offset) { _, block in
                     switch block {
                     case let .banner(surah):
-                        Text("سورة \(model.store?.surah(surah).nameArabic ?? "")")
-                            .font(.quran(settings.quranFont, size: 24))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8)
-                            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.accentColor, lineWidth: 1.5))
+                        SurahBanner(name: model.store?.surah(surah).nameArabic ?? "", font: settings.quranFont)
                             .padding(.top, 8)
                             .contentShape(Rectangle())
                             .onTapGesture(perform: onPage)
-                            .accessibilityAddTraits(.isHeader)
                     case let .basmala(text):
                         Text(text)
                             .font(.quran(settings.quranFont, size: size))

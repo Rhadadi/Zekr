@@ -7,6 +7,7 @@ import { type Meta, ayahIdOf, loadText, loadTranslation } from '../data'
 import { useAsync } from '../hooks'
 import { num, surahName, surahSubtitle, t } from '../i18n'
 import { href } from '../router'
+import { SurahBanner } from '../components/SurahBanner'
 import { TranslationAudioToggle } from '../components/TranslationAudioToggle'
 import { setLastRead, settings } from '../store'
 
@@ -77,7 +78,7 @@ export function Reader({ meta, surahId, ayah }: { meta: Meta; surahId: number; a
     <>
       <PageHeader title={surahName(surah)} sub={surahSubtitle(surah)} back={href.index} />
       <div class="surah-head">
-        <p class="surah-ar" lang="ar" dir="rtl">{surah.ar}</p>
+        <SurahBanner name={surah.ar} />
         <p class="muted small">
           {surah.type === 'Meccan' ? t('meccan') : t('medinan')} · {t('ayahCount', { n: surah.ayahs })}
         </p>

@@ -16,6 +16,10 @@
   --accent: #1f6b58;
   --accent-ink: #ffffff;
   --gold: #855d12;
+  --frame: #3f7a5a;
+  --banner-bg: #f4f8ec;
+  --flower: #d9a62e;
+  --flower-heart: #9a6a10;
   --hl: #fbf0cc;
   --sel: #dcefd8;
   --mark: #ffe08a;
@@ -34,6 +38,8 @@
   --line: #dccfb2;
   --accent: #6b4f1d;
   --gold: #6f4d0c;
+  --frame: #5d6b34;
+  --banner-bg: #f3ecd2;
   --hl: #f3dc9b;
   --sel: #d9dfa8;
   --mark: #efc860;
@@ -47,6 +53,10 @@
   --accent: #6cc4a4;
   --accent-ink: #0b1712;
   --gold: #d9ac5c;
+  --frame: #7fbf9f;
+  --banner-bg: #18201c;
+  --flower: #e0b54a;
+  --flower-heart: #8a5e10;
   --hl: #2c2a17;
   --sel: #1f3a2a;
   --mark: #5e4c10;
@@ -63,6 +73,10 @@
     --accent: #6cc4a4;
     --accent-ink: #0b1712;
     --gold: #d9ac5c;
+  --frame: #7fbf9f;
+  --banner-bg: #18201c;
+  --flower: #e0b54a;
+  --flower-heart: #8a5e10;
     --hl: #2c2a17;
     --sel: #1f3a2a;
     --mark: #5e4c10;
@@ -178,7 +192,6 @@ mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 1
 
 /* Reader */
 .surah-head { text-align: center; padding: 8px 0 14px; display: grid; gap: 6px; justify-items: center; }
-.surah-ar { font-family: var(--font-quran); font-size: 2.1rem; line-height: 1.6; }
 .basmala { font-family: var(--font-quran); text-align: center; padding: 8px 0 12px; line-height: 2; }
 .ayahs { display: block; }
 .ayah { padding: 12px 0 14px; border-top: 1px solid var(--line); scroll-margin-top: 70px; }
@@ -313,15 +326,22 @@ input[type='checkbox'] { width: 20px; height: 20px; accent-color: var(--accent);
 .ay.playing { background: var(--hl); }
 .mark { color: var(--accent); font-size: 0.7em; margin-inline: 0.1em; white-space: nowrap; unicode-bidi: isolate; }
 .banner {
-  position: relative; margin: 18px 6px 8px; padding: 6px 14px; text-align: center; font-family: var(--font-quran); font-size: 1.5rem;
-  color: var(--ink); border: 2px solid var(--gold); border-radius: 8px; outline: 1px solid var(--gold); outline-offset: 3px;
-  background: var(--surface);
+  display: flex; align-items: center; margin: 18px 0 8px; font-family: var(--font-quran); font-size: 1.45rem; color: var(--ink);
 }
-.banner::before, .banner::after {
-  content: ''; position: absolute; top: 50%; width: 10px; height: 10px; background: var(--gold); transform: translateY(-50%) rotate(45deg);
+.banner-frame {
+  flex: 1; min-width: 0; margin-inline: -9px; padding: 5px; border: 1.5px solid var(--frame); border-radius: 10px; background: var(--surface);
 }
-.banner::before { inset-inline-start: 10px; }
-.banner::after { inset-inline-end: 10px; }
+.banner-name {
+  display: block; padding: 4px 14px; text-align: center; border: 1px solid var(--frame); border-radius: 6px;
+  background: var(--banner-bg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.orn { flex: none; width: 60px; height: 45px; position: relative; z-index: 1; }
+.orn.flip { transform: scaleX(-1); }
+.orn-line { fill: none; stroke: var(--frame); stroke-width: 1.5; }
+.orn-fill { fill: var(--frame); }
+.orn-soft { fill: var(--frame); opacity: 0.18; }
+.orn-flower circle { fill: var(--flower); }
+.orn-heart { fill: var(--flower-heart); }
 .mushaf-flow .basmala { margin-top: 10px; }
 .chev-next, .chev-prev { display: inline-flex; }
 .chev-next { transform: scaleX(-1); }
@@ -420,3 +440,4 @@ a.player-info { color: var(--ink); text-decoration: none; }
   background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 8px 24px rgb(0 0 0 / 0.16); padding: 8px 12px;
   -webkit-user-select: text; user-select: text;
 }
+.surah-head .banner { justify-self: stretch; margin-top: 4px; }

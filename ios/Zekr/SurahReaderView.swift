@@ -63,8 +63,7 @@ struct SurahReaderView: View {
 
     private func header(_ surah: Surah) -> some View {
         VStack(spacing: 6) {
-            Text(surah.nameArabic)
-                .font(.quran(model.settings.settings.quranFont, size: 34))
+            SurahBanner(name: surah.nameArabic, font: model.settings.settings.quranFont)
             Text("\(surah.isMeccan ? model.text(.meccan) : model.text(.medinan)) · \(LocalizedText.ayahCount(surah.ayahCount, language: model.language))")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
