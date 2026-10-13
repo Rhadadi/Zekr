@@ -36,28 +36,20 @@ struct MushafReaderView: View {
     private var highlighted: Int? { panel == .ayah ? selectedID : model.player.playingAyahID }
 
     var body: some View {
-        let settings = model.settings.settings
-        let side = settings.pageTranslation
-        let inBox = panel == .options || (panel == .ayah && side != .popup)
         GeometryReader { geo in
-            HStack(spacing: 8) {
-                if inBox && side != .right { box(width: boxWidth(geo)) }
-                pages
-                if inBox && side == .right { box(width: boxWidth(geo)) }
-            }
-            // explicit left and right, whatever the app language
-            .environment(\.layoutDirection, .leftToRight)
-            .overlay(alignment: .top) {
-                if panel == .ayah, side == .popup, let selectedID {
-                    AyahBox(ayahID: selectedID, onClose: close)
-                        .frame(maxWidth: 460, maxHeight: 320)
-                        .padding(10)
-                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
-                        .shadow(radius: 8)
-                        .padding(.horizontal, 12)
-                        .offset(y: cardOffset(geo))
+            // The text keeps the full width; the translation is a card under the tapped ayah
+            // (there is no side box on the phone), and reading options are a card near the top.
+            pages
+                .environment(\.layoutDirection, .leftToRight)
+                .overlay(alignment: .top) {
+                    if panel == .ayah, let selectedID {
+                        card { AyahBox(ayahID: selectedID, onClose: close) }
+                            .offset(y: cardOffset(geo))
+                    } else if panel == .options {
+                        card { optionsBox }
+                            .offset(y: 8)
+                    }
                 }
-            }
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -112,29 +104,24 @@ struct MushafReaderView: View {
         }
     }
 
-    @ViewBuilder
-    private func box(width: CGFloat) -> some View {
-        Group {
-            if panel == .options {
-                PageOptionsBox(page: currentPage) {
-                    panel = nil
-                    if let first = try? model.store?.page(currentPage).ayahIDs.lowerBound { model.player.play(from: first) }
-                } onVerseView: {
-                    panel = nil
-                    model.switchReadMode(to: .verse, at: (try? model.store?.page(currentPage).ayahIDs.lowerBound) ?? 1)
-                } onClose: { panel = nil }
-            } else if let selectedID {
-                AyahBox(ayahID: selectedID, onClose: close)
-            }
-        }
-        .padding(10)
-        .frame(width: width)
-        .frame(maxHeight: .infinity, alignment: .top)
-        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 14))
-        .padding(.vertical, 6)
+    private var optionsBox: some View {
+        PageOptionsBox(page: currentPage) {
+            panel = nil
+            if let first = try? model.store?.page(currentPage).ayahIDs.lowerBound { model.player.play(from: first) }
+        } onVerseView: {
+            panel = nil
+            model.switchReadMode(to: .verse, at: (try? model.store?.page(currentPage).ayahIDs.lowerBound) ?? 1)
+        } onClose: { panel = nil }
     }
 
-    private func boxWidth(_ geo: GeometryProxy) -> CGFloat { max(150, min(340, geo.size.width * 0.4)) }
+    private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        content()
+            .frame(maxWidth: 460, maxHeight: 340)
+            .padding(12)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+            .shadow(radius: 8)
+            .padding(.horizontal, 12)
+    }
 
     /// The card goes under the tapped line, or above it near the bottom of the screen.
     private func cardOffset(_ geo: GeometryProxy) -> CGFloat {
@@ -412,13 +399,6 @@ private struct PageOptionsBox: View {
                     .buttonStyle(.borderedProminent)
                 Button(action: onVerseView) { Label(model.text(.viewVerseFull), systemImage: "list.bullet") }
                     .buttonStyle(.bordered)
-                Text(model.text(.pageTranslation)).font(.caption).foregroundStyle(.secondary)
-                Picker(model.text(.pageTranslation), selection: settings.binding(\.pageTranslation)) {
-                    Text(model.text(.pageTranslationLeft)).tag(PageTranslation.left)
-                    Text(model.text(.pageTranslationRight)).tag(PageTranslation.right)
-                    Text(model.text(.pageTranslationPopup)).tag(PageTranslation.popup)
-                }
-                .pickerStyle(.menu)
                 Toggle(model.text(.followRecitation), isOn: settings.binding(\.followRecitation))
                     .font(.subheadline)
                 Text(model.text(.quranFont)).font(.caption).foregroundStyle(.secondary)
