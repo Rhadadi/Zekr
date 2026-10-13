@@ -7,6 +7,7 @@ import { href } from '../router'
 import { highlight } from '../search'
 import { copyText, ayahLink, ayahText, shareText } from '../share'
 import { isBookmarked, settings, toggleBookmark } from '../store'
+import { tafsirIndex } from '../tafsir'
 import { Icon } from './Icon'
 
 export interface TranslationText {
@@ -68,6 +69,11 @@ function AyahCardView({ meta, id, ar, translations, playing, focused, showRef, q
               <button class="icon-btn" onClick={() => shareText(text(), ayahLink(meta, id))} aria-label={t('share')}>
                 <Icon name="share" size={20} />
               </button>
+              {tafsirIndex.value ? (
+                <a class="icon-btn" href={href.tafsir(surah, ayah)} aria-label={`${t('tafsir')}: ${t('almizan')}`}>
+                  <Icon name="book" size={20} />
+                </a>
+              ) : null}
             </>
           ) : null}
           <button class="icon-btn" onClick={() => setOpen(!open)} aria-label={t('more')} aria-expanded={open}>

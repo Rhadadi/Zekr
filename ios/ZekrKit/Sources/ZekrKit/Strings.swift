@@ -68,6 +68,11 @@ public enum Str: CaseIterable {
     case tapAyah
     case nextPage
     case prevPage
+    case tafsir
+    case almizan
+    case tafsirParts
+    case sources
+    case almizanCredit
 
     public func text(language: String) -> String {
         language == "fa" ? fa : en
@@ -144,6 +149,11 @@ public enum Str: CaseIterable {
         case .tapAyah: return "Tap an ayah to see its translation."
         case .nextPage: return "Next page"
         case .prevPage: return "Previous page"
+        case .tafsir: return "Tafsir"
+        case .almizan: return "Al-Mizan"
+        case .tafsirParts: return "Go to part"
+        case .sources: return "Sources"
+        case .almizanCredit: return "Al-Mizan by Allameh Tabatabaei, Persian translation by Mousavi Hamadani. Text from the Zolal project (CRCIS Noor), for personal use."
         }
     }
 
@@ -216,6 +226,11 @@ public enum Str: CaseIterable {
         case .tapAyah: return "برای دیدن ترجمه روی یک آیه بزنید."
         case .nextPage: return "صفحهٔ بعد"
         case .prevPage: return "صفحهٔ قبل"
+        case .tafsir: return "تفسیر"
+        case .almizan: return "المیزان"
+        case .tafsirParts: return "رفتن به بخش"
+        case .sources: return "منابع"
+        case .almizanCredit: return "تفسیر المیزان، علامه طباطبایی، ترجمهٔ سید محمدباقر موسوی همدانی. متن از پروژهٔ زلال (مرکز نور)، برای استفادهٔ شخصی."
         }
     }
 }

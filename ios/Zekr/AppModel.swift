@@ -30,6 +30,8 @@ final class AppModel {
     let settings = SettingsStore()
     let bookmarks = BookmarkStore()
     let player = AyahPlayer()
+    /// Al-Mizan, when this build includes it (`build_data.py --almizan`).
+    let tafsir = TafsirStore(resource: "almizan", in: .main)
 
     private(set) var store: QuranStore?
     private(set) var today: AyahDisplay?

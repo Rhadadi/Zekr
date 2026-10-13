@@ -8,6 +8,7 @@ struct AyahRowView: View {
     let translations: [(info: TranslationInfo, text: String)]
     let focused: Bool
     @Environment(AppModel.self) private var model
+    @State private var showingTafsir = false
 
     private var playing: Bool { model.player.playingAyahID == row.id }
 
@@ -47,6 +48,12 @@ struct AyahRowView: View {
                     Image(systemName: "doc.on.doc").frame(width: 36, height: 36)
                 }
                 .accessibilityLabel(model.text(.copy))
+                if model.tafsir != nil {
+                    Button { showingTafsir = true } label: {
+                        Image(systemName: "text.book.closed").frame(width: 36, height: 36)
+                    }
+                    .accessibilityLabel("\(model.text(.tafsir)): \(model.text(.almizan))")
+                }
             }
             .buttonStyle(.plain)
             .foregroundStyle(.secondary)
@@ -76,5 +83,8 @@ struct AyahRowView: View {
         .padding(.horizontal, (playing || focused) ? 10 : 0)
         .background((playing || focused) ? Color.accentColor.opacity(0.12) : Color.clear, in: RoundedRectangle(cornerRadius: 12))
         .overlay(alignment: .top) { Divider() }
+        .sheet(isPresented: $showingTafsir) {
+            TafsirView(ayahID: row.id).environment(model)
+        }
     }
 }

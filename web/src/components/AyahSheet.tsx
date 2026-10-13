@@ -4,6 +4,7 @@ import { ayahRef, t } from '../i18n'
 import { href } from '../router'
 import { ayahLink, ayahText, copyText, shareText } from '../share'
 import { isBookmarked, toggleBookmark } from '../store'
+import { tafsirIndex } from '../tafsir'
 import { Icon } from './Icon'
 
 interface Props {
@@ -38,6 +39,11 @@ export function AyahSheet({ meta, id, ar, translations, playing, onClose }: Prop
           <button class="icon-btn" onClick={() => shareText(text(), ayahLink(meta, id))} aria-label={t('share')}>
             <Icon name="share" size={20} />
           </button>
+          {tafsirIndex.value ? (
+            <a class="icon-btn" href={href.tafsir(surah, ayah)} aria-label={`${t('tafsir')}: ${t('almizan')}`}>
+              <Icon name="book" size={20} />
+            </a>
+          ) : null}
           <a class="icon-btn" href={href.verse(surah, ayah)} aria-label={t('openVerseView')}>
             <Icon name="list" size={20} />
           </a>

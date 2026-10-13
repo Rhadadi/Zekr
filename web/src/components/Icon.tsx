@@ -13,6 +13,7 @@ const stroked = {
   clock: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2',
   more: 'M5 12h.01M12 12h.01M19 12h.01',
   speech: 'M4 5h16v11H10l-5 4v-4H4zM8 9h8M8 12h5',
+  book: 'M4 4h6a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4zM20 4h-6a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h6z',
 } as const
 
 const filled = {

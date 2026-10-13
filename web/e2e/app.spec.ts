@@ -449,3 +449,61 @@ test('changing a setting while reciting does not stop playback', async ({ page }
   await finishRecording(page)
   await expect.poll(async () => (await played()).at(-1)).toBe('https://everyayah.com/data/Minshawy_Murattal_128kbps/112003.mp3')
 })
+
+test.describe('Al-Mizan tafsir', () => {
+  test('the public build has no tafsir button', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/verse/19/7')
+    await page.locator('article#a-7').getByRole('button', { name: 'More' }).click()
+    await expect(page.locator('article#a-7').getByRole('button', { name: 'Copy' })).toBeVisible()
+    await expect(page.getByRole('link', { name: /Tafsir/ })).toHaveCount(0)
+  })
+
+  test.describe('in a private build', () => {
+    // A made-up section in the format tools/almizan.py writes; the real text is never in the public build.
+    test.use({ serviceWorkers: 'block' })
+    test.beforeEach(async ({ page }) => {
+      await page.route('**/data/almizan/index.json', (route) =>
+        route.fulfill({ json: { source: 'test', sections: [['19_1-15', 1, 6236]] } }))
+      await page.route('**/data/almizan/19_1-15.json', (route) =>
+        route.fulfill({
+          json: {
+            id: '19_1-15', surah: 19, from: 1, to: 15, title: 'سوره مریم آیه‌های ۱ تا ۱۵',
+            blocks: [
+              { t: 'h', r: [['ترجمه آیات']] },
+              { t: 'p', r: [['ترجمهٔ آزمایشی']] },
+              { t: 'h', r: [['بحث روایتی']] },
+              { t: 't', r: [['موضوع '], ['کهیعص', 'q']] },
+              { t: 'p', r: [['در حدیث '], ['متن حدیث', 'd'], [1, 'n'], [' آمده است.']] },
+            ],
+            notes: ['مجمع البیان، ج ۶'],
+          },
+        }))
+    })
+
+    test('an ayah links to the Al-Mizan section that explains it', async ({ page }) => {
+      await useSettings(page, { lang: 'en' })
+      await page.goto('/#/verse/19/7')
+      await page.locator('article#a-7').getByRole('button', { name: 'More' }).click()
+      await page.locator('article#a-7').getByRole('link', { name: 'Tafsir: Al-Mizan' }).click()
+      await expect(page).toHaveURL(/#\/tafsir\/19\/7$/)
+      const article = page.locator('article.tafsir')
+      await expect(article.getByRole('heading', { name: 'سوره مریم آیه‌های ۱ تا ۱۵' })).toBeVisible()
+      await expect(article.getByRole('heading', { name: 'بحث روایتی', level: 3 })).toBeVisible()
+      await expect(article.locator('.tf-q')).toHaveText('کهیعص')
+      await expect(article.locator('.tf-d')).toHaveText('متن حدیث')
+      await expect(article.locator('sup.fn')).toHaveText('۱')
+      await expect(article.locator('.tf-notes li')).toHaveText('مجمع البیان، ج ۶')
+      await expect(article.getByRole('navigation', { name: 'Parts' }).getByRole('link')).toHaveCount(2)
+    })
+
+    test('the mushaf page panel links to it too', async ({ page }) => {
+      await useSettings(page, { lang: 'fa' })
+      await page.goto('/#/page/305')
+      await page.locator('.ay').nth(2).click()
+      await page.getByTestId('ayah-sheet').getByRole('link', { name: 'تفسیر: المیزان' }).click()
+      await expect(page).toHaveURL(/#\/tafsir\/19\/3$/)
+      await expect(page.locator('article.tafsir .tf-h').first()).toHaveText('ترجمه آیات')
+    })
+  })
+})

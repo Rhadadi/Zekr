@@ -38,6 +38,8 @@ jobs:
       - run: npm run build
         working-directory: web
       - uses: actions/configure-pages@v5
+      - name: Make sure the Al-Mizan text is not published (copyrighted, see docs/PLAN.md §8)
+        run: test ! -e web/dist/data/almizan || { echo "error: web/dist contains Al-Mizan"; exit 1; }
       - uses: actions/upload-pages-artifact@v3
         with:
           path: web/dist

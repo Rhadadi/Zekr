@@ -381,3 +381,18 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .icon-btn.active { color: var(--accent); }
 .field > .hint { font-weight: 400; }
 .player-controls .icon-btn { width: 40px; }
+
+/* Tafsir (Al-Mizan) */
+.tafsir { line-height: 2; padding-bottom: 24px; }
+.tf-title { font-size: 1.15em; text-align: center; margin: 4px 0 12px; }
+.tf-parts { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; font-size: 0.8rem; }
+.tf-parts a { border: 1px solid var(--line); border-radius: 999px; padding: 2px 12px; color: var(--accent); background: var(--surface); }
+.tf-s { text-align: center; font-weight: 700; }
+.tf-h { font-size: 1.1em; color: var(--accent); margin: 22px 0 4px; scroll-margin-top: 70px; }
+.tf-t { font-size: 1em; margin: 14px 0 2px; scroll-margin-top: 70px; }
+.tf-p { margin: 0 0 10px; text-align: justify; }
+.tf-q { color: var(--accent); }
+.tf-d { color: var(--gold); }
+.tafsir sup.fn { font-size: 0.65em; color: var(--muted); margin-inline-start: 1px; }
+.tf-notes { border-top: 1px solid var(--line); margin-top: 18px; font-size: 0.8em; color: var(--muted); }
+.tf-notes h3 { font-size: 1em; color: var(--ink); }

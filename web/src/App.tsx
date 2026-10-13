@@ -18,6 +18,8 @@ import { Reader } from './views/Reader'
 import { SearchView } from './views/Search'
 import { Saved } from './views/Saved'
 import { SettingsView } from './views/Settings'
+import { TafsirView } from './views/Tafsir'
+import { checkTafsir } from './tafsir'
 
 const NAV: { name: RouteName; href: string; icon: IconName; label: () => string }[] = [
   { name: 'home', href: href.home, icon: 'home', label: () => t('navHome') },
@@ -30,10 +32,13 @@ const NAV: { name: RouteName; href: string; icon: IconName; label: () => string 
 export function App() {
   const meta = useAsync(loadMeta, [])
   useEffect(() => {
-    if (meta.value) initAudio(meta.value)
+    if (meta.value) {
+      initAudio(meta.value)
+      void checkTafsir()
+    }
   }, [meta.value])
   const r = route.value
-  const active: RouteName = r.name === 'reader' || r.name === 'page' ? 'index' : r.name === 'daily' ? 'home' : r.name === 'about' ? 'settings' : r.name
+  const active: RouteName = r.name === 'reader' || r.name === 'page' || r.name === 'tafsir' ? 'index' : r.name === 'daily' ? 'home' : r.name === 'about' ? 'settings' : r.name
 
   let view
   if (meta.error) view = <LoadError retry={meta.retry} />
@@ -51,6 +56,7 @@ export function App() {
         }
         break
       case 'page': view = <PageReader key="page" meta={m} pageNo={r.page!} />; break
+      case 'tafsir': view = <TafsirView meta={m} surah={r.surah!} ayah={r.ayah!} />; break
       case 'index': view = <IndexView meta={m} tab={r.query.get('tab') === 'juz' ? 'juz' : 'surah'} />; break
       case 'daily': view = <Daily meta={m} />; break
       case 'search': view = <SearchView meta={m} initial={r.query.get('q') ?? ''} />; break
