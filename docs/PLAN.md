@@ -155,7 +155,7 @@ Each milestone is one pull request you can review.
 The web app comes first because it's the one I can run and check completely in this environment. The iPhone widget follows right after, since it's what you asked for most.
 
 **Later:**
-- Mushaf page view on the iPhone (the web already has it: `#/page/305`). A line-exact Madani layout would need the KFGQPC page fonts; the web uses flowing text with the same page, juz and surah boundaries
+- Mushaf page view on the iPhone: done, the default reading view. A line-exact Madani layout would need the KFGQPC page fonts; both apps use flowing text with the same page, juz and surah boundaries
 - Word-by-word meanings
 - Khatm and reading plans
 - iCloud sync
@@ -244,7 +244,7 @@ CI on GitHub checks every change. Because the repo is private, macOS minutes are
 | **M1** Web app | Done and tested here: 33 unit tests and 25 end-to-end tests at phone width, plus a check that real recitation plays. Not hosted yet (§8) |
 | **M1b** Web page view | Done and tested: `#/page/N` with surah banner, ornate ayah markers, surah/page/juz header, tap an ayah for its translation, previous/next page, swipe, jump to page, page turns with the recitation. Page and juz data match the Madani mushaf (19:1-11 on page 305, juz 16) |
 | **M2** iPhone widget | Written: `ZekrKit` (45 tests pass on Linux and on macOS, including the shared rotation cases and daylight-saving cases), the widget and the Xcode project definition. Built by CI on macOS (Xcode 16.4, iOS 18.5 SDK): the widget is embedded and has its App Intents metadata. Not yet run on a phone |
-| **M3** iPhone reader | First part written and built by CI: surah and juz index with filter, surah reader with a choice of Quran fonts (KFGQPC Hafs by default) and selectable translations, per-ayah play/save/share/copy, saved ayahs, settings. Still to do: search, the page view, tafsir panel |
+| **M3** iPhone reader | First part written and built by CI: surah and juz index with filter, surah reader with a choice of Quran fonts (KFGQPC Hafs by default) and selectable translations, per-ayah play/save/share/copy, saved ayahs, settings. Mushaf page view (the default on the iPhone): flowing pages 1-604 with surah banners, tap an ayah for its translation, swipe or buttons to turn, jump to page, follows the recitation. Still to do: search, tafsir panel |
 | **M4** iPhone player | The player is already in: queue, basmala, repeat, speed, translation audio, Lock Screen controls. Still to do: downloads for offline listening, and checking gaps between ayahs on a real phone |
 | M5, M6 | Not started |
 
