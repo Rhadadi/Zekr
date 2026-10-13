@@ -27,6 +27,7 @@ struct HomeView: View {
 }
 
 private struct TodayCard: View {
+    @Environment(AppModel.self) private var model
     let display: AyahDisplay
     let language: String
 
@@ -36,7 +37,7 @@ private struct TodayCard: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.tint)
             Text(display.arabic)
-                .font(.custom("AmiriQuran-Regular", size: 28))
+                .font(.quran(model.settings.settings.quranFont, size: 28))
                 .lineSpacing(10)
                 .multilineTextAlignment(.leading)
                 .frame(maxWidth: .infinity, alignment: .leading)

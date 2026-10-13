@@ -16,6 +16,13 @@ struct SurahReaderView: View {
 
     private var surah: Surah? { model.store?.surah(route.surah) }
 
+    /// The ayah to open the page view at: the one being recited if it is in this surah, else the one this view opened at.
+    private var currentAyahID: Int {
+        guard let surah else { return 1 }
+        if let id = model.player.playingAyahID, id >= surah.firstAyahID, id < surah.firstAyahID + surah.ayahCount { return id }
+        return surah.firstAyahID + (route.ayah ?? 1) - 1
+    }
+
     var body: some View {
         let settings = model.settings.settings
         ScrollViewReader { proxy in
@@ -25,7 +32,7 @@ struct SurahReaderView: View {
                     if let content {
                         if let basmala = content.basmala {
                             Text(basmala)
-                                .font(.custom("AmiriQuran-Regular", size: settings.arabicSize))
+                                .font(.quran(settings.quranFont, size: settings.arabicSize))
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 12)
                         }
@@ -58,12 +65,22 @@ struct SurahReaderView: View {
         }
         .navigationTitle(surah.map { $0.name(language: model.language) } ?? "")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    model.switchReadMode(to: .page, at: currentAyahID)
+                } label: {
+                    Image(systemName: "book.pages")
+                }
+                .accessibilityLabel(model.text(.viewPageFull))
+            }
+        }
     }
 
     private func header(_ surah: Surah) -> some View {
         VStack(spacing: 6) {
             Text(surah.nameArabic)
-                .font(.custom("AmiriQuran-Regular", size: 34))
+                .font(.quran(model.settings.settings.quranFont, size: 34))
             Text("\(surah.isMeccan ? model.text(.meccan) : model.text(.medinan)) · \(LocalizedText.ayahCount(surah.ayahCount, language: model.language))")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
@@ -74,6 +91,7 @@ struct SurahReaderView: View {
             }
             .buttonStyle(.borderedProminent)
             .padding(.top, 4)
+            TranslationAudioButton()
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)

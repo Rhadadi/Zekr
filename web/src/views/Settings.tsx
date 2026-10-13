@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks'
 import { PlaybackOptions } from '../components/PlaybackOptions'
 import { PageHeader } from '../components/Page'
 import { type Meta, type Script, downloadAll } from '../data'
+import { QURAN_FONTS, type QuranFont } from '../fonts'
 import { lang, t } from '../i18n'
 import { href } from '../router'
 import { settings, updateSettings } from '../store'
@@ -64,6 +65,12 @@ export function SettingsView({ meta }: { meta: Meta }) {
           <select value={s.script} onChange={(e) => updateSettings({ script: e.currentTarget.value as Script })}>
             <option value="uthmani">{t('scriptUthmani')}</option>
             <option value="simple">{t('scriptSimple')}</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>{t('quranFont')}</span>
+          <select value={s.quranFont} onChange={(e) => updateSettings({ quranFont: e.currentTarget.value as QuranFont })}>
+            {QURAN_FONTS.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
           </select>
         </label>
         <label class="field">

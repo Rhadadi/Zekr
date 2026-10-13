@@ -1,4 +1,5 @@
 import { memo } from 'preact/compat'
+import { useState } from 'preact/hooks'
 import { toggleAyah } from '../audio'
 import { type Meta, type TranslationInfo, locate } from '../data'
 import { ayahRef, num, t } from '../i18n'
@@ -40,6 +41,7 @@ function AyahCardView({ meta, id, ar, translations, playing, focused, showRef, q
   const { surah, ayah } = locate(meta, id)
   const s = settings.value
   const saved = isBookmarked(id)
+  const [open, setOpen] = useState(false)
   const labelled = translations.length > 1
   const trTexts = translations.map((x) => x.text || t('mergedTranslation'))
   const text = () => ayahText(meta, id, ar, trTexts)
@@ -53,18 +55,26 @@ function AyahCardView({ meta, id, ar, translations, playing, focused, showRef, q
         ) : (
           <span class="num" aria-label={t('ayahN', { n: ayah })}>{num(ayah)}</span>
         )}
+        {saved && !open ? <span class="saved-mark" title={t('saved')}><Icon name="bookmarkFilled" size={14} /></span> : null}
         <div class="ayah-actions">
+          {open ? (
+            <>
+              <button class="icon-btn" onClick={() => toggleBookmark(id)} aria-label={saved ? t('unbookmark') : t('bookmark')} aria-pressed={saved}>
+                <Icon name={saved ? 'bookmarkFilled' : 'bookmark'} size={20} />
+              </button>
+              <button class="icon-btn" onClick={() => copyText(text())} aria-label={t('copy')}>
+                <Icon name="copy" size={20} />
+              </button>
+              <button class="icon-btn" onClick={() => shareText(text(), ayahLink(meta, id))} aria-label={t('share')}>
+                <Icon name="share" size={20} />
+              </button>
+            </>
+          ) : null}
+          <button class="icon-btn" onClick={() => setOpen(!open)} aria-label={t('more')} aria-expanded={open}>
+            <Icon name="more" size={20} />
+          </button>
           <button class="icon-btn" onClick={() => toggleAyah(id)} aria-label={playing ? t('pause') : t('play')} aria-pressed={playing ?? false}>
             <Icon name={playing ? 'pause' : 'play'} size={20} />
-          </button>
-          <button class="icon-btn" onClick={() => toggleBookmark(id)} aria-label={saved ? t('unbookmark') : t('bookmark')} aria-pressed={saved}>
-            <Icon name={saved ? 'bookmarkFilled' : 'bookmark'} size={20} />
-          </button>
-          <button class="icon-btn" onClick={() => copyText(text())} aria-label={t('copy')}>
-            <Icon name="copy" size={20} />
-          </button>
-          <button class="icon-btn" onClick={() => shareText(text(), ayahLink(meta, id))} aria-label={t('share')}>
-            <Icon name="share" size={20} />
           </button>
         </div>
       </div>

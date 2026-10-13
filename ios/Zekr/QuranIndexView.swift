@@ -37,14 +37,14 @@ struct QuranIndexView: View {
 
             if segment == 0 {
                 ForEach(surahs, id: \.id) { surah in
-                    NavigationLink(value: ReaderRoute(surah: surah.id, ayah: nil)) {
+                    NavigationLink(value: model.route(surah: surah.id, ayah: nil)) {
                         SurahRow(surah: surah, language: model.language)
                     }
                 }
             } else {
                 ForEach(juzRows) { row in
                     if let store = model.store, let location = try? store.location(ofAyahID: row.ayahID) {
-                        NavigationLink(value: ReaderRoute(surah: location.surah, ayah: location.ayah)) {
+                        NavigationLink(value: model.route(surah: location.surah, ayah: location.ayah, select: false)) {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(LocalizedText.juzTitle(row.juz, language: model.language)).font(.headline)
                                 Text("\(store.surah(location.surah).name(language: model.language)) \(LocalizedText.digits("\(location.surah):\(location.ayah)", language: model.language))")
@@ -68,6 +68,7 @@ struct QuranIndexView: View {
 }
 
 private struct SurahRow: View {
+    @Environment(AppModel.self) private var model
     let surah: Surah
     let language: String
 
@@ -85,7 +86,7 @@ private struct SurahRow: View {
             }
             Spacer(minLength: 8)
             Text(surah.nameArabic)
-                .font(.custom("AmiriQuran-Regular", size: 22))
+                .font(.quran(model.settings.settings.quranFont, size: 22))
                 .foregroundStyle(.secondary)
         }
         .padding(.vertical, 4)

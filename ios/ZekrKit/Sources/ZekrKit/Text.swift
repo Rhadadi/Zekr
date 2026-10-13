@@ -25,6 +25,10 @@ public enum LocalizedText {
         language == "fa" ? "جزء \(digits(String(n), language: language))" : "Juz \(n)"
     }
 
+    public static func pageTitle(_ n: Int, language: String) -> String {
+        language == "fa" ? "صفحهٔ \(digits(String(n), language: language))" : "Page \(n)"
+    }
+
     /// The device's language code, "fa" or "en" (anything else counts as English).
     public static var deviceLanguage: String {
         let code = Locale.preferredLanguages.first.map { String($0.prefix(2)) } ?? "en"

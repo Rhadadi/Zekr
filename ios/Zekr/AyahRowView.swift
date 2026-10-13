@@ -52,7 +52,7 @@ struct AyahRowView: View {
             .foregroundStyle(.secondary)
 
             Text(row.arabic)
-                .font(.custom("AmiriQuran-Regular", size: settings.arabicSize))
+                .font(.quran(settings.quranFont, size: settings.arabicSize))
                 .lineSpacing(settings.arabicSize * 0.5)
                 .multilineTextAlignment(.leading)
                 .frame(maxWidth: .infinity, alignment: .leading)

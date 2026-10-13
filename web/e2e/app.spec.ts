@@ -6,11 +6,13 @@ import { ayahForSlot } from '../src/rotation'
 async function trackAudio(page: Page): Promise<() => Promise<string[]>> {
   await page.route('**/everyayah.com/**', (route) => route.abort())
   await page.addInitScript(() => {
-    const w = window as unknown as { __played: string[] }
+    const w = window as unknown as { __played: string[]; __audio: HTMLMediaElement[] }
     w.__played = []
+    w.__audio = []
     const play = HTMLMediaElement.prototype.play
     HTMLMediaElement.prototype.play = function () {
       w.__played.push(this.src)
+      if (!w.__audio.includes(this)) w.__audio.push(this)
       return play.call(this)
     }
   })
@@ -101,6 +103,27 @@ test.describe('reader', () => {
     await expect(page.locator('article#a-24')).toContainText('بال فروتنی')
   })
 
+  test('Quran text uses KFGQPC Hafs by default, and another font can be picked in Settings', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    const arFont = () => page.locator('article#a-24 .ar').evaluate((e) => getComputedStyle(e).fontFamily)
+    const loaded = (family: string) => page.evaluate(async (f) => {
+      await document.fonts.ready
+      return [...document.fonts].some((x) => x.family.replace(/"/g, '') === f && x.status === 'loaded')
+    }, family)
+    await page.goto('/#/ayah/17/24')
+    await expect.poll(arFont).toMatch(/^"?Zekr Hafs/)
+    await expect.poll(() => loaded('Zekr Hafs')).toBe(true)
+
+    await page.goto('/#/settings')
+    await page.getByLabel('Quran font').selectOption({ label: 'Me-Quran' })
+    await expect(page.locator('.sample .ar')).toHaveCSS('font-family', /^"?Zekr Me Quran/)
+    await page.goto('/#/ayah/17/24')
+    await expect.poll(arFont).toMatch(/^"?Zekr Me Quran/)
+    await expect.poll(() => loaded('Zekr Me Quran')).toBe(true)
+    await page.reload()
+    await expect.poll(arFont).toMatch(/^"?Zekr Me Quran/)
+  })
+
   test('play button asks for the reciter\'s file for that ayah', async ({ page }) => {
     const played = await trackAudio(page)
     await useSettings(page, { lang: 'en' })
@@ -139,6 +162,7 @@ test.describe('search, saved, settings', () => {
   test('saving an ayah keeps it after a reload', async ({ page }) => {
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/ayah/17/24')
+    await page.locator('article#a-24').getByRole('button', { name: 'More' }).click()
     await page.locator('article#a-24').getByRole('button', { name: 'Save ayah' }).click()
     await page.goto('/#/saved')
     await page.reload()
@@ -298,4 +322,130 @@ test.describe('mushaf page view', () => {
     await expect(page).toHaveURL(/#\/page\/305$/)
     await context.close()
   })
+})
+
+// Pretend the current recording finished, as the browser would at the end of the file.
+async function finishRecording(page: Page) {
+  await page.evaluate(() => (window as unknown as { __audio: HTMLMediaElement[] }).__audio[0]!.dispatchEvent(new Event('ended')))
+}
+
+test.describe('what plays, and seeing it', () => {
+  test('the play button on the ayah of the day plays only that ayah', async ({ page }) => {
+    const played = await trackAudio(page)
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/')
+    await page.getByTestId('daily-card').getByRole('button', { name: 'Play this ayah' }).click()
+    await expect.poll(async () => (await played()).length).toBe(1)
+    await finishRecording(page)
+    await page.waitForTimeout(300)
+    expect(await played()).toHaveLength(1)
+  })
+
+  test('in the reader, playback goes on to the next ayah and highlights it', async ({ page }) => {
+    const played = await trackAudio(page)
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/ayah/17/24')
+    await page.locator('article#a-24').getByRole('button', { name: 'Play' }).click()
+    await expect.poll(async () => (await played()).length).toBe(1)
+    await finishRecording(page)
+    await expect.poll(async () => (await played()).at(-1)).toBe('https://everyayah.com/data/Minshawy_Murattal_128kbps/017025.mp3')
+    await expect(page.locator('article#a-25')).toHaveClass(/playing/)
+    await expect(page.locator('.player')).toContainText('17:25')
+  })
+
+  test('the player bar takes you to the ayah being recited', async ({ page }) => {
+    await trackAudio(page)
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/')
+    await page.getByTestId('daily-card').getByRole('button', { name: 'Play this ayah' }).click()
+    const id = await page.getByTestId('daily-card').getAttribute('data-ayah-id')
+    await page.getByRole('link', { name: /Go to the ayah being recited/ }).click()
+    await expect(page).toHaveURL(/#\/ayah\/\d+\/\d+$/)
+    await expect(page.locator(`article[data-id="${id}"]`)).toHaveClass(/playing|focused/)
+  })
+
+  test('home shows only the ayah of the day and where you left off', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/')
+    await expect(page.getByTestId('daily-card')).toBeVisible()
+    await expect(page.locator('.continue-row')).toContainText('Start with Al-Fatiha')
+    await expect(page.locator('main .tile')).toHaveCount(0)
+    await expect(page.locator('main')).not.toContainText('Changes in')
+  })
+
+  test('ayah actions are tucked behind More', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/surah/1')
+    const first = page.locator('article#a-1')
+    await expect(first.getByRole('button', { name: 'Copy' })).toHaveCount(0)
+    await first.getByRole('button', { name: 'More' }).click()
+    await expect(first.getByRole('button', { name: 'Copy' })).toBeVisible()
+    await expect(first.getByRole('button', { name: 'Share' })).toBeVisible()
+  })
+})
+
+test.describe('translation audio after each ayah', () => {
+  test('one tap in the reader turns it on: Persian reads Fooladvand after each ayah, then moves on', async ({ page }) => {
+    const played = await trackAudio(page)
+    await useSettings(page, { lang: 'fa' })
+    await page.goto('/#/surah/17')
+    const chip = page.getByRole('button', { name: /ترجمهٔ گویا/ })
+    await expect(chip).toHaveAttribute('aria-pressed', 'false')
+    await chip.click()
+    await expect(chip).toHaveAttribute('aria-pressed', 'true')
+    await expect(chip).toContainText('فولادوند')
+    await page.goto('/#/ayah/17/24')
+    await page.locator('article#a-24').getByRole('button', { name: 'پخش' }).click()
+    await expect.poll(async () => (await played()).at(-1)).toBe('https://everyayah.com/data/Minshawy_Murattal_128kbps/017024.mp3')
+    await finishRecording(page)
+    await expect.poll(async () => (await played()).at(-1)).toBe('https://everyayah.com/data/translations/Fooladvand_Hedayatfar_40Kbps/017024.mp3')
+    await finishRecording(page)
+    await expect.poll(async () => (await played()).at(-1)).toBe('https://everyayah.com/data/Minshawy_Murattal_128kbps/017025.mp3')
+  })
+
+  test('English reads Saheeh International, and the player bar switch turns it off again', async ({ page }) => {
+    const played = await trackAudio(page)
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/surah/112')
+    await page.getByRole('button', { name: /Translation audio/ }).click()
+    await expect(page.getByRole('button', { name: /Translation audio/ }).first()).toContainText('Saheeh')
+    await page.locator('article#a-1').getByRole('button', { name: 'Play' }).click()
+    await finishRecording(page)
+    await expect.poll(async () => (await played()).at(-1)).toBe('https://everyayah.com/data/English/Sahih_Intnl_Ibrahim_Walk_192kbps/112001.mp3')
+    const barSwitch = page.locator('.player').getByRole('button', { name: 'Translation audio' })
+    await expect(barSwitch).toHaveAttribute('aria-pressed', 'true')
+    await barSwitch.click()
+    await expect(barSwitch).toHaveAttribute('aria-pressed', 'false')
+    await finishRecording(page)
+    await expect.poll(async () => (await played()).at(-1)).toBe('https://everyayah.com/data/Minshawy_Murattal_128kbps/112002.mp3')
+    // switching it back on brings back the same recording
+    await barSwitch.click()
+    await expect(page.locator('.chip')).toContainText('Saheeh')
+  })
+
+  test('the player bar fits on a phone screen', async ({ page }) => {
+    await trackAudio(page)
+    await useSettings(page, { lang: 'fa' })
+    await page.goto('/#/surah/1')
+    await page.locator('article#a-1').getByRole('button', { name: 'پخش' }).click()
+    await expect(page.locator('.player')).toBeVisible()
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
+    expect(overflow).toBeLessThanOrEqual(0)
+    const box = await page.locator('.player').boundingBox()
+    expect(box!.width).toBeLessThanOrEqual(390)
+  })
+})
+
+test('changing a setting while reciting does not stop playback', async ({ page }) => {
+  const played = await trackAudio(page)
+  await useSettings(page, { lang: 'en' })
+  await page.goto('/#/surah/112')
+  await page.locator('article#a-1').getByRole('button', { name: 'Play' }).click()
+  await page.locator('.player').getByRole('button', { name: 'Recitation' }).click()
+  await page.getByRole('dialog').getByLabel('Speed').selectOption('1.25')
+  await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click()
+  await finishRecording(page)
+  await expect.poll(async () => (await played()).at(-1)).toBe('https://everyayah.com/data/Minshawy_Murattal_128kbps/112002.mp3')
+  await finishRecording(page)
+  await expect.poll(async () => (await played()).at(-1)).toBe('https://everyayah.com/data/Minshawy_Murattal_128kbps/112003.mp3')
 })

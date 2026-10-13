@@ -11,6 +11,8 @@ const stroked = {
   sliders: 'M4 6h16M7 12h10M10 18h4',
   repeat: 'M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3',
   clock: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2',
+  more: 'M5 12h.01M12 12h.01M19 12h.01',
+  speech: 'M4 5h16v11H10l-5 4v-4H4zM8 9h8M8 12h5',
 } as const
 
 const filled = {

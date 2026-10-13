@@ -13,6 +13,8 @@ public enum StoreError: Error, CustomStringConvertible {
 /// Reads the Quran databases that `tools/build_data.py` builds (`quran.sqlite` for the app, `widget.sqlite` for the widget).
 public final class QuranStore {
     private let db: SQLiteDatabase
+    var database: SQLiteDatabase { db }
+    var hasUthmaniText: Bool { hasUthmani }
     public let surahs: [Surah]
     private let hasUthmani: Bool
 

@@ -1,19 +1,28 @@
+/* Quran fonts (public/fonts, licenses in LICENSES.txt). size-adjust evens out their sizes,
+   so the Arabic size setting looks about the same in each. */
+@font-face { font-family: 'Zekr Hafs'; src: url('/fonts/kfgqpc-hafs.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Zekr Naskh'; src: url('/fonts/kfgqpc-naskh.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Zekr Me Quran'; src: url('/fonts/me-quran.woff2') format('woff2'); font-display: swap; size-adjust: 85%; }
+@font-face { font-family: 'Zekr Scheherazade'; src: url('/fonts/scheherazade-new.woff2') format('woff2'); font-display: swap; size-adjust: 92%; }
+@font-face { font-family: 'Zekr Amiri'; src: url('/fonts/amiri-quran.woff2') format('woff2'); font-display: swap; }
+
 /* Themes: light (default), sepia, dark. data-theme="auto" follows the system. */
 :root {
-  --bg: #fbf8f1;
-  --surface: #fffdf8;
-  --ink: #2a2620;
-  --muted: #655b4e;
-  --line: #e9e1d1;
-  --accent: #1f6f5c;
+  --bg: #faf9f5;
+  --surface: #ffffff;
+  --ink: #1d2320;
+  --muted: #5c6560;
+  --line: #e6e6df;
+  --accent: #1f6b58;
   --accent-ink: #ffffff;
   --gold: #855d12;
-  --hl: #fff0c2;
-  --sel: #d9eed4;
+  --hl: #fbf0cc;
+  --sel: #dcefd8;
   --mark: #ffe08a;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 4px 14px rgb(60 40 10 / 0.05);
   --font-ui: 'Vazirmatn Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-quran: 'Amiri Quran', 'Scheherazade New', 'Geeza Pro', 'Noto Naskh Arabic', serif;
+  /* main.tsx sets this from the Quran font setting (src/fonts.ts). */
+  --font-quran: 'Zekr Hafs', 'Geeza Pro', 'Noto Naskh Arabic', serif;
   --nav-h: 58px;
   color-scheme: light;
 }
@@ -30,33 +39,33 @@
   --mark: #efc860;
 }
 :root[data-theme='dark'] {
-  --bg: #15130f;
-  --surface: #1f1c17;
-  --ink: #ece4d6;
-  --muted: #b0a594;
-  --line: #342f27;
-  --accent: #5fbf9f;
-  --accent-ink: #0d1a15;
+  --bg: #111413;
+  --surface: #191d1b;
+  --ink: #e8ece9;
+  --muted: #a4ada8;
+  --line: #2a302d;
+  --accent: #6cc4a4;
+  --accent-ink: #0b1712;
   --gold: #d9ac5c;
-  --hl: #3b3213;
+  --hl: #2c2a17;
   --sel: #1f3a2a;
-  --mark: #6b5513;
+  --mark: #5e4c10;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.4);
   color-scheme: dark;
 }
 @media (prefers-color-scheme: dark) {
   :root[data-theme='auto'] {
-    --bg: #15130f;
-    --surface: #1f1c17;
-    --ink: #ece4d6;
-    --muted: #b0a594;
-    --line: #342f27;
-    --accent: #5fbf9f;
-    --accent-ink: #0d1a15;
+    --bg: #111413;
+    --surface: #191d1b;
+    --ink: #e8ece9;
+    --muted: #a4ada8;
+    --line: #2a302d;
+    --accent: #6cc4a4;
+    --accent-ink: #0b1712;
     --gold: #d9ac5c;
-    --hl: #3b3213;
+    --hl: #2c2a17;
     --sel: #1f3a2a;
-    --mark: #6b5513;
+    --mark: #5e4c10;
     --shadow: 0 1px 2px rgb(0 0 0 / 0.4);
     color-scheme: dark;
   }
@@ -337,3 +346,38 @@ input[type='checkbox'] { width: 20px; height: 20px; accent-color: var(--accent);
 .ayah-sheet .sheet-head { gap: 8px; }
 .sheet-body { overflow-y: auto; padding-bottom: 4px; }
 .app.has-player { --player-h: 64px; }
+
+/* Home: the ayah of the day and where you left off, nothing else */
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.home { padding-top: calc(28px + env(safe-area-inset-top)); display: grid; gap: 28px; }
+.feature { display: grid; gap: 14px; }
+.feature-head { display: flex; align-items: center; justify-content: space-between; min-height: 36px; }
+.feature-label { color: var(--muted); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.02em; }
+.feature-ar { text-align: center; line-height: 2.2; margin: 4px 0; text-wrap: balance; }
+.feature-tr { line-height: 2; text-wrap: pretty; max-width: 62ch; }
+.feature-tr[dir='rtl'] { text-align: right; }
+.feature-tr[dir='ltr'] { text-align: left; }
+.feature-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 6px; border-top: 1px solid var(--line); }
+.icon-btn.small { width: 36px; height: 36px; }
+.continue-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px; color: var(--ink);
+}
+.continue-text { display: flex; flex-direction: column; line-height: 1.5; }
+.chev-fwd { display: inline-flex; color: var(--muted); }
+:root[dir='rtl'] .chev-fwd { transform: scaleX(-1); }
+.saved-mark { color: var(--accent); margin-inline-start: 6px; display: inline-flex; }
+.ayah-bar { gap: 4px; }
+.ayah-bar .ayah-actions { margin-inline-start: auto; }
+.num { border: 1px solid var(--line); color: var(--muted); font-weight: 600; }
+a.player-info { color: var(--ink); text-decoration: none; }
+/* Sticky headers cover the side gutters too, so text scrolling underneath never peeks out at the edges. */
+.top, .mushaf-bar { margin-inline: -16px; padding-inline: 16px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 6px 14px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; font-size: 0.9rem;
+}
+.chip.on { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.icon-btn.active { color: var(--accent); }
+.field > .hint { font-weight: 400; }
+.player-controls .icon-btn { width: 40px; }

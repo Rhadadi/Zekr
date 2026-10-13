@@ -23,7 +23,7 @@ struct SavedView: View {
                                         .font(.subheadline.weight(.semibold))
                                         .foregroundStyle(.tint)
                                     Text((try? store.arabic(ayahID: id, script: model.settings.settings.script)) ?? "")
-                                        .font(.custom("AmiriQuran-Regular", size: 22))
+                                        .font(.quran(model.settings.settings.quranFont, size: 22))
                                         .multilineTextAlignment(.leading)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                         .environment(\.layoutDirection, .rightToLeft)

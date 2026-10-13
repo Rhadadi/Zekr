@@ -108,7 +108,7 @@ A static website (no server, no login) that works on a phone, tablet or computer
   - Downloaded surahs play from the phone.
   - Lock Screen controls use Now Playing.
 - **Fonts:** all are free to bundle.
-  - Arabic: a Quran font. KFGQPC Uthmanic Hafs if its license allows, otherwise Amiri Quran or Scheherazade New (both under the SIL Open Font License).
+  - Arabic: a choice of Quran fonts, as on Tanzil: KFGQPC Hafs (default), KFGQPC Naskh, Me-Quran, Scheherazade New and Amiri Quran. PDMS Saleem is left out because its license forbids redistribution.
   - Persian: Vazirmatn (SIL Open Font License).
 - **Deep links:** `zekr://ayah/17/24`, used by the widget, notifications and Shortcuts.
 - **CI:** GitHub Actions checks every push. A Linux job runs the data script, the web build and tests, and the Swift tests for `ZekrKit`. A macOS job runs `xcodegen` and builds the app and widget. I can't run Xcode in this environment, so the macOS job is how I find compile errors in the iOS app before you do. It uses macOS minutes (10× on private repos), so it runs only when `ios/` changes.
@@ -155,7 +155,7 @@ Each milestone is one pull request you can review.
 The web app comes first because it's the one I can run and check completely in this environment. The iPhone widget follows right after, since it's what you asked for most.
 
 **Later:**
-- Mushaf page view on the iPhone (the web already has it: `#/page/305`). A line-exact Madani layout would need the KFGQPC page fonts; the web uses flowing text with the same page, juz and surah boundaries
+- Mushaf page view on the iPhone: done, the default reading view. A line-exact Madani layout would need the KFGQPC page fonts; both apps use flowing text with the same page, juz and surah boundaries
 - Word-by-word meanings
 - Khatm and reading plans
 - iCloud sync
@@ -225,7 +225,11 @@ CI on GitHub checks every change. Because the repo is private, macOS minutes are
 
 - **Tanzil translations:** they're for non-commercial use. Ask permission from each translator's publisher, or keep the app free with a clear credit and link to Tanzil.
 - **Al-Mizan:** written permission from the publishers, or keep the link-out.
-- **EveryAyah audio, fonts:** check the terms. The fonts used are under the SIL Open Font License.
+- **EveryAyah audio:** check the terms.
+- **Fonts** (licenses in `web/public/fonts/LICENSES.txt`):
+  - KFGQPC Hafs and Naskh may be used, copied and distributed free of charge, but not sold or modified. The files are Tanzil's builds of the King Fahd Complex fonts; before release, confirm with Tanzil or switch to files straight from the Complex (fonts.qurancomplex.gov.sa).
+  - Me-Quran is free for non-commercial use only. Ask the author (meory@yahoo.com) or drop it before any paid or commercial release.
+  - Scheherazade New and Amiri Quran: SIL Open Font License, no action needed.
 - **Privacy:** no data collected, no tracking (App Store privacy label: "Data Not Collected").
 - **The web version is public once hosted.** That means the Tanzil translations are served to anyone, which counts as redistribution. Fine for a private test site; for a public one, get permission or keep the site unlisted behind a login (Cloudflare Access is free). The Al-Mizan text must never be in the public web build unless the publishers agree.
 - **Web hosting: GitHub Pages (decided).** `.github/workflows/pages.yml` builds and deploys the site; the steps are in the README. A private repo needs a paid GitHub plan for Pages; otherwise the repo has to be public. Cloudflare Pages or Netlify would also work with a private repo if that's ever easier. The site is public once deployed, with a `noindex` request to search engines.
@@ -240,7 +244,7 @@ CI on GitHub checks every change. Because the repo is private, macOS minutes are
 | **M1** Web app | Done and tested here: 33 unit tests and 25 end-to-end tests at phone width, plus a check that real recitation plays. Not hosted yet (§8) |
 | **M1b** Web page view | Done and tested: `#/page/N` with surah banner, ornate ayah markers, surah/page/juz header, tap an ayah for its translation, previous/next page, swipe, jump to page, page turns with the recitation. Page and juz data match the Madani mushaf (19:1-11 on page 305, juz 16) |
 | **M2** iPhone widget | Written: `ZekrKit` (45 tests pass on Linux and on macOS, including the shared rotation cases and daylight-saving cases), the widget and the Xcode project definition. Built by CI on macOS (Xcode 16.4, iOS 18.5 SDK): the widget is embedded and has its App Intents metadata. Not yet run on a phone |
-| **M3** iPhone reader | First part written and built by CI: surah and juz index with filter, surah reader with the Amiri Quran font and selectable translations, per-ayah play/save/share/copy, saved ayahs, settings. Still to do: search, the page view, tafsir panel |
+| **M3** iPhone reader | First part written and built by CI: surah and juz index with filter, surah reader with a choice of Quran fonts (KFGQPC Hafs by default) and selectable translations, per-ayah play/save/share/copy, saved ayahs, settings. Mushaf page view (the default on the iPhone): flowing pages 1-604 with surah banners, tap an ayah for its translation, swipe or buttons to turn, jump to page, follows the recitation. Still to do: search, tafsir panel |
 | **M4** iPhone player | The player is already in: queue, basmala, repeat, speed, translation audio, Lock Screen controls. Still to do: downloads for offline listening, and checking gaps between ayahs on a real phone |
 | M5, M6 | Not started |
 

@@ -35,6 +35,7 @@ public enum Str: CaseIterable {
     case script
     case scriptUthmani
     case scriptSimple
+    case quranFont
     case arabicSize
     case translationSize
     case recitation
@@ -54,6 +55,19 @@ public enum Str: CaseIterable {
     case credits
     case mergedTranslation
     case audioError
+    case translationAudio
+    case readingView
+    case viewVerseFull
+    case viewPageFull
+    case viewVerse
+    case viewPage
+    case goToPage
+    case goTo
+    case cancel
+    case close
+    case tapAyah
+    case nextPage
+    case prevPage
 
     public func text(language: String) -> String {
         language == "fa" ? fa : en
@@ -97,6 +111,7 @@ public enum Str: CaseIterable {
         case .script: return "Arabic script"
         case .scriptUthmani: return "Uthmani"
         case .scriptSimple: return "Simple"
+        case .quranFont: return "Quran font"
         case .arabicSize: return "Arabic size"
         case .translationSize: return "Translation size"
         case .recitation: return "Recitation"
@@ -113,9 +128,22 @@ public enum Str: CaseIterable {
         case .audioTranslation: return "Translation audio after each ayah"
         case .off: return "Off"
         case .about: return "About"
-        case .credits: return "Quran text and translations: Tanzil Project (tanzil.net). The text is unchanged; translations are for non-commercial use. Recitation: EveryAyah.com. Font: Amiri Quran (SIL Open Font License)."
+        case .credits: return "Quran text and translations: Tanzil Project (tanzil.net). The text is unchanged; translations are for non-commercial use. Recitation: EveryAyah.com. Fonts: KFGQPC Hafs and Naskh (King Fahd Complex), Me-Quran (Meor Ridzuan), Scheherazade New and Amiri Quran (SIL Open Font License)."
         case .mergedTranslation: return "(translated together with the previous ayah)"
         case .audioError: return "Could not play this recording."
+        case .translationAudio: return "Translation audio"
+        case .readingView: return "Reading view"
+        case .viewVerseFull: return "Verse by verse, with translations"
+        case .viewPageFull: return "Mushaf page"
+        case .viewVerse: return "Verse by verse"
+        case .viewPage: return "Page"
+        case .goToPage: return "Go to page"
+        case .goTo: return "Go"
+        case .cancel: return "Cancel"
+        case .close: return "Close"
+        case .tapAyah: return "Tap an ayah to see its translation."
+        case .nextPage: return "Next page"
+        case .prevPage: return "Previous page"
         }
     }
 
@@ -155,6 +183,7 @@ public enum Str: CaseIterable {
         case .script: return "خط عربی"
         case .scriptUthmani: return "عثمانی"
         case .scriptSimple: return "ساده"
+        case .quranFont: return "قلم قرآن"
         case .arabicSize: return "اندازهٔ متن عربی"
         case .translationSize: return "اندازهٔ ترجمه"
         case .recitation: return "قرائت"
@@ -171,9 +200,22 @@ public enum Str: CaseIterable {
         case .audioTranslation: return "پخش ترجمهٔ گویا بعد از هر آیه"
         case .off: return "خاموش"
         case .about: return "دربارهٔ برنامه"
-        case .credits: return "متن قرآن و ترجمه‌ها: پروژهٔ تنزیل (tanzil.net). متن بدون تغییر است و ترجمه‌ها برای استفادهٔ غیرتجاری‌اند. قرائت: EveryAyah.com. قلم: امیری قرآن (مجوز SIL Open Font License)."
+        case .credits: return "متن قرآن و ترجمه‌ها: پروژهٔ تنزیل (tanzil.net). متن بدون تغییر است و ترجمه‌ها برای استفادهٔ غیرتجاری‌اند. قرائت: EveryAyah.com. قلم‌ها: حفص و نسخ مجمع ملک فهد، می‌قرآن (معیر رضوان)، شهرزاد و امیری قرآن (مجوز SIL Open Font License)."
         case .mergedTranslation: return "(ترجمهٔ این آیه همراه آیهٔ قبل آمده است)"
         case .audioError: return "پخش این فایل صوتی ممکن نشد."
+        case .translationAudio: return "ترجمهٔ گویا"
+        case .readingView: return "نحوهٔ نمایش قرآن"
+        case .viewVerseFull: return "آیه‌به‌آیه، با ترجمه"
+        case .viewPageFull: return "صفحهٔ قرآن"
+        case .viewVerse: return "آیه‌به‌آیه"
+        case .viewPage: return "صفحه"
+        case .goToPage: return "رفتن به صفحه"
+        case .goTo: return "برو"
+        case .cancel: return "انصراف"
+        case .close: return "بستن"
+        case .tapAyah: return "برای دیدن ترجمه روی یک آیه بزنید."
+        case .nextPage: return "صفحهٔ بعد"
+        case .prevPage: return "صفحهٔ قبل"
         }
     }
 }

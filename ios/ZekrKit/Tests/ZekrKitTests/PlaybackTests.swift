@@ -117,3 +117,31 @@ final class ReaderSettingsTests: XCTestCase {
         XCTAssertEqual(ReaderSettings.load(from: defaults), ReaderSettings())
     }
 }
+
+final class TranslationAudioToggleTests: XCTestCase {
+    func testFirstTimePicksByLanguage() {
+        var fa = ReaderSettings()
+        fa.toggleTranslationAudio(language: "fa")
+        XCTAssertEqual(fa.audioTranslationID, "fa.fooladvand")
+        var en = ReaderSettings()
+        en.toggleTranslationAudio(language: "en")
+        XCTAssertEqual(en.audioTranslationID, "en.sahih")
+    }
+
+    func testOffAndBackOnRemembersTheChoice() {
+        var s = ReaderSettings()
+        s.audioTranslationID = "fa.makarem"
+        s.toggleTranslationAudio(language: "en")
+        XCTAssertNil(s.audioTranslationID)
+        XCTAssertEqual(s.lastAudioTranslationID, "fa.makarem")
+        s.toggleTranslationAudio(language: "en")
+        XCTAssertEqual(s.audioTranslationID, "fa.makarem")
+    }
+
+    func testUnknownRememberedChoiceFallsBack() {
+        var s = ReaderSettings()
+        s.lastAudioTranslationID = "gone"
+        s.toggleTranslationAudio(language: "fa")
+        XCTAssertEqual(s.audioTranslationID, "fa.fooladvand")
+    }
+}
