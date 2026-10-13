@@ -5,6 +5,7 @@ import { type PageTranslation, settings, updateSettings } from '../store'
 import { Icon } from './Icon'
 
 interface Props {
+  wide: boolean
   pageNo: number
   juz: number
   onPlay: () => void
@@ -13,7 +14,7 @@ interface Props {
 }
 
 /** What tapping the page (not an ayah) shows in the side box: play from here, where translations show, following the recitation, the Quran font and size, and verse view. */
-export function PageOptions({ pageNo, juz, onPlay, onVerseView, onClose }: Props) {
+export function PageOptions({ wide, pageNo, juz, onPlay, onVerseView, onClose }: Props) {
   const s = settings.value
   return (
     <div class="page-options" role="region" aria-label={t('pageOptions')} data-testid="page-options" onClick={(e) => e.stopPropagation()}>
@@ -38,14 +39,14 @@ export function PageOptions({ pageNo, juz, onPlay, onVerseView, onClose }: Props
             {QURAN_FONTS.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
           </select>
         </label>
-        <label class="field">
+        {wide ? <label class="field">
           <span>{t('pageTranslation')}</span>
           <select value={s.pageTranslation} onChange={(e) => updateSettings({ pageTranslation: e.currentTarget.value as PageTranslation })}>
             <option value="left">{t('pageTranslationLeft')}</option>
             <option value="right">{t('pageTranslationRight')}</option>
             <option value="popup">{t('pageTranslationPopup')}</option>
           </select>
-        </label>
+        </label> : null}
         <label class="field row">
           <input type="checkbox" checked={s.autoScroll} onChange={(e) => updateSettings({ autoScroll: e.currentTarget.checked })} />
           <span>{t('autoScroll')}</span>

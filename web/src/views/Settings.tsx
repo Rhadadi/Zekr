@@ -3,11 +3,13 @@ import { PlaybackOptions } from '../components/PlaybackOptions'
 import { PageHeader } from '../components/Page'
 import { type Meta, type Script, downloadAll } from '../data'
 import { QURAN_FONTS, type QuranFont } from '../fonts'
+import { useWide } from '../hooks'
 import { lang, t } from '../i18n'
 import { href } from '../router'
 import { type PageTranslation, settings, updateSettings } from '../store'
 
 export function SettingsView({ meta }: { meta: Meta }) {
+  const wide = useWide()
   const s = settings.value
   const [dl, setDl] = useState<{ done: number; total: number; state: 'idle' | 'running' | 'ok' | 'failed' }>({ done: 0, total: 0, state: 'idle' })
   const toggleTranslation = (id: string, on: boolean) =>
@@ -60,14 +62,14 @@ export function SettingsView({ meta }: { meta: Meta }) {
             <option value="page">{t('viewPageFull')}</option>
           </select>
         </label>
-        <label class="field">
+        {wide ? <label class="field">
           <span>{t('pageTranslation')}</span>
           <select value={s.pageTranslation} onChange={(e) => updateSettings({ pageTranslation: e.currentTarget.value as PageTranslation })}>
             <option value="left">{t('pageTranslationLeft')}</option>
             <option value="right">{t('pageTranslationRight')}</option>
             <option value="popup">{t('pageTranslationPopup')}</option>
           </select>
-        </label>
+        </label> : null}
         <label class="field">
           <span>{t('script')}</span>
           <select value={s.script} onChange={(e) => updateSettings({ script: e.currentTarget.value as Script })}>

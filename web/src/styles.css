@@ -419,8 +419,9 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .mushaf-layout.with-box.box-right .mushaf-flow { padding-right: calc(var(--box-w) + 12px); }
 .side-box {
   position: fixed; z-index: 4; width: var(--box-w); overflow-y: auto;
-  top: calc(64px + env(safe-area-inset-top)); bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + var(--player-h, 0px) + 8px);
-  background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 8px 12px;
+  top: calc(76px + env(safe-area-inset-top)); height: fit-content;
+  max-height: calc(100dvh - 76px - var(--nav-h) - env(safe-area-inset-bottom) - var(--player-h, 0px) - 16px);
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 6px 20px rgb(0 0 0 / 0.12); padding: 8px 12px;
 }
 .side-box.side-left { left: max(8px, calc((100vw - 720px) / 2)); }
 .side-box.side-right { right: max(8px, calc((100vw - 720px) / 2)); }
@@ -441,3 +442,9 @@ a.player-info { color: var(--ink); text-decoration: none; }
   -webkit-user-select: text; user-select: text;
 }
 .surah-head .banner { justify-self: stretch; margin-top: 4px; }
+
+/* Phones: reading options float over the page as a card (the side box is for wide screens only) */
+@media (max-width: 999px) {
+  .side-box { left: 12px !important; right: 12px !important; width: auto; top: calc(64px + env(safe-area-inset-top)); bottom: auto; max-height: 60dvh; }
+  .mushaf-layout.with-box .mushaf-flow { padding-left: 0 !important; padding-right: 0 !important; }
+}

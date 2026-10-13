@@ -6,7 +6,7 @@ import { LoadError, Loading } from '../components/Page'
 import { PageOptions } from '../components/PageOptions'
 import { SurahBanner } from '../components/SurahBanner'
 import { type Meta, juzOf, loadText, loadTranslation, locate, pageRange } from '../data'
-import { useAsync } from '../hooks'
+import { useAsync, useWide } from '../hooks'
 import { num, t } from '../i18n'
 import { href } from '../router'
 import { setLastRead, settings, updateSettings } from '../store'
@@ -83,7 +83,9 @@ export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: numb
   const popRef = useRef<HTMLDivElement>(null)
   const touch = useRef<{ x: number; y: number; timer?: number; long?: boolean } | null>(null)
   const playingId = player.value?.ayahId
-  const popup = s.pageTranslation === 'popup'
+  // Phones show the translation as a card under the ayah; the side box is for wide screens.
+  const wide = useWide()
+  const popup = !wide || s.pageTranslation === 'popup'
   const selected = panel?.kind === 'ayah' ? panel.id : undefined
   // One highlight at a time: the ayah being shown, otherwise the one being recited.
   const highlight = selected ?? playingId
@@ -221,7 +223,7 @@ export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: numb
   // The side box: the ayah's panel (unless translations show over the page), or the reading options.
   const box =
     panel?.kind === 'options' ? (
-      <PageOptions pageNo={current} juz={juzOf(meta, pageRange(meta, current).first)} onPlay={() => { setPanel(null); playFrom(pageRange(meta, current).first) }} onVerseView={toVerse} onClose={() => setPanel(null)} />
+      <PageOptions wide={wide} pageNo={current} juz={juzOf(meta, pageRange(meta, current).first)} onPlay={() => { setPanel(null); playFrom(pageRange(meta, current).first) }} onVerseView={toVerse} onClose={() => setPanel(null)} />
     ) : selected !== undefined && !popup ? ayahPanel(selected, 'box') : null
   const side = s.pageTranslation === 'right' ? 'right' : 'left'
 

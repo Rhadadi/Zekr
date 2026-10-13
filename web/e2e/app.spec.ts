@@ -227,6 +227,7 @@ test('works offline after the first visit', async ({ page, context }) => {
 })
 
 test.describe('mushaf page view', () => {
+  test.use({ viewport: { width: 1280, height: 800 } }) // a computer: the box beside the text
   test('page 305 matches the printed mushaf: Maryam 1-11, juz 16', async ({ page }) => {
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/page/305')
@@ -560,6 +561,7 @@ test.describe('opening the app', () => {
 })
 
 test.describe('page view: recitation, tapping and pressing', () => {
+  test.use({ viewport: { width: 1280, height: 800 } }) // a computer: the box beside the text
   test('the open box follows the recitation, with one highlight', async ({ page }) => {
     const played = await trackAudio(page)
     await useSettings(page, { lang: 'en' })
@@ -622,5 +624,26 @@ test.describe('page view: recitation, tapping and pressing', () => {
 
     await page.locator('#page-305 .ay').nth(2).dispatchEvent('contextmenu')
     await expect(page.getByTestId('ayah-panel')).toContainText('19:3')
+  })
+})
+
+test.describe('page view on a phone', () => {
+  test('never has a side box: the translation is a card under the ayah, and the text keeps its full width', async ({ page }) => {
+    await useSettings(page, { lang: 'en', pageTranslation: 'left' })
+    await page.goto('/#/page/1')
+    await page.waitForTimeout(800)
+    const before = (await page.locator('#page-1 .flow').first().boundingBox())!
+    const ayah = page.locator('#page-1 .ay').nth(2)
+    await ayah.click()
+    await expect(page.getByTestId('side-box')).toHaveCount(0)
+    const card = page.locator('.ayah-popup')
+    await expect(card).toContainText('1:3')
+    const after = (await page.locator('#page-1 .flow').first().boundingBox())!
+    expect(after.width).toBeGreaterThanOrEqual(before.width - 1)
+    const a = (await ayah.boundingBox())!
+    const c = (await card.boundingBox())!
+    expect(Math.abs(c.y - (a.y + a.height))).toBeLessThan(80)
+    await page.goto('/#/settings')
+    await expect(page.getByLabel('Translation on the page')).toHaveCount(0)
   })
 })
