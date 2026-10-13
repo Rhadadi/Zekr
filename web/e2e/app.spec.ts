@@ -313,6 +313,7 @@ test.describe('mushaf page view', () => {
   test('over the ayah: a mouse shows the translation on hover, a tap keeps it', async ({ page }) => {
     await useSettings(page, { lang: 'en', pageTranslation: 'popup' })
     await page.goto('/#/page/305')
+    await page.waitForTimeout(800) // the view holds the page in place for a moment while the text settles
     const ayah = page.locator('#page-305 .ay').nth(3)
     await ayah.hover()
     const pop = page.locator('.ayah-popup')
