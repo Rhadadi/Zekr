@@ -2,7 +2,9 @@ import { QURAN_FONTS, type QuranFont } from '../fonts'
 import { t } from '../i18n'
 import { href } from '../router'
 import { settings, updateSettings } from '../store'
+import { useRef } from 'preact/hooks'
 import { Icon } from './Icon'
+import { useSheetSpace } from './sheetSpace'
 
 interface Props {
   pageNo: number
@@ -15,8 +17,10 @@ interface Props {
 /** What tapping the page (not an ayah) shows: play from here, the Quran font and size, and the way to verse by verse. */
 export function PageOptions({ pageNo, juz, onPlay, onVerseView, onClose }: Props) {
   const s = settings.value
+  const ref = useRef<HTMLDivElement>(null)
+  useSheetSpace(ref)
   return (
-    <div class="ayah-sheet page-options" role="region" aria-label={t('pageOptions')} data-testid="page-options" onClick={(e) => e.stopPropagation()}>
+    <div ref={ref} class="ayah-sheet page-options" role="region" aria-label={t('pageOptions')} data-testid="page-options" onClick={(e) => e.stopPropagation()}>
       <div class="sheet-head">
         <strong>{t('pageN', { n: pageNo })} · {t('juzN', { n: juz })}</strong>
         <button class="icon-btn" onClick={onClose} aria-label={t('close')}>

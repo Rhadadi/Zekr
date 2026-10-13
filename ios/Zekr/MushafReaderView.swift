@@ -38,6 +38,8 @@ struct MushafReaderView: View {
                 MushafPageView(
                     page: content,
                     highlighted: highlighted,
+                    // room to scroll the page (and its buttons) above an open panel
+                    bottomSpace: panel == nil ? 0 : 380,
                     onAyah: { id in
                         selectedID = id
                         panel = .ayah
@@ -65,14 +67,6 @@ struct MushafReaderView: View {
         .toolbar {
             ToolbarItem(placement: .principal) {
                 if let content { header(content) }
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    model.switchReadMode(to: .verse, at: selectedID ?? content?.ayahIDs.lowerBound ?? 1)
-                } label: {
-                    Image(systemName: "list.bullet")
-                }
-                .accessibilityLabel(model.text(.viewVerseFull))
             }
         }
         .sheet(item: $panel) { which in
@@ -145,6 +139,7 @@ struct MushafReaderView: View {
 private struct MushafPageView: View {
     let page: MushafPage
     let highlighted: Int?
+    let bottomSpace: CGFloat
     let onAyah: (Int) -> Void
     let onPage: () -> Void
     let onNext: () -> Void
@@ -184,27 +179,34 @@ private struct MushafPageView: View {
                     .foregroundStyle(.secondary)
             }
             .padding(.horizontal)
-            .padding(.vertical, 8)
+            .padding(.top, 8)
+            .padding(.bottom, 8 + bottomSpace)
             .environment(\.layoutDirection, .rightToLeft)
         }
     }
 
-    /// Next page on the left, as in a right-to-left book.
+    /// Small buttons, next page on the left as in a right-to-left book.
     private var pager: some View {
         HStack {
             Button(action: onPrevious) {
-                Label(model.text(.prevPage), systemImage: "chevron.right")
+                Image(systemName: "chevron.right").frame(width: 34, height: 34)
             }
             .disabled(page.number <= 1)
+            .accessibilityLabel(model.text(.prevPage))
+            Spacer()
+            Text("\(LocalizedText.pageTitle(page.number, language: model.language)) / \(LocalizedText.digits("604", language: model.language))")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
             Spacer()
             Button(action: onNext) {
-                Label(model.text(.nextPage), systemImage: "chevron.left")
-                    .labelStyle(TrailingIconLabelStyle())
+                Image(systemName: "chevron.left").frame(width: 34, height: 34)
             }
             .disabled(page.number >= MushafPage.count)
+            .accessibilityLabel(model.text(.nextPage))
         }
-        .buttonStyle(.bordered)
-        .font(.subheadline)
+        .buttonStyle(.plain)
+        .foregroundStyle(.tint)
+        .font(.subheadline.weight(.semibold))
     }
 }
 
@@ -299,15 +301,6 @@ private struct MushafTextView: UIViewRepresentable {
             else { return nil }
             let index = layout.characterIndexForGlyph(at: glyph)
             return view.textStorage.attribute(MushafTextView.ayahKey, at: index, effectiveRange: nil) as? Int
-        }
-    }
-}
-
-private struct TrailingIconLabelStyle: LabelStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        HStack(spacing: 4) {
-            configuration.title
-            configuration.icon
         }
     }
 }

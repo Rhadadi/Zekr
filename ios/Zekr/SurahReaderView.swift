@@ -16,13 +16,6 @@ struct SurahReaderView: View {
 
     private var surah: Surah? { model.store?.surah(route.surah) }
 
-    /// The ayah to open the page view at: the one being recited if it is in this surah, else the one this view opened at.
-    private var currentAyahID: Int {
-        guard let surah else { return 1 }
-        if let id = model.player.playingAyahID, id >= surah.firstAyahID, id < surah.firstAyahID + surah.ayahCount { return id }
-        return surah.firstAyahID + (route.ayah ?? 1) - 1
-    }
-
     var body: some View {
         let settings = model.settings.settings
         ScrollViewReader { proxy in
@@ -66,16 +59,6 @@ struct SurahReaderView: View {
         }
         .navigationTitle(surah.map { $0.name(language: model.language) } ?? "")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    model.switchReadMode(to: .page, at: currentAyahID)
-                } label: {
-                    Image(systemName: "book.pages")
-                }
-                .accessibilityLabel(model.text(.viewPageFull))
-            }
-        }
     }
 
     private func header(_ surah: Surah) -> some View {

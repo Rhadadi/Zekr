@@ -1,3 +1,4 @@
+import { useRef } from 'preact/hooks'
 import { toggleAyah } from '../audio'
 import { type Meta, type TranslationInfo, locate } from '../data'
 import { ayahRef, t } from '../i18n'
@@ -6,6 +7,7 @@ import { ayahLink, ayahText, copyText, shareText } from '../share'
 import { isBookmarked, toggleBookmark } from '../store'
 import { tafsirIndex } from '../tafsir'
 import { Icon } from './Icon'
+import { useSheetSpace } from './sheetSpace'
 
 interface Props {
   meta: Meta
@@ -22,8 +24,10 @@ export function AyahSheet({ meta, id, ar, translations, playing, onClose }: Prop
   const saved = isBookmarked(id)
   const texts = translations.map((x) => x.text || t('mergedTranslation'))
   const text = () => ayahText(meta, id, ar, texts)
+  const ref = useRef<HTMLDivElement>(null)
+  useSheetSpace(ref)
   return (
-    <div class="ayah-sheet" role="region" aria-label={ayahRef(meta.surahs[surah - 1]!, ayah)} data-testid="ayah-sheet">
+    <div ref={ref} class="ayah-sheet" role="region" aria-label={ayahRef(meta.surahs[surah - 1]!, ayah)} data-testid="ayah-sheet">
       <div class="sheet-head">
         <strong>{ayahRef(meta.surahs[surah - 1]!, ayah)}</strong>
         <div class="ayah-actions">

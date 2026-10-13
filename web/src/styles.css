@@ -305,13 +305,7 @@ input[type='checkbox'] { width: 20px; height: 20px; accent-color: var(--accent);
   background: none; color: var(--gold); font-family: var(--font-ui); font-weight: 700; cursor: pointer;
 }
 .mb-jump input { width: 84px; min-height: 40px; text-align: center; border-radius: 999px; border: 1.5px solid var(--gold); background: var(--surface); }
-.mode-toggle { margin: 10px 0 4px; }
-.mode-toggle button {
-  flex: 1; min-height: 40px; border: 0; background: none; border-radius: 9px; color: var(--ink); font-weight: 600; cursor: pointer;
-}
-.mode-toggle button.on { background: var(--surface); box-shadow: var(--shadow); }
 .mushaf-page { padding: 8px 0 12px; touch-action: pan-y; }
-.mushaf-page.has-sheet { padding-bottom: 42dvh; }
 .flow {
   font-family: var(--font-quran); line-height: 2.15; text-align: justify; text-justify: inter-word; margin: 6px 0; word-spacing: 0.05em;
 }
@@ -329,7 +323,11 @@ input[type='checkbox'] { width: 20px; height: 20px; accent-color: var(--accent);
 .banner::before { inset-inline-start: 10px; }
 .banner::after { inset-inline-end: 10px; }
 .mushaf-page .basmala { margin-top: 10px; }
-.pager { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 14px 0 6px; }
+.pager { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 10px 0 6px; }
+.pager-btn { width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 999px; color: var(--accent); }
+.pager-btn:disabled { opacity: 0.35; }
+/* while a panel is open, room to scroll the page (and its buttons) above it */
+.page-wrap { padding-bottom: var(--sheet-h, 0px); }
 .chev-next, .chev-prev { display: inline-flex; }
 .chev-next { transform: scaleX(-1); }
 :root[dir='rtl'] .chev-prev { transform: scaleX(-1); }
@@ -339,7 +337,7 @@ input[type='checkbox'] { width: 20px; height: 20px; accent-color: var(--accent);
   position: fixed; inset-inline: 0; margin-inline: auto; max-width: 720px; z-index: 9;
   bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + var(--player-h, 0px));
   background: var(--surface); border-top: 1px solid var(--line); border-radius: 16px 16px 0 0;
-  box-shadow: 0 -6px 18px rgb(0 0 0 / 0.12); padding: 6px 14px 10px; max-height: 38dvh; display: flex; flex-direction: column;
+  box-shadow: 0 -6px 18px rgb(0 0 0 / 0.12); padding: 6px 14px 10px; max-height: 70dvh; display: flex; flex-direction: column;
 }
 .ayah-sheet .sheet-head { gap: 8px; }
 .sheet-body { overflow-y: auto; padding-bottom: 4px; }
@@ -401,4 +399,3 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .options-body { display: grid; gap: 12px; padding-top: 6px; }
 .options-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .options-row .btn { display: inline-flex; align-items: center; gap: 6px; }
-.page-options { max-height: 60dvh; }

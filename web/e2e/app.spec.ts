@@ -284,16 +284,36 @@ test.describe('mushaf page view', () => {
     await expect(page.locator('.mb-surah')).toContainText('الإسراء')
   })
 
-  test('the reading mode setting decides how surah links open, and the toggle switches', async ({ page }) => {
+  test('the reading view is a setting (no switch on the page); reading options can go to verse view', async ({ page }) => {
     await useSettings(page, { lang: 'en', readMode: 'page' })
     await page.goto('/#/ayah/17/24')
     await expect(page.locator('.mushaf-page')).toHaveAttribute('data-page', '284')
     await expect(page.locator('.ay.sel')).toHaveCount(1)
-    await page.getByRole('button', { name: 'Verses' }).click()
-    await expect(page).toHaveURL(/#\/verse\/17\/24$/)
-    await expect(page.locator('article#a-24')).toBeVisible()
-    await page.getByRole('button', { name: 'Page' }).click()
-    await expect(page).toHaveURL(/#\/page\/284$/)
+    await expect(page.getByRole('group', { name: 'Reading view' })).toHaveCount(0)
+    await page.locator('.mushaf-page').dispatchEvent('click') // closes the ayah panel
+    await page.locator('.mushaf-page').dispatchEvent('click') // opens the reading options
+    await page.getByTestId('page-options').getByRole('button', { name: 'Open in verse view' }).click()
+    await expect(page).toHaveURL(/#\/verse\/17\/\d+$/)
+    await page.goto('/#/settings')
+    await page.getByLabel('Reading view').selectOption({ label: 'Mushaf page' })
+    await page.goto('/#/surah/19')
+    await expect(page.locator('.mushaf-page')).toHaveAttribute('data-page', '305')
+  })
+
+  test('with two translations the panel shows both in full, and the page buttons stay reachable', async ({ page }) => {
+    await useSettings(page, { lang: 'en', translations: ['fa.safavi', 'en.sahih'] })
+    await page.goto('/#/page/3')
+    await page.locator('.ay').nth(1).click()
+    const sheet = page.getByTestId('ayah-sheet')
+    await expect(sheet.locator('.tr')).toHaveCount(2)
+    const body = sheet.locator('.sheet-body')
+    expect(await body.evaluate((e) => e.scrollHeight - e.clientHeight)).toBeLessThanOrEqual(1)
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+    const next = page.getByRole('button', { name: 'Next page' })
+    const box = (await next.boundingBox())!
+    expect(box.height).toBeLessThanOrEqual(40)
+    const onTop = await page.evaluate(([x, y]) => document.elementFromPoint(x!, y!)?.closest('.pager') !== null, [box.x + box.width / 2, box.y + box.height / 2])
+    expect(onTop).toBe(true)
   })
 
   test('verse links always open verse by verse', async ({ page }) => {

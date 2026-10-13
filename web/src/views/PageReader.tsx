@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'preact/hooks'
 import { player, playFrom } from '../audio'
 import { AyahSheet } from '../components/AyahSheet'
 import { Icon } from '../components/Icon'
-import { ModeToggle } from '../components/ModeToggle'
 import { PageOptions } from '../components/PageOptions'
 import { LoadError, Loading } from '../components/Page'
 import { type Meta, juzOf, loadText, loadTranslation, locate, pageOf, pageRange } from '../data'
@@ -162,9 +161,9 @@ export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: numb
         )}
         <span class="mb-juz">{t('juzN', { n: juzOf(meta, first) })}</span>
       </header>
-      <ModeToggle current="page" onPick={(m) => (m === 'verse' ? toVerse() : undefined)} />
+      <div class="page-wrap">
       <div
-        class={`mushaf-page${selected !== undefined || options ? ' has-sheet' : ''}`}
+        class="mushaf-page"
         data-page={pageNo}
         // Tap the page (not an ayah) for reading options; tap again to close what is open.
         onClick={() => {
@@ -205,14 +204,15 @@ export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: numb
         {data.error ? <LoadError retry={data.retry} /> : !data.value ? <Loading /> : flow}
       </div>
       <nav class="pager" aria-label={t('readPage')}>
-        <button class="btn" disabled={pageNo >= 604} onClick={() => goTo(pageNo + 1)}>
-          <span class="chev-next"><Icon name="chevron" size={18} /></span> {t('nextPage')}
+        <button class="icon-btn pager-btn" disabled={pageNo >= 604} onClick={() => goTo(pageNo + 1)} aria-label={t('nextPage')}>
+          <span class="chev-next"><Icon name="chevron" size={18} /></span>
         </button>
         <span class="muted small">{t('pageN', { n: pageNo })} / {num(604)}</span>
-        <button class="btn" disabled={pageNo <= 1} onClick={() => goTo(pageNo - 1)}>
-          {t('prevPage')} <span class="chev-prev"><Icon name="chevron" size={18} /></span>
+        <button class="icon-btn pager-btn" disabled={pageNo <= 1} onClick={() => goTo(pageNo - 1)} aria-label={t('prevPage')}>
+          <span class="chev-prev"><Icon name="chevron" size={18} /></span>
         </button>
       </nav>
+      </div>
       {options && data.value ? (
         <PageOptions pageNo={pageNo} juz={juzOf(meta, first)} onPlay={() => { setOptions(false); playFrom(first) }} onVerseView={toVerse} onClose={() => setOptions(false)} />
       ) : selected !== undefined && data.value ? (

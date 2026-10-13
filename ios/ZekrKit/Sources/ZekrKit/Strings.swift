@@ -59,8 +59,6 @@ public enum Str: CaseIterable {
     case readingView
     case viewVerseFull
     case viewPageFull
-    case viewVerse
-    case viewPage
     case goToPage
     case goTo
     case cancel
@@ -141,8 +139,6 @@ public enum Str: CaseIterable {
         case .readingView: return "Reading view"
         case .viewVerseFull: return "Verse by verse, with translations"
         case .viewPageFull: return "Mushaf page"
-        case .viewVerse: return "Verse by verse"
-        case .viewPage: return "Page"
         case .goToPage: return "Go to page"
         case .goTo: return "Go"
         case .cancel: return "Cancel"
@@ -219,8 +215,6 @@ public enum Str: CaseIterable {
         case .readingView: return "نحوهٔ نمایش قرآن"
         case .viewVerseFull: return "آیه‌به‌آیه، با ترجمه"
         case .viewPageFull: return "صفحهٔ قرآن"
-        case .viewVerse: return "آیه‌به‌آیه"
-        case .viewPage: return "صفحه"
         case .goToPage: return "رفتن به صفحه"
         case .goTo: return "برو"
         case .cancel: return "انصراف"
