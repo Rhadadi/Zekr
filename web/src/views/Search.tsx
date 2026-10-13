@@ -6,6 +6,7 @@ import { useAsync } from '../hooks'
 import { t, num } from '../i18n'
 import { search } from '../search'
 import { settings } from '../store'
+import { StudySearchPanel } from '../components/StudyQuranPanel'
 
 export function SearchView({ meta, initial }: { meta: Meta; initial: string }) {
   const [input, setInput] = useState(initial)
@@ -35,6 +36,7 @@ export function SearchView({ meta, initial }: { meta: Meta; initial: string }) {
       <PageHeader title={t('navSearch')} />
       <input class="search-input" type="search" autofocus value={input} placeholder={t('searchPlaceholder')}
         onInput={(e) => setInput(e.currentTarget.value)} aria-label={t('navSearch')} />
+      {meta.studyQuran ? <StudySearchPanel meta={meta} query={query} /> : null}
       {corpora.error ? <LoadError retry={corpora.retry} /> : null}
       {!query.trim() ? <p class="muted tip">{t('searchHint')}</p> : null}
       {query.trim() && corpora.loading && !found ? <p class="status" role="status">{t('searching')}</p> : null}

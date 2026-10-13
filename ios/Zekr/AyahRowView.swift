@@ -78,6 +78,11 @@ struct AyahRowView: View {
                         .environment(\.layoutDirection, item.info.isRightToLeft ? .rightToLeft : .leftToRight)
                 }
             }
+            if model.store?.hasStudyQuran == true {
+                Button("Tafsir · The Study Quran") { showingTafsir = true }
+                    .font(.footnote)
+                    .sheet(isPresented: $showingTafsir) { StudyQuranView(ayahID: row.id) }
+            }
         }
         .padding(.vertical, 12)
         .padding(.horizontal, (playing || focused) ? 10 : 0)
