@@ -29,8 +29,13 @@ struct RootView: View {
             NavigationStack(path: $model.quranPath) {
                 QuranIndexView()
                     .withPlayerBar()
-                    .navigationDestination(for: ReaderRoute.self) { route in
-                        SurahReaderView(route: route).withPlayerBar()
+                    .navigationDestination(for: QuranRoute.self) { route in
+                        switch route {
+                        case let .verses(reader):
+                            SurahReaderView(route: reader).withPlayerBar()
+                        case let .page(page, focus):
+                            MushafReaderView(page: page, focus: focus).withPlayerBar()
+                        }
                     }
             }
             .tabItem { Label(model.text(.tabQuran), systemImage: "book") }

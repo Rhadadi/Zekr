@@ -1,10 +1,19 @@
 import Foundation
 
+/// How the Quran tab shows the text.
+public enum ReadMode: String, Codable, CaseIterable, Sendable {
+    /// One ayah at a time, with translations.
+    case verse
+    /// Flowing mushaf pages; tap an ayah for its translation.
+    case page
+}
+
 /// Reading and recitation settings, saved as JSON in UserDefaults. Missing keys fall back to the defaults,
 /// so a newer app can add settings without losing the saved ones.
 public struct ReaderSettings: Codable, Equatable, Sendable {
     /// Translation ids shown under each ayah, in this order.
     public var translations: [String] = ["fa.safavi"]
+    public var readMode = ReadMode.page
     public var useUthmaniScript = true
     /// A `QuranFont` id.
     public var quranFontID = QuranFont.hafs.id
@@ -22,13 +31,14 @@ public struct ReaderSettings: Codable, Equatable, Sendable {
     public init() {}
 
     private enum CodingKeys: String, CodingKey {
-        case translations, useUthmaniScript, quranFontID, arabicSize, translationSize, reciterID, speed, repeatCount, playTo, audioTranslationID, lastAudioTranslationID
+        case translations, readMode, useUthmaniScript, quranFontID, arabicSize, translationSize, reciterID, speed, repeatCount, playTo, audioTranslationID, lastAudioTranslationID
     }
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let d = ReaderSettings()
         translations = try c.decodeIfPresent([String].self, forKey: .translations) ?? d.translations
+        readMode = (try? c.decodeIfPresent(ReadMode.self, forKey: .readMode)) ?? d.readMode
         useUthmaniScript = try c.decodeIfPresent(Bool.self, forKey: .useUthmaniScript) ?? d.useUthmaniScript
         quranFontID = try c.decodeIfPresent(String.self, forKey: .quranFontID) ?? d.quranFontID
         arabicSize = try c.decodeIfPresent(Double.self, forKey: .arabicSize) ?? d.arabicSize

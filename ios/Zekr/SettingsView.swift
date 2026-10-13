@@ -33,6 +33,10 @@ struct SettingsView: View {
             }
 
             Section(model.text(.reading)) {
+                Picker(model.text(.readingView), selection: settings.binding(\.readMode)) {
+                    Text(model.text(.viewPageFull)).tag(ReadMode.page)
+                    Text(model.text(.viewVerseFull)).tag(ReadMode.verse)
+                }
                 Picker(model.text(.script), selection: settings.binding(\.useUthmaniScript)) {
                     Text(model.text(.scriptUthmani)).tag(true)
                     Text(model.text(.scriptSimple)).tag(false)

@@ -37,14 +37,14 @@ struct QuranIndexView: View {
 
             if segment == 0 {
                 ForEach(surahs, id: \.id) { surah in
-                    NavigationLink(value: ReaderRoute(surah: surah.id, ayah: nil)) {
+                    NavigationLink(value: model.route(surah: surah.id, ayah: nil)) {
                         SurahRow(surah: surah, language: model.language)
                     }
                 }
             } else {
                 ForEach(juzRows) { row in
                     if let store = model.store, let location = try? store.location(ofAyahID: row.ayahID) {
-                        NavigationLink(value: ReaderRoute(surah: location.surah, ayah: location.ayah)) {
+                        NavigationLink(value: model.route(surah: location.surah, ayah: location.ayah, select: false)) {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(LocalizedText.juzTitle(row.juz, language: model.language)).font(.headline)
                                 Text("\(store.surah(location.surah).name(language: model.language)) \(LocalizedText.digits("\(location.surah):\(location.ayah)", language: model.language))")

@@ -56,6 +56,18 @@ public enum Str: CaseIterable {
     case mergedTranslation
     case audioError
     case translationAudio
+    case readingView
+    case viewVerseFull
+    case viewPageFull
+    case viewVerse
+    case viewPage
+    case goToPage
+    case goTo
+    case cancel
+    case close
+    case tapAyah
+    case nextPage
+    case prevPage
 
     public func text(language: String) -> String {
         language == "fa" ? fa : en
@@ -120,6 +132,18 @@ public enum Str: CaseIterable {
         case .mergedTranslation: return "(translated together with the previous ayah)"
         case .audioError: return "Could not play this recording."
         case .translationAudio: return "Translation audio"
+        case .readingView: return "Reading view"
+        case .viewVerseFull: return "Verse by verse, with translations"
+        case .viewPageFull: return "Mushaf page"
+        case .viewVerse: return "Verse by verse"
+        case .viewPage: return "Page"
+        case .goToPage: return "Go to page"
+        case .goTo: return "Go"
+        case .cancel: return "Cancel"
+        case .close: return "Close"
+        case .tapAyah: return "Tap an ayah to see its translation."
+        case .nextPage: return "Next page"
+        case .prevPage: return "Previous page"
         }
     }
 
@@ -180,6 +204,18 @@ public enum Str: CaseIterable {
         case .mergedTranslation: return "(ترجمهٔ این آیه همراه آیهٔ قبل آمده است)"
         case .audioError: return "پخش این فایل صوتی ممکن نشد."
         case .translationAudio: return "ترجمهٔ گویا"
+        case .readingView: return "نحوهٔ نمایش قرآن"
+        case .viewVerseFull: return "آیه‌به‌آیه، با ترجمه"
+        case .viewPageFull: return "صفحهٔ قرآن"
+        case .viewVerse: return "آیه‌به‌آیه"
+        case .viewPage: return "صفحه"
+        case .goToPage: return "رفتن به صفحه"
+        case .goTo: return "برو"
+        case .cancel: return "انصراف"
+        case .close: return "بستن"
+        case .tapAyah: return "برای دیدن ترجمه روی یک آیه بزنید."
+        case .nextPage: return "صفحهٔ بعد"
+        case .prevPage: return "صفحهٔ قبل"
         }
     }
 }
