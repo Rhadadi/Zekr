@@ -12,7 +12,7 @@ public enum Str: CaseIterable {
     case addWidgetTitle
     case addWidgetSteps
     case widgetNote
-    case tabHome
+    case tabToday
     case tabQuran
     case tabSaved
     case tabSettings
@@ -59,8 +59,6 @@ public enum Str: CaseIterable {
     case readingView
     case viewVerseFull
     case viewPageFull
-    case viewVerse
-    case viewPage
     case goToPage
     case goTo
     case cancel
@@ -68,6 +66,17 @@ public enum Str: CaseIterable {
     case tapAyah
     case nextPage
     case prevPage
+    case playFromPage
+    case pageTranslation
+    case pageTranslationLeft
+    case pageTranslationRight
+    case pageTranslationPopup
+    case followRecitation
+    case tafsir
+    case almizan
+    case tafsirParts
+    case sources
+    case almizanCredit
 
     public func text(language: String) -> String {
         language == "fa" ? fa : en
@@ -88,7 +97,7 @@ public enum Str: CaseIterable {
         case .addWidgetSteps:
             return "1. Touch and hold the Lock Screen, then tap Customize.\n2. Choose Lock Screen and tap the widget area.\n3. Search for Zekr and add “Ayah”.\n4. Tap the widget, then Edit Widget, to choose how often it changes and what it shows."
         case .widgetNote: return "It uses the same rule as the web version, so both show the same ayah with the same options."
-        case .tabHome: return "Home"
+        case .tabToday: return "Today"
         case .tabQuran: return "Quran"
         case .tabSaved: return "Saved"
         case .tabSettings: return "Settings"
@@ -135,15 +144,24 @@ public enum Str: CaseIterable {
         case .readingView: return "Reading view"
         case .viewVerseFull: return "Verse by verse, with translations"
         case .viewPageFull: return "Mushaf page"
-        case .viewVerse: return "Verse by verse"
-        case .viewPage: return "Page"
         case .goToPage: return "Go to page"
         case .goTo: return "Go"
         case .cancel: return "Cancel"
         case .close: return "Close"
-        case .tapAyah: return "Tap an ayah to see its translation."
+        case .tapAyah: return "Tap an ayah for its translation, or the page for reading options."
         case .nextPage: return "Next page"
         case .prevPage: return "Previous page"
+        case .playFromPage: return "Play from this page"
+        case .pageTranslation: return "Translation on the page"
+        case .pageTranslationLeft: return "In a box on the left"
+        case .pageTranslationRight: return "In a box on the right"
+        case .pageTranslationPopup: return "In a card over the page"
+        case .followRecitation: return "Follow the recitation (show the ayah being recited)"
+        case .tafsir: return "Tafsir"
+        case .almizan: return "Al-Mizan"
+        case .tafsirParts: return "Go to part"
+        case .sources: return "Sources"
+        case .almizanCredit: return "Al-Mizan by Allameh Tabatabaei, Persian translation by Mousavi Hamadani. Text from the Zolal project (CRCIS Noor), for personal use."
         }
     }
 
@@ -160,7 +178,7 @@ public enum Str: CaseIterable {
         case .addWidgetSteps:
             return "۱. روی صفحهٔ قفل نگه دارید و «سفارشی‌سازی» را بزنید.\n۲. «صفحهٔ قفل» را انتخاب و روی بخش ویجت‌ها بزنید.\n۳. «Zekr» را جستجو و «Ayah» را اضافه کنید.\n۴. روی ویجت بزنید و «ویرایش ویجت» را انتخاب کنید تا هر چند وقت یک‌بار عوض شود و چه چیزی نشان دهد."
         case .widgetNote: return "این ویجت همان قاعدهٔ نسخهٔ وب را دارد؛ با تنظیمات یکسان، هر دو یک آیه را نشان می‌دهند."
-        case .tabHome: return "خانه"
+        case .tabToday: return "امروز"
         case .tabQuran: return "قرآن"
         case .tabSaved: return "نشان‌شده"
         case .tabSettings: return "تنظیمات"
@@ -207,15 +225,24 @@ public enum Str: CaseIterable {
         case .readingView: return "نحوهٔ نمایش قرآن"
         case .viewVerseFull: return "آیه‌به‌آیه، با ترجمه"
         case .viewPageFull: return "صفحهٔ قرآن"
-        case .viewVerse: return "آیه‌به‌آیه"
-        case .viewPage: return "صفحه"
         case .goToPage: return "رفتن به صفحه"
         case .goTo: return "برو"
         case .cancel: return "انصراف"
         case .close: return "بستن"
-        case .tapAyah: return "برای دیدن ترجمه روی یک آیه بزنید."
+        case .tapAyah: return "برای ترجمه روی یک آیه بزنید، و برای تنظیمات خواندن روی صفحه."
         case .nextPage: return "صفحهٔ بعد"
         case .prevPage: return "صفحهٔ قبل"
+        case .playFromPage: return "پخش از این صفحه"
+        case .pageTranslation: return "ترجمه در صفحه"
+        case .pageTranslationLeft: return "در کادری در سمت چپ"
+        case .pageTranslationRight: return "در کادری در سمت راست"
+        case .pageTranslationPopup: return "در کارتی روی صفحه"
+        case .followRecitation: return "همراهی با قرائت (نمایش آیه‌ای که خوانده می‌شود)"
+        case .tafsir: return "تفسیر"
+        case .almizan: return "المیزان"
+        case .tafsirParts: return "رفتن به بخش"
+        case .sources: return "منابع"
+        case .almizanCredit: return "تفسیر المیزان، علامه طباطبایی، ترجمهٔ سید محمدباقر موسوی همدانی. متن از پروژهٔ زلال (مرکز نور)، برای استفادهٔ شخصی."
         }
     }
 }

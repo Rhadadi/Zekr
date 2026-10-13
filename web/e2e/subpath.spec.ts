@@ -46,7 +46,7 @@ test('the site works from a sub-path, installs its service worker and runs offli
   page.on('response', (r) => r.status() >= 400 && failed.push(`${r.status()} ${r.url()}`))
   await page.addInitScript(() => localStorage.setItem('zekr.settings', JSON.stringify({ lang: 'en' })))
   await page.goto(`http://localhost:${PORT}/Zekr/`)
-  await expect(page.getByTestId('daily-card')).toBeVisible()
+  await expect(page.locator('article#a-1')).toBeVisible()
   await expect(page.locator('link[rel="manifest"]')).toHaveAttribute('href', /manifest\.webmanifest$/)
 
   const scope = await page.evaluate(async () => (await navigator.serviceWorker.ready).scope)
@@ -59,10 +59,10 @@ test('the site works from a sub-path, installs its service worker and runs offli
     .toBeGreaterThan(20)
 
   await page.goto(`http://localhost:${PORT}/Zekr/#/page/305`)
-  await expect(page.locator('.ay')).toHaveCount(11)
+  await expect(page.locator('#page-305 .ay')).toHaveCount(11)
   await context.setOffline(true)
   await page.reload()
-  await expect(page.locator('.ay')).toHaveCount(11)
+  await expect(page.locator('#page-305 .ay')).toHaveCount(11)
   // the Quran font comes from the precache too
   await expect
     .poll(() => page.evaluate(async () => {

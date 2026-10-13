@@ -1,6 +1,6 @@
 # Zekr
 
-A personal Quran app for iPhone and the web: Arabic text (verse by verse or as a mushaf page), Persian and English translations, recitation, tafsir (planned), and a Lock Screen widget that shows a new ayah every hour or every day.
+A personal Quran app for iPhone and the web: Arabic text (verse by verse or as a mushaf page), Persian and English translations, recitation, the Al-Mizan tafsir (Persian, on the iPhone), and a Lock Screen widget that shows a new ayah every hour or every day.
 
 - Plan, decisions and milestones: [docs/PLAN.md](docs/PLAN.md)
 - Persian translations compared: [docs/research/persian-translations.html](docs/research/persian-translations.html)
@@ -52,7 +52,7 @@ On a Mac with Xcode 16 or later:
 
 ```sh
 brew install xcodegen
-python3 tools/build_data.py
+python3 tools/build_data.py --almizan   # --almizan adds the Al-Mizan tafsir (about 10 minutes the first time)
 cp ios/Config/Signing.local.xcconfig.example ios/Config/Signing.local.xcconfig   # then put your Team ID in it
 cd ios && xcodegen && open Zekr.xcodeproj
 ```
@@ -63,6 +63,12 @@ Then add the widget: touch and hold the Lock Screen, Customize, Lock Screen, tap
 
 Tests for the shared Swift code (no Xcode project needed): `cd ios/ZekrKit && swift test`.
 
+### Al-Mizan
+
+`--almizan` downloads Al-Mizan in the Persian translation of Mousavi Hamadani from the [Zolal](https://github.com/roshan-research/zolal) project (built with CRCIS Noor) into `data/raw/almizan_fa/`, then builds `ios/Zekr/Resources/almizan.sqlite`. Every ayah has a book button that opens the section of Al-Mizan that explains it. Without the flag the app works the same, minus that button.
+
+The text is copyrighted, so it is for personal and family use: it is not committed to this repository, and the public website never has it. For a private web build (one only your family can reach), `python3 tools/build_data.py --almizan-web` puts it in the web data too; never deploy that build to the public GitHub Pages site.
+
 ## Credits
 
-Quran text and translations: [Tanzil Project](https://tanzil.net) (text unchanged; translations for non-commercial use). Recitation: [EveryAyah.com](https://everyayah.com). Fonts: KFGQPC Hafs and Naskh (King Fahd Glorious Quran Printing Complex, via Tanzil), Me-Quran (Meor Ridzuan, non-commercial use), Scheherazade New, Amiri Quran and Vazirmatn (SIL Open Font License); see `web/public/fonts/LICENSES.txt`.
+Quran text and translations: [Tanzil Project](https://tanzil.net) (text unchanged; translations for non-commercial use). Recitation: [EveryAyah.com](https://everyayah.com). Tafsir: Al-Mizan (Allameh Tabatabaei), Persian translation by Mousavi Hamadani, text from the Zolal project (CRCIS Noor), for personal use. Fonts: KFGQPC Hafs and Naskh (King Fahd Glorious Quran Printing Complex, via Tanzil), Me-Quran (Meor Ridzuan, non-commercial use), Scheherazade New, Amiri Quran and Vazirmatn (SIL Open Font License); see `web/public/fonts/LICENSES.txt`.

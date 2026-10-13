@@ -193,7 +193,9 @@ CI on GitHub checks every change. Because the repo is private, macOS minutes are
 - **Build path:** your Mac with a free Apple ID for now. Join the Apple Developer Program before sharing with family or releasing.
 - **Audience:** you and your family first, then the App Store. Because of the App Store goal, every text source needs permission before release (see §8).
 - **Tafsir:** Al-Mizan (Tabatabai).
-  - No open digital edition exists. I didn't find any JSON, SQLite or Tanzil/QUL version.
+  - **Source found:** the Zolal project (open-source Quran app by Roshan/Sobhe with CRCIS Noor, github.com/roshan-research/zolal) has the whole Persian translation (and the Arabic original) as one HTML file per section, in Al-Mizan's own ayah groups (594 sections that cover every ayah once). `tools/almizan.py` downloads it once and turns it into headings, paragraphs, Quran quotes, hadith and footnotes. The Iranian libraries (lib.eshia.ir, ghbook, Noor) were not reachable from the build machine. An Arabic-only alternative is OpenITI's text on GitHub.
+  - **Done (iPhone):** `build_data.py --almizan` builds `almizan.sqlite`; every ayah has a book button that opens its Al-Mizan section, with a menu to jump to its parts (Al-Mizan's own translation of the ayahs, the commentary, the hadith discussion) and the sources at the end.
+  - **Web:** the same view exists, but only private builds (`--almizan-web`) have the text; the public site never does.
   - The Persian translation (Musavi Hamadani) is published by Daftar-e Entesharat-e Eslami (Jame'eh Modarresin, Qom). It's sold as an e-book (for example on Fidibo).
   - The English translation (Rizvi for volumes 1–13, Tawheed Institute Australia for 14–40) is partly on al-islam.org.
   - Plan: build the tafsir panel so it can show Al-Mizan by passage (it explains ayahs in groups). Then:
@@ -224,7 +226,7 @@ CI on GitHub checks every change. Because the repo is private, macOS minutes are
 ## 8. Before the App Store
 
 - **Tanzil translations:** they're for non-commercial use. Ask permission from each translator's publisher, or keep the app free with a clear credit and link to Tanzil.
-- **Al-Mizan:** written permission from the publishers, or keep the link-out.
+- **Al-Mizan:** the text in the app is from Zolal / CRCIS Noor and the publisher Daftar-e Entesharat-e Eslami holds the translation rights. Fine for family use; before the App Store, get written permission (CRCIS, noorsoft.org, and the publisher), or ship without it.
 - **EveryAyah audio:** check the terms.
 - **Fonts** (licenses in `web/public/fonts/LICENSES.txt`):
   - KFGQPC Hafs and Naskh may be used, copied and distributed free of charge, but not sold or modified. The files are Tanzil's builds of the King Fahd Complex fonts; before release, confirm with Tanzil or switch to files straight from the Complex (fonts.qurancomplex.gov.sa).

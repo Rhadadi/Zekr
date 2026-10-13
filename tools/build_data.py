@@ -14,6 +14,8 @@ Usage:
   python3 tools/build_data.py            build everything (downloads on first run)
   python3 tools/build_data.py --check    download and validate only, write nothing
   python3 tools/build_data.py --refresh  ignore the download cache
+  python3 tools/build_data.py --almizan  also build the Al-Mizan tafsir for the iPhone app
+                                         (downloads it first if needed; see tools/almizan.py)
 
 Downloaded files are cached in data/raw/ (not committed). Generated files are not
 committed either; run this script to recreate them.
@@ -452,7 +454,7 @@ def build_sqlite(path: Path, *, surahs, marks, texts, translations, pools, versi
     db.close()
 
 
-def build_web(out: Path, *, surahs, marks, texts, translations, pools, version: str):
+def build_web(out: Path, *, surahs, marks, texts, translations, pools, version: str, tafsir: list[str] | None = None):
     if out.exists():
         shutil.rmtree(out)
     order = [(s.id, n) for s in surahs for n in range(1, s.ayahs + 1)]
@@ -479,6 +481,8 @@ def build_web(out: Path, *, surahs, marks, texts, translations, pools, version: 
                 {"id": tid, "lang": i["lang"], "name": i["name"], "translator": i["translator"], "dir": i["dir"], "widget": i["widget"]}
                 for tid, i in translations.items()
             ],
+            # tafsirs in data/<id>/ (private builds only; the public site has none)
+            "tafsir": tafsir or [],
         },
     )
 
@@ -493,6 +497,12 @@ def main(argv=None) -> int:
     ap.add_argument("--web-dir", type=Path, default=ROOT / "web" / "public" / "data")
     ap.add_argument("--ios-db", type=Path, default=ROOT / "ios" / "Zekr" / "Resources" / "quran.sqlite")
     ap.add_argument("--widget-db", type=Path, default=ROOT / "ios" / "ZekrWidgets" / "Resources" / "widget.sqlite")
+    ap.add_argument("--almizan", action="store_true", help="also build the Al-Mizan tafsir database for the iPhone app")
+    ap.add_argument("--almizan-db", type=Path, default=ROOT / "ios" / "Zekr" / "Resources" / "almizan.sqlite")
+    ap.add_argument(
+        "--almizan-web", action="store_true",
+        help="also put Al-Mizan into the web data (private builds only: never deploy it publicly, see docs/PLAN.md §8)",
+    )
     args = ap.parse_args(argv)
 
     report = Report()
@@ -547,6 +557,8 @@ def main(argv=None) -> int:
 
     BASMALA.update(uthmani=texts["uthmani"][(1, 1)], simple=texts["simple"][(1, 1)])
     pools = build_pools(surahs, texts["simple"], translations)
+    if args.almizan_web:
+        hashes["almizan-web"] = "1"  # a build with the tafsir gets its own data version
     version = hashlib.sha256(json.dumps(hashes, sort_keys=True).encode()).hexdigest()[:12]
     print(f"ok: {len(surahs)} surahs, {AYAH_COUNT} ayahs, {len(translations)} translations, data version {version}")
     for name in ("all", "fits.fa.safavi", "fits.fa.fooladvand", "fits.en.sahih"):
@@ -557,9 +569,19 @@ def main(argv=None) -> int:
     kw = dict(surahs=surahs, marks=marks, texts=texts, translations=translations, pools=pools, version=version)
     build_sqlite(args.ios_db, widget=False, **kw)
     build_sqlite(args.widget_db, widget=True, **kw)
-    build_web(args.web_dir, **kw)
+    build_web(args.web_dir, tafsir=["almizan"] if args.almizan_web else None, **kw)
     for p in (args.ios_db, args.widget_db):
         print(f"wrote {p.relative_to(ROOT)} ({p.stat().st_size / 1e6:.1f} MB)")
+    if args.almizan or args.almizan_web:
+        import almizan
+
+        almizan.fetch_all()
+        sections = almizan.load_all([s.ayahs for s in surahs], [s.start + 1 for s in surahs])
+        almizan.build_sqlite(args.almizan_db, sections)
+        print(f"wrote {args.almizan_db.relative_to(ROOT)} ({args.almizan_db.stat().st_size / 1e6:.1f} MB, {len(sections)} sections)")
+        if args.almizan_web:
+            almizan.build_web(args.web_dir, sections)
+            print(f"wrote {args.web_dir.relative_to(ROOT)}/almizan/ (private build: do not deploy publicly)")
     total = sum(f.stat().st_size for f in args.web_dir.rglob("*.json"))
     print(f"wrote {args.web_dir.relative_to(ROOT)}/ ({total / 1e6:.1f} MB of JSON)")
     return 0

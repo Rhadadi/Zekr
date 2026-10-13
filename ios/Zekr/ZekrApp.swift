@@ -20,12 +20,6 @@ struct RootView: View {
     var body: some View {
         @Bindable var model = model
         TabView(selection: $model.tab) {
-            NavigationStack {
-                HomeView().withPlayerBar()
-            }
-            .tabItem { Label(model.text(.tabHome), systemImage: "house") }
-            .tag(AppTab.home)
-
             NavigationStack(path: $model.quranPath) {
                 QuranIndexView()
                     .withPlayerBar()
@@ -40,6 +34,12 @@ struct RootView: View {
             }
             .tabItem { Label(model.text(.tabQuran), systemImage: "book") }
             .tag(AppTab.quran)
+
+            NavigationStack {
+                HomeView().withPlayerBar()
+            }
+            .tabItem { Label(model.text(.tabToday), systemImage: "sun.max") }
+            .tag(AppTab.home)
 
             NavigationStack {
                 SavedView().withPlayerBar()

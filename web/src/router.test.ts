@@ -6,10 +6,11 @@ vi.stubGlobal('window', { addEventListener: () => {} })
 const { parseRoute } = await import('./router')
 
 describe('parseRoute', () => {
-  it('opens the home page by default', () => {
-    expect(parseRoute('').name).toBe('home')
-    expect(parseRoute('#/').name).toBe('home')
-    expect(parseRoute('#/nonsense').name).toBe('home')
+  it('opens the Quran by default, and the ayah of the day at #/today', () => {
+    expect(parseRoute('').name).toBe('start')
+    expect(parseRoute('#/').name).toBe('start')
+    expect(parseRoute('#/nonsense').name).toBe('start')
+    expect(parseRoute('#/today').name).toBe('home')
   })
   it('parses surah and ayah links', () => {
     expect(parseRoute('#/surah/17')).toMatchObject({ name: 'reader', surah: 17, ayah: undefined })

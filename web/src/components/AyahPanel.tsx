@@ -1,9 +1,11 @@
+import type { JSX } from 'preact'
 import { toggleAyah } from '../audio'
 import { type Meta, type TranslationInfo, locate } from '../data'
 import { ayahRef, t } from '../i18n'
 import { href } from '../router'
 import { ayahLink, ayahText, copyText, shareText } from '../share'
 import { isBookmarked, toggleBookmark } from '../store'
+import { tafsirIndex } from '../tafsir'
 import { Icon } from './Icon'
 
 interface Props {
@@ -12,17 +14,21 @@ interface Props {
   ar: string
   translations: { info: TranslationInfo; text: string }[]
   playing: boolean
+  /** 'box': in the side box; 'popup': over the page, under the ayah. */
+  variant: 'box' | 'popup'
+  style?: JSX.CSSProperties
+  panelRef?: preact.Ref<HTMLDivElement>
   onClose: () => void
 }
 
-/** Translation and actions for the ayah selected on a mushaf page. */
-export function AyahSheet({ meta, id, ar, translations, playing, onClose }: Props) {
+/** Translation and actions for an ayah on a mushaf page. */
+export function AyahPanel({ meta, id, ar, translations, playing, variant, style, panelRef, onClose }: Props) {
   const { surah, ayah } = locate(meta, id)
   const saved = isBookmarked(id)
   const texts = translations.map((x) => x.text || t('mergedTranslation'))
   const text = () => ayahText(meta, id, ar, texts)
   return (
-    <div class="ayah-sheet" role="region" aria-label={ayahRef(meta.surahs[surah - 1]!, ayah)} data-testid="ayah-sheet">
+    <div ref={panelRef} class={`ayah-panel ayah-${variant}`} style={style} role="region" aria-label={ayahRef(meta.surahs[surah - 1]!, ayah)} data-testid="ayah-panel">
       <div class="sheet-head">
         <strong>{ayahRef(meta.surahs[surah - 1]!, ayah)}</strong>
         <div class="ayah-actions">
@@ -38,6 +44,11 @@ export function AyahSheet({ meta, id, ar, translations, playing, onClose }: Prop
           <button class="icon-btn" onClick={() => shareText(text(), ayahLink(meta, id))} aria-label={t('share')}>
             <Icon name="share" size={20} />
           </button>
+          {tafsirIndex.value ? (
+            <a class="icon-btn" href={href.tafsir(surah, ayah)} aria-label={`${t('tafsir')}: ${t('almizan')}`}>
+              <Icon name="book" size={20} />
+            </a>
+          ) : null}
           <a class="icon-btn" href={href.verse(surah, ayah)} aria-label={t('openVerseView')}>
             <Icon name="list" size={20} />
           </a>

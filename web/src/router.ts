@@ -1,6 +1,6 @@
 import { signal } from '@preact/signals'
 
-export type RouteName = 'home' | 'index' | 'reader' | 'page' | 'daily' | 'search' | 'saved' | 'settings' | 'about'
+export type RouteName = 'start' | 'home' | 'index' | 'reader' | 'page' | 'tafsir' | 'daily' | 'search' | 'saved' | 'settings' | 'about'
 
 export interface Route {
   name: RouteName
@@ -27,11 +27,18 @@ export function parseRoute(hash: string): Route {
       if (surah && surah >= 1 && surah <= 114) return { name: 'reader', surah, ayah: num(parts[2]), verse: parts[0] === 'verse', query }
       return { name: 'index', query }
     }
+    case 'tafsir': {
+      const surah = num(parts[1])
+      if (surah && surah >= 1 && surah <= 114) return { name: 'tafsir', surah, ayah: num(parts[2]) ?? 1, query }
+      return { name: 'index', query }
+    }
     case 'page': {
       const page = num(parts[1])
       if (page && page >= 1 && page <= 604) return { name: 'page', page, query }
       return { name: 'index', query }
     }
+    case 'today':
+      return { name: 'home', query }
     case 'index':
     case 'daily':
     case 'search':
@@ -40,7 +47,8 @@ export function parseRoute(hash: string): Route {
     case 'about':
       return { name: parts[0], query }
     default:
-      return { name: 'home', query }
+      // Opening the app shows the Quran, where you left off.
+      return { name: 'start', query }
   }
 }
 
@@ -52,7 +60,10 @@ window.addEventListener('hashchange', () => {
 })
 
 export const href = {
-  home: '#/',
+  /** The Quran, where you left off. */
+  start: '#/',
+  /** The ayah of the day. */
+  today: '#/today',
   index: '#/index',
   juz: '#/index?tab=juz',
   daily: '#/daily',
@@ -65,4 +76,5 @@ export const href = {
   /** Always verse by verse. */
   verse: (s: number, a?: number) => (a ? `#/verse/${s}/${a}` : `#/verse/${s}`),
   page: (p: number) => `#/page/${p}`,
+  tafsir: (s: number, a: number) => `#/tafsir/${s}/${a}`,
 }

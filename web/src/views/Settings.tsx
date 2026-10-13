@@ -5,7 +5,7 @@ import { type Meta, type Script, downloadAll } from '../data'
 import { QURAN_FONTS, type QuranFont } from '../fonts'
 import { lang, t } from '../i18n'
 import { href } from '../router'
-import { settings, updateSettings } from '../store'
+import { type PageTranslation, settings, updateSettings } from '../store'
 
 export function SettingsView({ meta }: { meta: Meta }) {
   const s = settings.value
@@ -58,6 +58,14 @@ export function SettingsView({ meta }: { meta: Meta }) {
           <select value={s.readMode} onChange={(e) => updateSettings({ readMode: e.currentTarget.value as typeof s.readMode })}>
             <option value="verse">{t('viewVerseFull')}</option>
             <option value="page">{t('viewPageFull')}</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>{t('pageTranslation')}</span>
+          <select value={s.pageTranslation} onChange={(e) => updateSettings({ pageTranslation: e.currentTarget.value as PageTranslation })}>
+            <option value="left">{t('pageTranslationLeft')}</option>
+            <option value="right">{t('pageTranslationRight')}</option>
+            <option value="popup">{t('pageTranslationPopup')}</option>
           </select>
         </label>
         <label class="field">

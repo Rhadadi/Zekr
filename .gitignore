@@ -1,6 +1,7 @@
 data/raw/
 build/
 ios/Zekr/Resources/quran.sqlite
+ios/Zekr/Resources/almizan.sqlite
 ios/ZekrWidgets/Resources/widget.sqlite
 ios/*.xcodeproj/
 web/public/data/

@@ -16,13 +16,6 @@ struct SurahReaderView: View {
 
     private var surah: Surah? { model.store?.surah(route.surah) }
 
-    /// The ayah to open the page view at: the one being recited if it is in this surah, else the one this view opened at.
-    private var currentAyahID: Int {
-        guard let surah else { return 1 }
-        if let id = model.player.playingAyahID, id >= surah.firstAyahID, id < surah.firstAyahID + surah.ayahCount { return id }
-        return surah.firstAyahID + (route.ayah ?? 1) - 1
-    }
-
     var body: some View {
         let settings = model.settings.settings
         ScrollViewReader { proxy in
@@ -58,29 +51,19 @@ struct SurahReaderView: View {
                     focusedID = nil
                 }
             }
+            .onAppear { model.saveLastRead(surah: route.surah, ayah: route.ayah ?? 1) }
             .onChange(of: model.player.playingAyahID) { _, newID in
-                guard let newID, let surah, newID >= surah.firstAyahID, newID < surah.firstAyahID + surah.ayahCount else { return }
+                guard let newID, model.settings.settings.followRecitation, let surah, newID >= surah.firstAyahID, newID < surah.firstAyahID + surah.ayahCount else { return }
                 withAnimation { proxy.scrollTo(newID, anchor: .center) }
             }
         }
         .navigationTitle(surah.map { $0.name(language: model.language) } ?? "")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    model.switchReadMode(to: .page, at: currentAyahID)
-                } label: {
-                    Image(systemName: "book.pages")
-                }
-                .accessibilityLabel(model.text(.viewPageFull))
-            }
-        }
     }
 
     private func header(_ surah: Surah) -> some View {
         VStack(spacing: 6) {
-            Text(surah.nameArabic)
-                .font(.quran(model.settings.settings.quranFont, size: 34))
+            SurahBanner(name: surah.nameArabic, font: model.settings.settings.quranFont)
             Text("\(surah.isMeccan ? model.text(.meccan) : model.text(.medinan)) · \(LocalizedText.ayahCount(surah.ayahCount, language: model.language))")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
