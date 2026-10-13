@@ -69,5 +69,10 @@ final class MushafPageTests: XCTestCase {
         XCTAssertEqual(old.readMode, .page)
         let verse = try JSONDecoder().decode(ReaderSettings.self, from: Data(#"{"readMode": "verse"}"#.utf8))
         XCTAssertEqual(verse.readMode, .verse)
+        XCTAssertEqual(old.pageTranslation, .left)
+        XCTAssertTrue(old.followRecitation)
+        let saved = try JSONDecoder().decode(ReaderSettings.self, from: Data(#"{"pageTranslation": "popup", "followRecitation": false}"#.utf8))
+        XCTAssertEqual(saved.pageTranslation, .popup)
+        XCTAssertFalse(saved.followRecitation)
     }
 }

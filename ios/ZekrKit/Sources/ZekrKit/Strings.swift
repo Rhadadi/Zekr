@@ -67,6 +67,11 @@ public enum Str: CaseIterable {
     case nextPage
     case prevPage
     case playFromPage
+    case pageTranslation
+    case pageTranslationLeft
+    case pageTranslationRight
+    case pageTranslationPopup
+    case followRecitation
     case tafsir
     case almizan
     case tafsirParts
@@ -147,6 +152,11 @@ public enum Str: CaseIterable {
         case .nextPage: return "Next page"
         case .prevPage: return "Previous page"
         case .playFromPage: return "Play from this page"
+        case .pageTranslation: return "Translation on the page"
+        case .pageTranslationLeft: return "In a box on the left"
+        case .pageTranslationRight: return "In a box on the right"
+        case .pageTranslationPopup: return "In a card over the page"
+        case .followRecitation: return "Follow the recitation (show the ayah being recited)"
         case .tafsir: return "Tafsir"
         case .almizan: return "Al-Mizan"
         case .tafsirParts: return "Go to part"
@@ -223,6 +233,11 @@ public enum Str: CaseIterable {
         case .nextPage: return "صفحهٔ بعد"
         case .prevPage: return "صفحهٔ قبل"
         case .playFromPage: return "پخش از این صفحه"
+        case .pageTranslation: return "ترجمه در صفحه"
+        case .pageTranslationLeft: return "در کادری در سمت چپ"
+        case .pageTranslationRight: return "در کادری در سمت راست"
+        case .pageTranslationPopup: return "در کارتی روی صفحه"
+        case .followRecitation: return "همراهی با قرائت (نمایش آیه‌ای که خوانده می‌شود)"
         case .tafsir: return "تفسیر"
         case .almizan: return "المیزان"
         case .tafsirParts: return "رفتن به بخش"

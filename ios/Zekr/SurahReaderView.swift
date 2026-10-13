@@ -53,7 +53,7 @@ struct SurahReaderView: View {
             }
             .onAppear { model.saveLastRead(surah: route.surah, ayah: route.ayah ?? 1) }
             .onChange(of: model.player.playingAyahID) { _, newID in
-                guard let newID, let surah, newID >= surah.firstAyahID, newID < surah.firstAyahID + surah.ayahCount else { return }
+                guard let newID, model.settings.settings.followRecitation, let surah, newID >= surah.firstAyahID, newID < surah.firstAyahID + surah.ayahCount else { return }
                 withAnimation { proxy.scrollTo(newID, anchor: .center) }
             }
         }
