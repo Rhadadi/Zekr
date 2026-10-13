@@ -38,6 +38,6 @@ Done:
 - **Fixture:** `tools/tests/study_fixture.py` builds a complete made-up package (real schema, filler text, shared and overlapping notes, an ayah with no commentary, an unnumbered "quoted header" note). `test_study_integration.py` runs the adapter on it; the Swift tests that need a package run on it too.
 - **Public build guards:** CI and the Pages deploy fail if `data/tafsir`, `data/intro`, `data/almizan`, a `studyQuran` entry in `meta.json`, or a PDF is in a public build.
 
-Checked here: 41 Python tests (5 need the private package), 45 web unit tests, 69 web end-to-end tests (made-up text via mocked files), 65 Swift tests with the made-up package (61 without), public build free of study content.
+Checked here: 41 Python tests (5 need the private package), 45 web unit tests, 68 web end-to-end tests (made-up text via mocked files), 65 Swift tests with the made-up package (61 without), public build free of study content.
 
 Not checked, needs the Mac and the PDF: every word of the translation, introductions and commentary against the book; the 73 recorded source observations; real file sizes (search loads all 114 commentary files); the interactive iPhone app; offline use with the real data. Do not treat the structural checks as proof of fidelity.
