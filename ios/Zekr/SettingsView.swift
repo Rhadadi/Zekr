@@ -37,6 +37,10 @@ struct SettingsView: View {
                     Text(model.text(.viewPageFull)).tag(ReadMode.page)
                     Text(model.text(.viewVerseFull)).tag(ReadMode.verse)
                 }
+                Picker(model.text(.pageBox), selection: settings.binding(\.pageBox)) {
+                    Text(model.text(.pageBoxBottom)).tag(PageBox.bottom)
+                    Text(model.text(.pageBoxPopup)).tag(PageBox.popup)
+                }
                 Toggle(model.text(.followRecitation), isOn: settings.binding(\.followRecitation))
                 Picker(model.text(.script), selection: settings.binding(\.useUthmaniScript)) {
                     Text(model.text(.scriptUthmani)).tag(true)
@@ -89,6 +93,7 @@ struct SettingsView: View {
             }
         }
         .navigationTitle(model.text(.settingsTitle))
+        .mainMenu()
         .task {
             translations = (try? model.store?.translations()) ?? []
         }

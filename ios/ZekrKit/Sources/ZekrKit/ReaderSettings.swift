@@ -1,5 +1,11 @@
 import Foundation
 
+/// Where the page view shows an ayah's translation: in a box at the bottom (the default) or in a card over the page.
+public enum PageBox: String, Codable, CaseIterable, Sendable {
+    case bottom
+    case popup
+}
+
 /// How the Quran tab shows the text.
 public enum ReadMode: String, Codable, CaseIterable, Sendable {
     /// One ayah at a time, with translations.
@@ -14,6 +20,7 @@ public struct ReaderSettings: Codable, Equatable, Sendable {
     /// Translation ids shown under each ayah, in this order.
     public var translations: [String] = ["fa.safavi"]
     public var readMode = ReadMode.page
+    public var pageBox = PageBox.bottom
     /// While reciting, keep the ayah being recited on screen (even after scrolling elsewhere).
     public var followRecitation = true
     public var useUthmaniScript = true
@@ -33,7 +40,7 @@ public struct ReaderSettings: Codable, Equatable, Sendable {
     public init() {}
 
     private enum CodingKeys: String, CodingKey {
-        case translations, readMode, followRecitation, useUthmaniScript, quranFontID, arabicSize, translationSize, reciterID, speed, repeatCount, playTo, audioTranslationID, lastAudioTranslationID
+        case translations, readMode, pageBox, followRecitation, useUthmaniScript, quranFontID, arabicSize, translationSize, reciterID, speed, repeatCount, playTo, audioTranslationID, lastAudioTranslationID
     }
 
     public init(from decoder: Decoder) throws {
@@ -41,6 +48,7 @@ public struct ReaderSettings: Codable, Equatable, Sendable {
         let d = ReaderSettings()
         translations = try c.decodeIfPresent([String].self, forKey: .translations) ?? d.translations
         readMode = (try? c.decodeIfPresent(ReadMode.self, forKey: .readMode)) ?? d.readMode
+        pageBox = (try? c.decodeIfPresent(PageBox.self, forKey: .pageBox)) ?? d.pageBox
         followRecitation = try c.decodeIfPresent(Bool.self, forKey: .followRecitation) ?? d.followRecitation
         useUthmaniScript = try c.decodeIfPresent(Bool.self, forKey: .useUthmaniScript) ?? d.useUthmaniScript
         quranFontID = try c.decodeIfPresent(String.self, forKey: .quranFontID) ?? d.quranFontID

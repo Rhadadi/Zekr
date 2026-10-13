@@ -70,6 +70,7 @@ final class MushafPageTests: XCTestCase {
         let verse = try JSONDecoder().decode(ReaderSettings.self, from: Data(#"{"readMode": "verse"}"#.utf8))
         XCTAssertEqual(verse.readMode, .verse)
         XCTAssertTrue(old.followRecitation)
+        XCTAssertEqual(old.pageBox, .bottom)
         let saved = try JSONDecoder().decode(ReaderSettings.self, from: Data(#"{"followRecitation": false}"#.utf8))
         XCTAssertFalse(saved.followRecitation)
     }

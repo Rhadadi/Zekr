@@ -53,5 +53,7 @@ struct RootView: View {
             .tabItem { Label(model.text(.tabSettings), systemImage: "slider.horizontal.3") }
             .tag(AppTab.settings)
         }
+        // no tab bar: the menu button at the top left of each screen switches between them
+        .toolbar(.hidden, for: .tabBar)
     }
 }

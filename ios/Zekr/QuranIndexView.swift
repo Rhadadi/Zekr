@@ -59,6 +59,7 @@ struct QuranIndexView: View {
         .listStyle(.plain)
         .searchable(text: $filter, prompt: model.text(.filterSurahs))
         .navigationTitle(model.text(.tabQuran))
+        .mainMenu()
         .task {
             if let starts = try? model.store?.juzStarts() {
                 juzRows = starts.map { JuzRow(juz: $0.juz, ayahID: $0.ayahID) }

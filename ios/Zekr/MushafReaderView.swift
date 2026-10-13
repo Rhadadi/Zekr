@@ -15,6 +15,8 @@ struct MushafReaderView: View {
     @State private var panel: Panel?
     /// Where the ayah was tapped, for the card over the page.
     @State private var tapPoint: CGPoint?
+    /// A tap in the lower half of the screen would put the bottom box over the ayah, so the box goes to the top.
+    @State private var boxAtTop = false
     @State private var jumping = false
     @State private var jumpText = ""
 
@@ -39,21 +41,33 @@ struct MushafReaderView: View {
         GeometryReader { geo in
             // The text keeps the full width; the translation is a card under the tapped ayah
             // (there is no side box on the phone), and reading options are a card near the top.
+            let bottomMode = model.settings.settings.pageBox == .bottom
             pages
                 .environment(\.layoutDirection, .leftToRight)
+                // the translation in a box at the bottom (the default); the text scrolls clear of it
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    if (panel == .ayah && bottomMode && !boxAtTop), let selectedID {
+                        card { AyahBox(ayahID: selectedID, onClose: close) }.padding(.bottom, 8)
+                    } else if panel == .options {
+                        card { optionsBox }.padding(.bottom, 8)
+                    }
+                }
                 .overlay(alignment: .top) {
                     if panel == .ayah, let selectedID {
-                        card { AyahBox(ayahID: selectedID, onClose: close) }
-                            .offset(y: cardOffset(geo))
-                    } else if panel == .options {
-                        card { optionsBox }
-                            .offset(y: 8)
+                        if !bottomMode {
+                            card { AyahBox(ayahID: selectedID, onClose: close) }
+                                .offset(y: cardOffset(geo))
+                        } else if boxAtTop {
+                            card { AyahBox(ayahID: selectedID, onClose: close) }
+                                .offset(y: 8)
+                        }
                     }
                 }
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) { header }
+            ToolbarItem(placement: .topBarLeading) { MainMenu() }
         }
         .alert(model.text(.goToPage), isPresented: $jumping) {
             TextField("1–604", text: $jumpText).keyboardType(.numberPad)
@@ -90,6 +104,7 @@ struct MushafReaderView: View {
                             onAyah: { id, point in
                                 selectedID = id
                                 tapPoint = point
+                                boxAtTop = point.y > UIScreen.main.bounds.height * 0.5
                                 panel = .ayah
                             },
                             onPage: { panel = panel == nil ? .options : nil }
@@ -197,7 +212,7 @@ private struct MushafPageView: View {
             .padding(.vertical, 10)
             .accessibilityHidden(true)
         }
-        .padding(.horizontal)
+        .padding(.horizontal, 10)
         .environment(\.layoutDirection, .rightToLeft)
     }
 }
@@ -224,7 +239,9 @@ private struct MushafTextView: UIViewRepresentable {
         view.isScrollEnabled = false
         view.backgroundColor = .clear
         view.textContainerInset = .zero
-        view.textContainer.lineFragmentPadding = 0
+        // room for the glyphs that overhang the edge of a justified line (the last word was cut off)
+        view.textContainer.lineFragmentPadding = 6
+        view.clipsToBounds = false
         view.semanticContentAttribute = .forceRightToLeft
         view.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         view.addGestureRecognizer(UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.tapped(_:))))

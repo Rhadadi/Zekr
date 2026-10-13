@@ -58,6 +58,7 @@ struct SurahReaderView: View {
             }
         }
         .navigationTitle(surah.map { $0.name(language: model.language) } ?? "")
+        .mainMenu()
         .navigationBarTitleDisplayMode(.inline)
     }
 
