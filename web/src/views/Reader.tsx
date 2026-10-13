@@ -11,6 +11,7 @@ import { ModeToggle } from '../components/ModeToggle'
 import { TranslationAudioToggle } from '../components/TranslationAudioToggle'
 import { pageOf } from '../data'
 import { setLastRead, settings, updateSettings } from '../store'
+import { StudyIntroductionPanel } from '../components/StudyQuranPanel'
 
 export function Reader({ meta, surahId, ayah }: { meta: Meta; surahId: number; ayah?: number }) {
   const s = settings.value
@@ -93,6 +94,7 @@ export function Reader({ meta, surahId, ayah }: { meta: Meta; surahId: number; a
         </button>
         <TranslationAudioToggle />
       </div>
+      {meta.studyQuran ? <StudyIntroductionPanel key={surahId} meta={meta} surah={surahId} /> : null}
       {data.error ? <LoadError retry={data.retry} /> : !data.value ? <Loading /> : (
         <div class="ayahs" ref={listRef}>
           {showBasmala ? (

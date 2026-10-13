@@ -1,4 +1,5 @@
 // Loads the Quran data that tools/build_data.py generates into public/data/.
+import { loadStudyIntroduction, loadStudyTafsir } from './studyQuran'
 
 export interface Surah {
   id: number
@@ -39,6 +40,7 @@ export interface Meta {
   pages: number[]
   sajdas: { surah: number; ayah: number; id: number; type: string }[]
   translations: TranslationInfo[]
+  studyQuran?: { id: string; name: string; pdfSha256: string; importVersion: string }
 }
 
 export interface PoolsFile {
@@ -71,7 +73,8 @@ export function loadMeta(): Promise<Meta> {
 
 const arrays = new Map<string, Promise<string[]>>()
 
-function loadArray(path: string): Promise<string[]> {
+function loadArray(path: string, refresh = false): Promise<string[]> {
+  if (refresh) arrays.delete(path)
   let p = arrays.get(path)
   if (!p) {
     // The data version is in the URL so the service worker can cache these files forever.
@@ -91,10 +94,10 @@ function loadArray(path: string): Promise<string[]> {
 }
 
 /** Arabic text, one string per ayah (index = ayah id - 1). */
-export const loadText = (kind: TextKind) => loadArray(`text/${kind}.json`)
+export const loadText = (kind: TextKind, refresh = false) => loadArray(`text/${kind}.json`, refresh)
 
 /** A translation, one string per ayah (index = ayah id - 1). May be '' where the translator merged two ayahs. */
-export const loadTranslation = (id: string) => loadArray(`tr/${id}.json`)
+export const loadTranslation = (id: string, refresh = false) => loadArray(`tr/${id}.json`, refresh)
 
 let poolsPromise: Promise<PoolsFile> | null = null
 
@@ -117,12 +120,36 @@ export async function getPool(name: string): Promise<number[]> {
 
 /** Fetch every data file so the app works offline. Reports progress as done/total. */
 export async function downloadAll(onProgress: (done: number, total: number) => void): Promise<void> {
+  if (import.meta.env.PROD && typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+    await new Promise<void>((resolve, reject) => {
+      const finish = () => {
+        if (!navigator.serviceWorker.controller) return
+        clearTimeout(timer)
+        navigator.serviceWorker.removeEventListener('controllerchange', finish)
+        resolve()
+      }
+      const timer = setTimeout(() => {
+        navigator.serviceWorker.removeEventListener('controllerchange', finish)
+        reject(new Error('Offline caching is not ready; please retry'))
+      }, 15000)
+      navigator.serviceWorker.ready.then(() => {
+        navigator.serviceWorker.addEventListener('controllerchange', finish)
+        finish()
+      }, (error) => { clearTimeout(timer); reject(error) })
+    })
+  }
   const meta = await loadMeta()
   const jobs: (() => Promise<unknown>)[] = [
     () => loadPools(),
-    ...(['uthmani', 'simple', 'clean'] as const).map((k) => () => loadText(k)),
-    ...meta.translations.map((t) => () => loadTranslation(t.id)),
+    // Refetch during explicit download: an in-memory response may predate the service worker.
+    ...(['uthmani', 'simple', 'clean'] as const).map((k) => () => loadText(k, true)),
+    ...meta.translations.map((t) => () => loadTranslation(t.id, true)),
   ]
+  if (meta.studyQuran) {
+    for (const surah of meta.surahs) {
+      jobs.push(() => loadStudyIntroduction(meta, surah.id, true), () => loadStudyTafsir(meta, surah.id, true))
+    }
+  }
   let done = 0
   onProgress(0, jobs.length)
   for (const job of jobs) {

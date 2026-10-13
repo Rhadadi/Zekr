@@ -381,3 +381,11 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .icon-btn.active { color: var(--accent); }
 .field > .hint { font-weight: 400; }
 .player-controls .icon-btn { width: 40px; }
+
+.study-panel { margin: 12px 0; padding: 12px; border: 1px solid var(--line, #ddd); border-radius: 10px; text-align: left; }
+.study-panel summary { cursor: pointer; min-height: 28px; font-weight: 600; }
+.study-note { line-height: 1.7; overflow-wrap: anywhere; }
+.study-note h4 { margin: 16px 0 8px; }
+.study-panel p { margin: .75em 0; }
+.study-note p { white-space: pre-wrap; }
+.study-refs { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-bottom: 16px; }

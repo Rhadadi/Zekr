@@ -7,6 +7,7 @@ struct SurahReaderView: View {
     @Environment(AppModel.self) private var model
     @State private var content: SurahContent?
     @State private var focusedID: Int?
+    @State private var showingIntroduction = false
 
     struct SurahContent {
         let rows: [QuranStore.AyahRow]
@@ -92,6 +93,11 @@ struct SurahReaderView: View {
             .buttonStyle(.borderedProminent)
             .padding(.top, 4)
             TranslationAudioButton()
+            if model.store?.hasStudyQuran == true {
+                Button("Surah introduction · The Study Quran") { showingIntroduction = true }
+                    .font(.footnote)
+                    .sheet(isPresented: $showingIntroduction) { StudyQuranView(surahID: surah.id) }
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)

@@ -490,6 +490,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--check", action="store_true", help="download and validate only")
     ap.add_argument("--refresh", action="store_true", help="re-download everything")
+    ap.add_argument("--study-quran", type=Path, help="Complete private Study Quran content database; local builds only")
     ap.add_argument("--web-dir", type=Path, default=ROOT / "web" / "public" / "data")
     ap.add_argument("--ios-db", type=Path, default=ROOT / "ios" / "Zekr" / "Resources" / "quran.sqlite")
     ap.add_argument("--widget-db", type=Path, default=ROOT / "ios" / "ZekrWidgets" / "Resources" / "widget.sqlite")
@@ -538,6 +539,14 @@ def main(argv=None) -> int:
         if not report.errors:
             check_translation(tid, info["texts"], texts["clean"], report)
 
+    if args.study_quran:
+        from study_quran import load_translation, checksum, TRANSLATION
+        try:
+            translations[TRANSLATION] = load_translation(args.study_quran, surahs)
+            hashes["study_quran"] = checksum(args.study_quran)
+        except (ValueError, sqlite3.Error, OSError) as e:
+            report.error(f"Study Quran: {e}")
+
     for w in report.warnings:
         print("warning:", w)
     if report.errors:
@@ -558,6 +567,10 @@ def main(argv=None) -> int:
     build_sqlite(args.ios_db, widget=False, **kw)
     build_sqlite(args.widget_db, widget=True, **kw)
     build_web(args.web_dir, **kw)
+    if args.study_quran:
+        from study_quran import install_sqlite, export_web
+        install_sqlite(args.study_quran, args.ios_db)
+        export_web(args.study_quran, args.web_dir)
     for p in (args.ios_db, args.widget_db):
         print(f"wrote {p.relative_to(ROOT)} ({p.stat().st_size / 1e6:.1f} MB)")
     total = sum(f.stat().st_size for f in args.web_dir.rglob("*.json"))

@@ -5,6 +5,7 @@ import { href } from '../router'
 import { ayahLink, ayahText, copyText, shareText } from '../share'
 import { isBookmarked, toggleBookmark } from '../store'
 import { Icon } from './Icon'
+import { StudyQuranPanel } from './StudyQuranPanel'
 
 interface Props {
   meta: Meta
@@ -56,6 +57,7 @@ export function AyahSheet({ meta, id, ar, translations, playing, onClose }: Prop
             </p>
           </div>
         ))}
+        {meta.studyQuran ? <StudyQuranPanel meta={meta} ayahID={id} /> : null}
       </div>
     </div>
   )

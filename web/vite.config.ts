@@ -51,7 +51,7 @@ export default defineConfig({
           {
             urlPattern: ({ url }) => url.pathname.includes('/data/'),
             handler: 'CacheFirst',
-            options: { cacheName: 'zekr-data', expiration: { maxEntries: 60 } },
+            options: { cacheName: 'zekr-data', expiration: { maxEntries: 320 } },
           },
         ],
       },

@@ -8,6 +8,7 @@ struct AyahRowView: View {
     let translations: [(info: TranslationInfo, text: String)]
     let focused: Bool
     @Environment(AppModel.self) private var model
+    @State private var showingTafsir = false
 
     private var playing: Bool { model.player.playingAyahID == row.id }
 
@@ -70,6 +71,11 @@ struct AyahRowView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .environment(\.layoutDirection, item.info.isRightToLeft ? .rightToLeft : .leftToRight)
                 }
+            }
+            if model.store?.hasStudyQuran == true {
+                Button("Tafsir · The Study Quran") { showingTafsir = true }
+                    .font(.footnote)
+                    .sheet(isPresented: $showingTafsir) { StudyQuranView(ayahID: row.id) }
             }
         }
         .padding(.vertical, 12)
