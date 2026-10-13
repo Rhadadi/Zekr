@@ -59,10 +59,10 @@ test('the site works from a sub-path, installs its service worker and runs offli
     .toBeGreaterThan(20)
 
   await page.goto(`http://localhost:${PORT}/Zekr/#/page/305`)
-  await expect(page.locator('.ay')).toHaveCount(11)
+  await expect(page.locator('#page-305 .ay')).toHaveCount(11)
   await context.setOffline(true)
   await page.reload()
-  await expect(page.locator('.ay')).toHaveCount(11)
+  await expect(page.locator('#page-305 .ay')).toHaveCount(11)
   // the Quran font comes from the precache too
   await expect
     .poll(() => page.evaluate(async () => {

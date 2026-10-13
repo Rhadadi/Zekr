@@ -12,7 +12,11 @@ for (const theme of ['light', 'sepia', 'dark'] as const) {
         await page.goto('/' + path)
         await page.waitForSelector('main#main :is(article, .card, ul.list, .status, p, h2)')
         await page.waitForTimeout(300)
-        const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()
+        // The page view holds the whole mushaf; check the page on screen (the others are the same markup).
+        const shown = /^#\/page\/(\d+)/.exec(path)?.[1]
+        let axe = new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa'])
+        if (shown) axe = axe.exclude(`.mpage:not(#page-${shown})`)
+        const result = await axe.analyze()
         const summary = result.violations.map((v) => `${v.id} (${v.impact}): ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join(' | ')}`)
         problems.push(...summary.map((m) => `${path}: ${m}`))
       }

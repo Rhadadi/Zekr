@@ -1,10 +1,8 @@
 import { QURAN_FONTS, type QuranFont } from '../fonts'
 import { t } from '../i18n'
 import { href } from '../router'
-import { settings, updateSettings } from '../store'
-import { useRef } from 'preact/hooks'
+import { type PageTranslation, settings, updateSettings } from '../store'
 import { Icon } from './Icon'
-import { useSheetSpace } from './sheetSpace'
 
 interface Props {
   pageNo: number
@@ -14,13 +12,11 @@ interface Props {
   onClose: () => void
 }
 
-/** What tapping the page (not an ayah) shows: play from here, the Quran font and size, and the way to verse by verse. */
+/** What tapping the page (not an ayah) shows in the side box: play from here, where translations show, following the recitation, the Quran font and size, and verse view. */
 export function PageOptions({ pageNo, juz, onPlay, onVerseView, onClose }: Props) {
   const s = settings.value
-  const ref = useRef<HTMLDivElement>(null)
-  useSheetSpace(ref)
   return (
-    <div ref={ref} class="ayah-sheet page-options" role="region" aria-label={t('pageOptions')} data-testid="page-options" onClick={(e) => e.stopPropagation()}>
+    <div class="page-options" role="region" aria-label={t('pageOptions')} data-testid="page-options" onClick={(e) => e.stopPropagation()}>
       <div class="sheet-head">
         <strong>{t('pageN', { n: pageNo })} · {t('juzN', { n: juz })}</strong>
         <button class="icon-btn" onClick={onClose} aria-label={t('close')}>
@@ -41,6 +37,18 @@ export function PageOptions({ pageNo, juz, onPlay, onVerseView, onClose }: Props
           <select value={s.quranFont} onChange={(e) => updateSettings({ quranFont: e.currentTarget.value as QuranFont })}>
             {QURAN_FONTS.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
           </select>
+        </label>
+        <label class="field">
+          <span>{t('pageTranslation')}</span>
+          <select value={s.pageTranslation} onChange={(e) => updateSettings({ pageTranslation: e.currentTarget.value as PageTranslation })}>
+            <option value="left">{t('pageTranslationLeft')}</option>
+            <option value="right">{t('pageTranslationRight')}</option>
+            <option value="popup">{t('pageTranslationPopup')}</option>
+          </select>
+        </label>
+        <label class="field row">
+          <input type="checkbox" checked={s.autoScroll} onChange={(e) => updateSettings({ autoScroll: e.currentTarget.checked })} />
+          <span>{t('autoScroll')}</span>
         </label>
         <label class="field">
           <span>{t('arabicSize')}</span>

@@ -230,48 +230,36 @@ test.describe('mushaf page view', () => {
   test('page 305 matches the printed mushaf: Maryam 1-11, juz 16', async ({ page }) => {
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/page/305')
-    await expect(page.locator('.banner')).toContainText('سورة مريم')
-    await expect(page.locator('.basmala')).toBeVisible()
-    await expect(page.locator('.ay')).toHaveCount(11)
-    await expect(page.locator('.ay').first()).toContainText(/هيع/) // the letters, whatever marks the script puts on them
-    await expect(page.locator('.mark').first()).toHaveText('﴿١﴾')
-    await expect(page.locator('.mark').last()).toHaveText('﴿١١﴾')
+    const p305 = page.locator('#page-305')
+    await expect(p305.locator('.banner')).toContainText('سورة مريم')
+    await expect(p305.locator('.basmala')).toBeVisible()
+    await expect(p305.locator('.ay')).toHaveCount(11)
+    await expect(p305.locator('.ay').first()).toContainText(/هيع/) // the letters, whatever marks the script puts on them
+    await expect(p305.locator('.mark').first()).toHaveText('﴿١﴾')
+    await expect(p305.locator('.mark').last()).toHaveText('﴿١١﴾')
     await expect(page.locator('.mb-page')).toHaveText('305')
     await expect(page.locator('.mb-juz')).toHaveText('Juz 16')
     await expect(page.locator('.mb-surah')).toContainText('مريم')
   })
 
-  test('tapping an ayah shows its translation and actions', async ({ page }) => {
+  test('the pages flow on: scrolling down reaches the next page, and the header follows', async ({ page }) => {
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/page/305')
-    await page.locator('.ay').nth(1).click()
-    const sheet = page.getByTestId('ayah-sheet')
-    await expect(sheet).toContainText('19:2')
-    await expect(sheet).toContainText('رحمت بخشی پروردگارت')
-    await expect(page.locator('.ay.sel')).toHaveCount(1)
-    await sheet.getByRole('button', { name: 'Close' }).click()
-    await expect(page.getByTestId('ayah-sheet')).toHaveCount(0)
+    await expect(page.locator('.mb-page')).toHaveText('305')
+    await page.waitForTimeout(800) // the view holds the page in place for a moment while the text settles
+    await page.locator('#page-306').evaluate((el) => el.scrollIntoView({ block: 'start' }))
+    await expect(page.locator('.mb-page')).toHaveText('306')
+    await expect(page.locator('#page-306 .ay').first().locator('.mark')).toHaveText('﴿١٢﴾')
+    await expect(page.locator('#page-306 .banner')).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Next page' })).toHaveCount(0)
   })
 
-  test('next and previous page buttons turn the page', async ({ page }) => {
+  test('the first page is Al-Fatiha, with no separate basmala', async ({ page }) => {
     await useSettings(page, { lang: 'en' })
-    await page.goto('/#/page/305')
-    await page.getByRole('button', { name: 'Next page' }).click()
-    await expect(page).toHaveURL(/#\/page\/306$/)
-    await expect(page.locator('.ay').first().locator('.mark')).toHaveText('﴿١٢﴾')
-    await page.getByRole('button', { name: 'Previous page' }).click()
-    await expect(page).toHaveURL(/#\/page\/305$/)
-  })
-
-  test('a page that starts mid-surah has no banner, and the first page opens Al-Fatiha', async ({ page }) => {
-    await useSettings(page, { lang: 'en' })
-    await page.goto('/#/page/306')
-    await expect(page.locator('.ay').first()).toBeVisible()
-    await expect(page.locator('.banner')).toHaveCount(0)
     await page.goto('/#/page/1')
-    await expect(page.locator('.banner')).toContainText('الفاتحة')
-    await expect(page.locator('.basmala')).toHaveCount(0)
-    await expect(page.locator('.ay')).toHaveCount(7)
+    await expect(page.locator('#page-1 .banner')).toContainText('الفاتحة')
+    await expect(page.locator('#page-1 .basmala')).toHaveCount(0)
+    await expect(page.locator('#page-1 .ay')).toHaveCount(7)
   })
 
   test('jump to a page by number', async ({ page }) => {
@@ -280,67 +268,86 @@ test.describe('mushaf page view', () => {
     await page.locator('.mb-page').click()
     await page.getByLabel('Go to page').fill('284')
     await page.keyboard.press('Enter')
-    await expect(page).toHaveURL(/#\/page\/284$/)
+    await expect(page.locator('.mb-page')).toHaveText('284')
     await expect(page.locator('.mb-surah')).toContainText('الإسراء')
+    await expect(page.locator('#page-284 .ay').first()).toBeInViewport()
+  })
+
+  test('tapping an ayah shows its translation in a box at the side', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/305')
+    await page.locator('#page-305 .ay').nth(1).click()
+    const box = page.getByTestId('side-box')
+    await expect(box.getByTestId('ayah-panel')).toContainText('19:2')
+    await expect(box).toContainText('رحمت بخشی پروردگارت')
+    await expect(page.locator('.ay.sel')).toHaveCount(1)
+    await expect(page.locator('#page-305 .ay').nth(1)).toBeInViewport()
+    // on the left by default; the text makes room for it rather than being covered
+    const boxRect = (await box.boundingBox())!
+    const textRect = (await page.locator('#page-305 .flow').first().boundingBox())!
+    expect(boxRect.x + boxRect.width).toBeLessThanOrEqual(textRect.x + 1)
+    await box.getByRole('button', { name: 'Close' }).click()
+    await expect(page.getByTestId('side-box')).toHaveCount(0)
+  })
+
+  test('the box can be on the right, chosen in Settings', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/settings')
+    await page.getByLabel('Translation on the page').selectOption({ label: 'In a box on the right' })
+    await page.goto('/#/page/305')
+    await page.locator('#page-305 .ay').nth(1).click()
+    const boxRect = (await page.getByTestId('side-box').boundingBox())!
+    const textRect = (await page.locator('#page-305 .flow').first().boundingBox())!
+    expect(boxRect.x).toBeGreaterThanOrEqual(textRect.x + textRect.width - 1)
+  })
+
+  test('with two translations the box shows both in full', async ({ page }) => {
+    await useSettings(page, { lang: 'en', translations: ['fa.safavi', 'en.sahih'] })
+    await page.goto('/#/page/3')
+    await page.locator('#page-3 .ay').nth(1).click()
+    const box = page.getByTestId('side-box')
+    await expect(box.locator('.tr')).toHaveCount(2)
+    await expect(box.locator('.tr').nth(1)).toBeVisible()
+  })
+
+  test('over the ayah: a mouse shows the translation on hover, a tap keeps it', async ({ page }) => {
+    await useSettings(page, { lang: 'en', pageTranslation: 'popup' })
+    await page.goto('/#/page/305')
+    const ayah = page.locator('#page-305 .ay').nth(3)
+    await ayah.hover()
+    const pop = page.locator('.ayah-popup')
+    await expect(pop).toContainText('19:4')
+    const a = (await ayah.boundingBox())!
+    const b = (await pop.boundingBox())!
+    expect(Math.abs(b.y - (a.y + a.height))).toBeLessThan(80) // right by the ayah
+    await expect(page.getByTestId('side-box')).toHaveCount(0)
+    await page.locator('.mb-surah').hover()
+    await expect(pop).toHaveCount(0)
+    await ayah.click()
+    await page.locator('.mb-surah').hover()
+    await expect(pop).toContainText('19:4')
   })
 
   test('the reading view is a setting (no switch on the page); reading options can go to verse view', async ({ page }) => {
     await useSettings(page, { lang: 'en', readMode: 'page' })
     await page.goto('/#/ayah/17/24')
-    await expect(page.locator('.mushaf-page')).toHaveAttribute('data-page', '284')
+    await expect(page.locator('.mb-page')).toHaveText('284')
     await expect(page.locator('.ay.sel')).toHaveCount(1)
     await expect(page.getByRole('group', { name: 'Reading view' })).toHaveCount(0)
-    await page.locator('.mushaf-page').dispatchEvent('click') // closes the ayah panel
-    await page.locator('.mushaf-page').dispatchEvent('click') // opens the reading options
+    await page.locator('.mushaf-flow').dispatchEvent('click') // closes the ayah box
+    await page.locator('.mushaf-flow').dispatchEvent('click') // opens the reading options
     await page.getByTestId('page-options').getByRole('button', { name: 'Open in verse view' }).click()
     await expect(page).toHaveURL(/#\/verse\/17\/\d+$/)
     await page.goto('/#/settings')
     await page.getByLabel('Reading view').selectOption({ label: 'Mushaf page' })
     await page.goto('/#/surah/19')
-    await expect(page.locator('.mushaf-page')).toHaveAttribute('data-page', '305')
-  })
-
-  test('with two translations the panel shows both in full, and the page buttons stay reachable', async ({ page }) => {
-    await useSettings(page, { lang: 'en', translations: ['fa.safavi', 'en.sahih'] })
-    await page.goto('/#/page/3')
-    await page.locator('.ay').nth(1).click()
-    const sheet = page.getByTestId('ayah-sheet')
-    await expect(sheet.locator('.tr')).toHaveCount(2)
-    const body = sheet.locator('.sheet-body')
-    expect(await body.evaluate((e) => e.scrollHeight - e.clientHeight)).toBeLessThanOrEqual(1)
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
-    const next = page.getByRole('button', { name: 'Next page' })
-    const box = (await next.boundingBox())!
-    expect(box.height).toBeLessThanOrEqual(40)
-    const onTop = await page.evaluate(([x, y]) => document.elementFromPoint(x!, y!)?.closest('.pager') !== null, [box.x + box.width / 2, box.y + box.height / 2])
-    expect(onTop).toBe(true)
+    await expect(page.locator('.mb-page')).toHaveText('305')
   })
 
   test('verse links always open verse by verse', async ({ page }) => {
     await useSettings(page, { lang: 'en', readMode: 'page' })
     await page.goto('/#/verse/1')
     await expect(page.locator('article.ayah')).toHaveCount(7)
-  })
-
-  test('swiping right turns to the next page (right-to-left book)', async ({ browser }) => {
-    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true })
-    const page = await context.newPage()
-    await page.addInitScript(() => localStorage.setItem('zekr.settings', JSON.stringify({ lang: 'en' })))
-    await page.goto('http://localhost:4173/#/page/305')
-    await expect(page.locator('.ay').first()).toBeVisible()
-    const swipe = (fromX: number, toX: number) =>
-      page.evaluate(([a, b]) => {
-        const el = document.querySelector('.mushaf-page')!
-        const mk = (type: string, x: number) =>
-          new TouchEvent(type, { bubbles: true, cancelable: true, touches: type === 'touchend' ? [] : [new Touch({ identifier: 1, target: el, clientX: x, clientY: 300 })], changedTouches: [new Touch({ identifier: 1, target: el, clientX: x, clientY: 300 })] })
-        el.dispatchEvent(mk('touchstart', a as number))
-        el.dispatchEvent(mk('touchend', b as number))
-      }, [fromX, toX])
-    await swipe(100, 260)
-    await expect(page).toHaveURL(/#\/page\/306$/)
-    await swipe(260, 100)
-    await expect(page).toHaveURL(/#\/page\/305$/)
-    await context.close()
   })
 })
 
@@ -524,8 +531,8 @@ test.describe('Al-Mizan tafsir', () => {
     test('the mushaf page panel links to it too', async ({ page }) => {
       await useSettings(page, { lang: 'fa' })
       await page.goto('/#/page/305')
-      await page.locator('.ay').nth(2).click()
-      await page.getByTestId('ayah-sheet').getByRole('link', { name: 'تفسیر: المیزان' }).click()
+      await page.locator('#page-305 .ay').nth(2).click()
+      await page.getByTestId('ayah-panel').getByRole('link', { name: 'تفسیر: المیزان' }).click()
       await expect(page).toHaveURL(/#\/tafsir\/19\/3$/)
       await expect(page.locator('article.tafsir .tf-h').first()).toHaveText('ترجمه آیات')
     })
@@ -547,41 +554,72 @@ test.describe('opening the app', () => {
     await useSettings(page, { lang: 'en', readMode: 'page' })
     await page.addInitScript(() => localStorage.setItem('zekr.lastRead', JSON.stringify({ surah: 19, ayah: 5 })))
     await page.goto('/')
-    await expect(page.locator('.mushaf-page')).toHaveAttribute('data-page', '305')
+    await expect(page.locator('.mb-page')).toHaveText('305')
   })
 })
 
-test.describe('page view: tapping and pressing', () => {
-  test('the open ayah panel follows the recitation, with one highlight', async ({ page }) => {
+test.describe('page view: recitation, tapping and pressing', () => {
+  test('the open box follows the recitation, with one highlight', async ({ page }) => {
     const played = await trackAudio(page)
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/page/305')
-    await page.locator('.ay').first().click()
-    const sheet = page.getByTestId('ayah-sheet')
-    await expect(sheet).toContainText('19:1')
-    await sheet.getByRole('button', { name: 'Play' }).click()
+    await page.locator('#page-305 .ay').first().click()
+    const panel = page.getByTestId('ayah-panel')
+    await expect(panel).toContainText('19:1')
+    await panel.getByRole('button', { name: 'Play' }).click()
     await expect.poll(async () => (await played()).length).toBe(1)
     await finishRecording(page)
-    await expect(sheet).toContainText('19:2')
-    await expect(sheet.locator('.tr')).toContainText('زکری')
+    await expect(panel).toContainText('19:2')
+    await expect(panel.locator('.tr')).toContainText('زکری')
     await expect(page.locator('.ay.sel')).toHaveCount(1)
-    await expect(page.locator('.ay.sel')).toHaveAttribute('data-id', String(await page.locator('.ay').nth(1).getAttribute('data-id')))
+    await expect(page.locator('.ay.sel')).toHaveAttribute('data-id', String(await page.locator('#page-305 .ay').nth(1).getAttribute('data-id')))
     await expect(page.locator('.ay.playing')).toHaveCount(0)
   })
 
-  test('tapping the page opens reading options; a long press on an ayah opens its panel, not the browser menu', async ({ page }) => {
+  test('the ayah being recited is highlighted and brought back into view, even after scrolling away', async ({ page }) => {
+    const played = await trackAudio(page)
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/305')
+    await page.locator('#page-305 .ay').first().click()
+    await page.getByTestId('ayah-panel').getByRole('button', { name: 'Play' }).click()
+    await page.getByTestId('side-box').getByRole('button', { name: 'Close' }).click()
+    await expect.poll(async () => (await played()).length).toBe(1)
+    await page.waitForTimeout(800) // the view holds the ayah in place for a moment while the text settles
+    await page.locator('#page-320').evaluate((el) => el.scrollIntoView())
+    await finishRecording(page)
+    const second = page.locator('#page-305 .ay').nth(1)
+    await expect(second).toHaveClass(/playing/)
+    await expect(second).toBeInViewport()
+  })
+
+  test('…unless following the recitation is turned off', async ({ page }) => {
+    const played = await trackAudio(page)
+    await useSettings(page, { lang: 'en', autoScroll: false })
+    await page.goto('/#/page/305')
+    await page.locator('#page-305 .ay').first().click()
+    await page.getByTestId('ayah-panel').getByRole('button', { name: 'Play' }).click()
+    await page.getByTestId('side-box').getByRole('button', { name: 'Close' }).click()
+    await expect.poll(async () => (await played()).length).toBe(1)
+    await page.waitForTimeout(800) // the view holds the ayah in place for a moment while the text settles
+    await page.locator('#page-320').evaluate((el) => el.scrollIntoView())
+    await finishRecording(page)
+    await expect(page.locator('#page-305 .ay').nth(1)).toHaveClass(/playing/)
+    await expect(page.locator('#page-305 .ay').nth(1)).not.toBeInViewport()
+  })
+
+  test('tapping the page opens reading options; a long press on an ayah opens its box, not the browser menu', async ({ page }) => {
     await useSettings(page, { lang: 'en', translations: ['en.sahih'] })
     await page.goto('/#/page/305')
-    await expect(page.locator('.mushaf-page')).toHaveCSS('user-select', 'none')
-    await page.locator('.banner').click()
+    await expect(page.locator('.mushaf-flow')).toHaveCSS('user-select', 'none')
+    await page.locator('#page-305 .banner').click()
     const options = page.getByTestId('page-options')
-    await expect(options).toContainText('Page 305')
+    await expect(options).toContainText(/Page 30[45]/)
     await options.getByLabel('Quran font').selectOption({ label: 'Amiri Quran' })
-    await expect(page.locator('.flow').first()).toHaveCSS('font-family', /^"?Zekr Amiri/)
-    await page.locator('.banner').click()
+    await expect(page.locator('#page-305 .flow').first()).toHaveCSS('font-family', /^"?Zekr Amiri/)
+    await page.locator('#page-305 .banner').click()
     await expect(options).toHaveCount(0)
 
-    await page.locator('.ay').nth(2).dispatchEvent('contextmenu')
-    await expect(page.getByTestId('ayah-sheet')).toContainText('19:3')
+    await page.locator('#page-305 .ay').nth(2).dispatchEvent('contextmenu')
+    await expect(page.getByTestId('ayah-panel')).toContainText('19:3')
   })
 })

@@ -305,7 +305,7 @@ input[type='checkbox'] { width: 20px; height: 20px; accent-color: var(--accent);
   background: none; color: var(--gold); font-family: var(--font-ui); font-weight: 700; cursor: pointer;
 }
 .mb-jump input { width: 84px; min-height: 40px; text-align: center; border-radius: 999px; border: 1.5px solid var(--gold); background: var(--surface); }
-.mushaf-page { padding: 8px 0 12px; touch-action: pan-y; }
+.mushaf-flow { position: relative; padding: 8px 0 12px; }
 .flow {
   font-family: var(--font-quran); line-height: 2.15; text-align: justify; text-justify: inter-word; margin: 6px 0; word-spacing: 0.05em;
 }
@@ -322,24 +322,11 @@ input[type='checkbox'] { width: 20px; height: 20px; accent-color: var(--accent);
 }
 .banner::before { inset-inline-start: 10px; }
 .banner::after { inset-inline-end: 10px; }
-.mushaf-page .basmala { margin-top: 10px; }
-.pager { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 10px 0 6px; }
-.pager-btn { width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 999px; color: var(--accent); }
-.pager-btn:disabled { opacity: 0.35; }
-/* while a panel is open, room to scroll the page (and its buttons) above it */
-.page-wrap { padding-bottom: var(--sheet-h, 0px); }
+.mushaf-flow .basmala { margin-top: 10px; }
 .chev-next, .chev-prev { display: inline-flex; }
 .chev-next { transform: scaleX(-1); }
 :root[dir='rtl'] .chev-prev { transform: scaleX(-1); }
 :root[dir='rtl'] .chev-next { transform: none; }
-.pager-tip { text-align: center; }
-.ayah-sheet {
-  position: fixed; inset-inline: 0; margin-inline: auto; max-width: 720px; z-index: 9;
-  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + var(--player-h, 0px));
-  background: var(--surface); border-top: 1px solid var(--line); border-radius: 16px 16px 0 0;
-  box-shadow: 0 -6px 18px rgb(0 0 0 / 0.12); padding: 6px 14px 10px; max-height: 70dvh; display: flex; flex-direction: column;
-}
-.ayah-sheet .sheet-head { gap: 8px; }
 .sheet-body { overflow-y: auto; padding-bottom: 4px; }
 .app.has-player { --player-h: 64px; }
 
@@ -394,8 +381,42 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .tf-notes h3 { font-size: 1em; color: var(--ink); }
 
 /* Page view: Zekr's own menus instead of the browser's text-selection menu */
-.mushaf-page { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.mushaf-flow { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .ay.sel { background: var(--hl); }
 .options-body { display: grid; gap: 12px; padding-top: 6px; }
 .options-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .options-row .btn { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Page view: the whole mushaf scrolls; pages render only near the screen */
+.mpage { content-visibility: auto; contain-intrinsic-size: auto var(--page-h, 1400px); scroll-margin-top: 64px; }
+.page-no { display: flex; align-items: center; gap: 10px; margin: 18px 0 22px; color: var(--muted); font-size: 0.8rem; }
+.page-no::before, .page-no::after { content: ''; flex: 1; border-top: 1px solid var(--line); }
+@media (hover: hover) { .ay:not(.sel):not(.playing):hover { background: var(--sel); } }
+
+/* The translation box in the left or right margin. The text makes room for it. */
+.mushaf-layout { --box-w: clamp(150px, 40vw, 340px); }
+.mushaf-layout.with-box.box-left .mushaf-flow { padding-left: calc(var(--box-w) + 12px); }
+.mushaf-layout.with-box.box-right .mushaf-flow { padding-right: calc(var(--box-w) + 12px); }
+.side-box {
+  position: fixed; z-index: 4; width: var(--box-w); overflow-y: auto;
+  top: calc(64px + env(safe-area-inset-top)); bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + var(--player-h, 0px) + 8px);
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 8px 12px;
+}
+.side-box.side-left { left: max(8px, calc((100vw - 720px) / 2)); }
+.side-box.side-right { right: max(8px, calc((100vw - 720px) / 2)); }
+/* wide screens: the box sits beside the text instead of taking its room */
+@media (min-width: 1440px) {
+  .mushaf-layout.with-box.box-left .mushaf-flow, .mushaf-layout.with-box.box-right .mushaf-flow { padding-left: 0; padding-right: 0; }
+  .side-box.side-left { left: calc((100vw - 720px) / 2 - var(--box-w) - 16px); }
+  .side-box.side-right { right: calc((100vw - 720px) / 2 - var(--box-w) - 16px); }
+}
+.side-box .sheet-head { flex-wrap: wrap; gap: 4px; }
+.side-box .ayah-actions { flex-wrap: wrap; }
+.ayah-panel .tr { font-size: 0.95rem; }
+
+/* The translation over the page, under its ayah */
+.ayah-popup {
+  position: fixed; z-index: 6; left: 12px; right: 12px; margin-inline: auto; max-width: 460px; max-height: 60dvh; overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 8px 24px rgb(0 0 0 / 0.16); padding: 8px 12px;
+  -webkit-user-select: text; user-select: text;
+}
