@@ -5,6 +5,8 @@ A personal Quran app for iPhone and the web: Arabic text (verse by verse or as a
 - Plan, decisions and milestones: [docs/PLAN.md](docs/PLAN.md)
 - Persian translations compared: [docs/research/persian-translations.html](docs/research/persian-translations.html)
 
+Working on this repository (human or agent)? Start with [`AGENTS.md`](AGENTS.md); the next piece of work is planned in [`docs/DESIGN.md`](docs/DESIGN.md).
+
 ## Layout
 
 | Folder | What it is |
