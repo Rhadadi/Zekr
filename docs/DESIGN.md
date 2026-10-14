@@ -144,27 +144,18 @@ The inspector is in flow and sticky, not `position: fixed`, so the text width de
 - **inline**: one paragraph per ayah followed by its translation. Justification is lost in this mode; say so in the option's hint. Build this last; it is the only genuinely new rendering.
 - **off**: no translations on the page; tapping an ayah still opens the panel (it is the action surface).
 
-### The mushaf page (frame, running heads, surah boxes)
+### The mushaf page: the printed pages themselves
 
-The owner's reference is the printed Madani mushaf, blue edition: a patterned border round each page, two tabs on the top edge, the page number in a tab on the bottom edge, round ayah-number rosettes, and the first two pages set in a medallion. Mockups: the "Zekr mushaf page" canvas (https://claude.ai/artifact/9QezGeFt4WmaMUP787SzXj): page 1, page 2, page 3 (a regular page), page 604 (three surahs) and the page-colour setting. Draw our own simple patterns; do **not** copy the printed artwork.
+The owner wants every page to look **exactly** like their printed mushaf (the blue edition: patterned border, juz and surah tabs, page number tab, round ayah markers, illuminated pages 1 and 2, several surah boxes on a juz 30 page). Do not draw or imitate it. Use the edition's own pages.
 
-- **Which ayahs go on which page**: Tanzil's Madani split, already in `meta.pages` (page 3 = 2:6–16, page 604 = 112:1–114:6). Nothing to change. The text flows and is justified; it is not broken into the printed 15 lines (that needs line-by-line data and the King Fahd glyph fonts, which we do not have a licence for).
-- **Regular page** (3–604): a `section.mpage` with a patterned band (about 8px) between two thin rules, and the paper colour inside.
-  - **Top-right tab**: the juz in Arabic words (`الجُزءُ الأوَّل` … `الجُزءُ الثَّلاثون`; a 30-entry table in `i18n` or `quran.ts`, not digits).
-  - **Top-left tab**: `سُورَةُ` plus the name of the surah the page **starts in** (page 604 shows Al-Ikhlas).
-  - **Bottom-centre tab**: the page number in Arabic-Indic digits.
-  - The tabs sit on the border and are positioned physically (juz right, surah left) in both UI languages, because the page is always Arabic. They are `aria-hidden`; the section keeps its `aria-label` ("Page 3").
-- **Surah start**, on any page and as many times as a page needs (juz 30 has three on page 604): a patterned title box with `سُورَةُ <name>` (replaces the current `SurahBanner` art), then the basmala on its own centred line. There is no basmala for 9; for 1 the basmala is ayah 1.
-- **Opening pages 1 and 2**: no tabs. A heavier border; the title box at the top, a plain ornament box at the bottom, and the ayahs centred inside a round medallion (`border-radius: 50%` on a box that grows with the text, so nothing is ever clipped).
-- **Ayah number**: a small circle (rosette) in the frame colour with the number inside, instead of `﴿n﴾`. Keep the `.mark` class and its text, so copy and search are unchanged.
-- **The app bar** keeps the burger, the page button (tap to jump: "Page 3") and options. The surah and juz move into the page's own tabs. Keep the `.mb-page` / `.mb-jump` classes. The tests that read `.mb-surah` / `.mb-juz` move to the first visible page's tabs.
-- **Fonts and sizes**: KFGQPC Hafs for the text and tabs. Tabs about 17px; text is the user's Arabic size (default 22px on a phone); line height 2.1.
-
-```ts
-export type PageColor = 'blue' | 'green' | 'pink' | 'sand' | 'white'   // default 'blue'
-```
-
-A new setting, **Page colour**, under Reading. It sets five tokens on `.mpage` (`--pg-band`, `--pg-deep`, `--pg-dot`, `--pg-paper`, `--pg-tint`, plus `--pg-accent` for the small rosette centres), so the reading surface changes and the app chrome keeps its theme. In the dark theme the paper and tint turn dark and the band keeps its hue. Use the values from the canvas (blue: band `#2a9fd3`, deep `#0b5a80`, paper `#eaf6fc`, tint `#d2ecf8`; dark paper `#0e1a21`). Check ayah-number text against the tint for 4.5:1 in every combination. iPhone: the same enum in `ReaderSettings`, and the same tokens in `MushafReaderView`.
+- **Source**: `https://www.pdfquran.com/download/big/big-quran.pdf` (624 PDF pages, each one 750×1075 JPEG). **Quran page n = PDF page n + 3** (PDF 4 is Al-Fatiha, 6 is page 3, 607 is page 604). The page split is the standard Madani one, the same as Tanzil's `meta.pages`, so every ayah id already maps to its page.
+- **Private, like the Study Quran.** The page scans are a publisher's artwork. They never go in git or on the public site. A new `tools/mushaf_pages.py` extracts them (`pdfimages -j`, no re-encoding loss beyond one WebP pass), crops to the page (opening pages `(38,70,712,1005)`, others `(46,70,704,1005)` in PDF-image pixels; the side margin keeps the hizb and sajdah marks) and writes `data/mushaf/NNN.webp` for a `--mushaf-images` web build and the iPhone bundle. Add `data/mushaf` to **both** private-content guards (`ci.yml`, `pages.yml`). The public build keeps the current text rendering.
+- **Tapping an ayah on a picture.** The same tool writes `data/mushaf/map.json`: for each page, the 15 line bands (equal heights inside the text frame) and the position of every ayah-end marker, found by colour (the markers' pale-blue fill; keep blobs about 21×14 px, merge halves split by the digit). An ayah runs from the previous marker to its own, across lines, so the tool can store each ayah as a list of line-segment rectangles. Check every page's marker count against the known number of ayahs that end on it, and fail the build on a mismatch (page 598 needs a tuned threshold: first run found 17 of 18). Pages 1 and 2 are circular: hand-write their 7 and 5 ayah boxes.
+- **Highlight and selection** are semi-transparent overlays drawn from those rectangles (`.ay.sel` / `.ay.playing` become absolutely positioned `<button>`s over the image, one per ayah, with `aria-label` "2:7" and the ayah's text for screen readers). The page `<img>` has `alt` "Page N".
+- **Page colour** is a CSS filter on the image, so the artwork is untouched: blue (as printed, default), green `hue-rotate(-60deg)`, purple `hue-rotate(70deg)`, pink `hue-rotate(130deg)`, dark `invert(1) hue-rotate(180deg)`. iPhone: the same with `.hueRotation` / `.colorInvert`.
+- **Sizing.** A page is shown at the screen width (phone) or at most 720px wide (desktop) and keeps its aspect ratio; there is no reflow, so the Arabic size setting does not apply to the picture (say so in Settings; it still applies to the Study view). Pinch-zoom works as on any image.
+- Size: about 170–340 KB per page as WebP, about 110 MB for 604 pages. Load pages on demand and cache them; do not precache all of them in the service worker.
+- Mockups: the "Zekr mushaf page" canvas (https://claude.ai/artifact/9QezGeFt4WmaMUP787SzXj) shows pages 1, 2, 3, 598 and 604 from the PDF and the colour setting.
 
 ## 8. Settings
 
@@ -172,7 +163,7 @@ A new setting, **Page colour**, under Reading. It sets five tokens on `.mpage` (
 export type TranslationPlace = 'panel' | 'card' | 'inline' | 'off'   // default 'panel'
 ```
 
-- Add `pageColor: PageColor` (default `'blue'`), described in §7 "The mushaf page".
+- Add `pageColor: 'blue' | 'green' | 'purple' | 'pink' | 'dark'` (default `'blue'`), described in §7 "The mushaf page".
 
 - Remove `readMode` (the mushaf is the only reading screen) and `pageBox`.
 - **Migrate** in `store.ts#loadSettings`: `pageBox: 'popup'` → `'card'`; any other `pageBox` → `'panel'`; ignore a stored `readMode`; do not write the old keys back. Mirror the same migration in `ReaderSettings.init(from:)` on iPhone.
@@ -209,7 +200,7 @@ Risky first. Each step has its own tests and leaves everything green. Commit per
 13. **iPhone 2.** Sheet detents (`.presentationDetents([.fraction(0.45), .large])`, drag indicator, background interaction); regular-width inspector column; the eight actions; `AyahPlayer.loop(ayahID:)`.
 14. **iPhone 3.** `translationPlace` migration (delete `PageBox`, `ReadMode`); trim `PageOptionsBox`; rewrite `testReadModeDefaultsToPageAndIsSaved`; add the five-item drawer's missing **Search** screen (the app has none yet; do it last, it is new feature work).
 15. **Docs.** Update `docs/PLAN.md` §9 and §1; add a short `docs/navigation.md` if this document drifts.
-16. **The mushaf page** (§7 "The mushaf page"; it can come any time after step 3, since it does not depend on the layers): border and tabs, juz names, the surah title box and basmala line, opening pages 1–2, rosette numbers, then `pageColor` with its migration-free default and the Settings control, then iPhone. New e2e: *page 3 shows juz 1 at the top right, Al-Baqarah at the top left and ٣ at the bottom*; *page 604 has three surah boxes and three basmalas*; *page 1 has no tabs and no separate basmala*; *page colour changes the page, not the app bar*. Screenshot all five colours in light and dark at 390×844 and 1280×800.
+16. **The mushaf page** (§7; any time after step 3, it does not depend on the layers): `tools/mushaf_pages.py` (extract, crop, WebP, `map.json`, count check), the private guards, the `<img>` page with ayah buttons over it in private builds, `pageColor`, then iPhone. New e2e (with a made-up 2-page fixture, never the real scans): *a page image shows with one button per ayah*, *tapping an ayah button selects that ayah*, *page colour applies a filter to the page only*, *the public build has no `data/mushaf`*.
 
 ### Existing e2e that will change (by name)
 
@@ -224,7 +215,7 @@ Things that must **stay** true: no `.bottom-nav`, no `main .tile`, no "Next page
 - `.ay` has `tabIndex={0}` on all 6,236 spans. With the mushaf always mounted, keep the `inert` guard; a later pass could make only the selected or playing ayah focusable.
 - Safari: `content-visibility: auto` clips to the page box; pages keep `padding-inline: 12px; margin-inline: -12px` so glyph overhang is not cut off. Do not remove it.
 - Persian (RTL) is half the audience. Test every step in both languages.
-- The page tabs are physical (juz right, surah left) even in English; do not "fix" them with logical properties.
+- The page images are private (see §7). Tests use a made-up fixture, never the scans.
 
 ## 12. Verification
 
