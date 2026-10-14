@@ -49,7 +49,7 @@ Mushaf (home, always underneath)
  │    ├─ Tafsir (Al-Mizan, private builds)      → layer
  │    ├─ Commentary chips (Study Quran, private) → layer
  │    └─ Study view (verse by verse)             → layer
- ├─ tap the page number → jump to page (inline field)
+ ├─ tap the page number at the bottom of the page → jump to page (inline field)
  └─ options button in the bar → reading options (play from this page, Study view, All settings)
 
 Every layer: [burger] [title] [Close ✕]. Close, Escape and Back all return to the mushaf.
@@ -100,11 +100,11 @@ One component for the mushaf and every layer; `PageHeader` and the inline `.mush
 
 ```
 [ burger ] [ centre ........................ ] [ end ]
-mushaf: surah name · page (tap to jump) · juz        [ options ⚙ ]
-layer:  title (+ subtitle)                           [ Close ✕ ]
+mushaf: (empty: the page itself shows surah, juz and page) [ options ⚙ ]
+layer:  title (+ subtitle)                                  [ Close ✕ ]
 ```
 
-Keep the class names `.mb-surah`, `.mb-page`, `.mb-jump`, `.mb-juz` and the "Go to page" label (tests depend on them). Layers close; they do not navigate to a parent, so there is no `back` prop.
+On the mushaf the bar has **no text**: the printed page already shows the surah and juz in its top tabs and the page number in Arabic at the bottom centre, and the owner does not want them repeated in English. **Jump to a page** = tap the page number at the bottom of a page (a transparent `<button aria-label="Go to page: page 3">` over the number tab; it opens the inline number field) or the "Go to page" row in reading options. Keep the class names `.mb-page` (that button) and `.mb-jump` (the field). `.mb-surah` and `.mb-juz` go away; the tests that read them check the page's `data-page` and the ayah buttons instead. Layers close; they do not navigate to a parent, so there is no `back` prop.
 
 z-index ladder: inspector 1, app bar 5, card 6, layer 7, player 8, sheet 10, drawer backdrop/drawer 20/21, toast 30.
 
