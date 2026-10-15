@@ -514,3 +514,12 @@ a.player-info { color: var(--ink); text-decoration: none; }
 /* Translations inline: each ayah of the text is followed by its translation. Justified lines are lost in this mode. */
 .tr-inline { margin: 0 0 14px; padding-inline: 4px; }
 .tr-inline .tr { margin: 2px 0; color: var(--ink); opacity: 0.88; line-height: 1.7; }
+
+/* Printed pages are shown one at a time; the bar turns them. The book is right to left, so previous is on the right. */
+.turn { display: flex; gap: 6px; direction: rtl; }
+.turn .icon-btn { width: 44px; height: 44px; }
+.turn-next svg { transform: scaleX(-1); }
+.turn-prev svg { transform: none; }
+.turn .icon-btn:disabled { opacity: 0.35; cursor: default; }
+.mushaf-flow.printed { display: grid; justify-items: center; }
+.mushaf-flow.printed .mpage { width: 100%; max-width: calc((100dvh - var(--bar-h) - 20px) * 654 / 935); }

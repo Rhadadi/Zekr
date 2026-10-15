@@ -8,7 +8,7 @@ import { LoadError, Loading } from '../components/Page'
 import { PageOptions } from '../components/PageOptions'
 import { Sheet } from '../components/Sheet'
 import { SurahBanner } from '../components/SurahBanner'
-import { type Meta, type MushafPageMap, type TranslationInfo, juzOf, loadMushafMap, loadText, loadTranslation, locate, mushafImage, pageRange } from '../data'
+import { type Meta, type MushafPageMap, type TranslationInfo, juzOf, loadMushafMap, loadText, loadTranslation, locate, mushafImage, pageOf, pageRange } from '../data'
 import { useAsync, useWide } from '../hooks'
 import { num, t } from '../i18n'
 import { href } from '../router'
@@ -104,7 +104,7 @@ const PrintedPage = memo(function PrintedPage({ meta, pg, ar, highlight, kind, o
   return (
     <section class="mpage printed" id={`page-${n}`} data-page={n} aria-label={t('pageN', { n })}>
       <div class="pg" style={{ aspectRatio: `${pg.w} / ${pg.h}` }}>
-        <img class="pg-img" src={mushafImage(meta, n)} alt="" loading="lazy" decoding="async" draggable={false} />
+        <img class="pg-img" src={mushafImage(meta, n)} alt="" decoding="async" draggable={false} />
         {pg.a.map((segs, k) => {
           const id = pg.first + k
           const at = locate(meta, id)
@@ -198,6 +198,14 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   }, [pageNo])
   useLayoutEffect(() => {
     if (!ready) return
+    if (printed) {
+      // one printed page at a time: show the page of the requested ayah, or the requested page
+      setCurrent(focusId !== undefined ? pageOf(meta, focusId) : wanted.current)
+      if (focusId !== undefined) setPanel({ kind: 'ayah', id: focusId })
+      window.scrollTo(0, 0)
+      setJumping(false)
+      return
+    }
     if (focusId !== undefined) {
       scrollTo(() => ayahEl(focusId), 'center')
       setPanel({ kind: 'ayah', id: focusId })
@@ -208,9 +216,24 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
     setJumping(false)
   }, [pageNo, focusId, ready])
 
+  /** Printed pages: turn to a page (a button, "go to page", or the recitation moving on). */
+  const turnTo = (n: number, keepPanel = false) => {
+    if (n < 1 || n > PAGES || n === current) return
+    wanted.current = n
+    history.replaceState(history.state, '', href.page(n))
+    setCurrent(n)
+    if (!keepPanel) setPanel(null)
+    window.scrollTo(0, 0)
+  }
+  // the next and previous pictures are fetched ahead, so turning the page is instant
+  useEffect(() => {
+    if (!printed) return
+    for (const n of [current - 1, current + 1]) if (n >= 1 && n <= PAGES) new Image().src = mushafImage(meta, n)
+  }, [printed, current])
+
   // The page in view drives the header and "where you left off": the page at 30% down the screen.
   useEffect(() => {
-    if (!ready) return
+    if (!ready || printed) return
     let frame = 0
     const look = () => {
       frame = 0
@@ -240,7 +263,8 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   useEffect(() => {
     if (playingId === undefined) return
     if (panel?.kind === 'ayah') setPanel({ kind: 'ayah', id: playingId })
-    if (settings.peek().autoScroll) {
+    if (printed && settings.peek().autoScroll) turnTo(pageOf(meta, playingId), true)
+    else if (settings.peek().autoScroll) {
       ayahEl(playingId)?.scrollIntoView({ block: boxBottomRef.current ? 'nearest' : 'center', behavior: 'smooth' })
     }
   }, [playingId])
@@ -326,9 +350,12 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
         setJumping(false)
         if (Number.isInteger(v) && v >= 1 && v <= PAGES) {
           history.replaceState(null, '', href.page(v))
-          wanted.current = v
-          scrollToPage(v)
-          setCurrent(v)
+          if (printed) turnTo(v)
+          else {
+            wanted.current = v
+            scrollToPage(v)
+            setCurrent(v)
+          }
         }
       }}
     >
@@ -340,8 +367,18 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
       <AppBar
         centre={
           printed ? (
-            // The printed page shows its own surah, juz and page number; its page number opens "go to page".
-            jumping ? jumpForm : null
+            // The printed page shows its own surah, juz and page number; the bar only turns the page. The turning
+            // buttons follow the book: in a right-to-left book the next page is to the left.
+            jumping ? jumpForm : (
+              <div class="turn">
+                <button class="icon-btn small turn-prev" onClick={() => turnTo(current - 1)} disabled={current <= 1} aria-label={t('prevPage')}>
+                  <Icon name="chevron" size={20} />
+                </button>
+                <button class="icon-btn small turn-next" onClick={() => turnTo(current + 1)} disabled={current >= PAGES} aria-label={t('nextPage')}>
+                  <Icon name="chevron" size={20} />
+                </button>
+              </div>
+            )
           ) : (
             <div class="mushaf-id" dir="rtl">
               <span class="mb-surah" lang="ar">سورة {surahOfPage.ar}</span>
@@ -423,7 +460,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
           }}
         >
           {data.error || map.error ? <LoadError retry={data.error ? data.retry : map.retry} /> : !ready ? <Loading /> : (
-            Array.from({ length: PAGES }, (_, i) => {
+            (printed ? [current - 1] : Array.from({ length: PAGES }, (_, i) => i)).map((i) => {
               const n = i + 1
               const { first, last } = pageRange(meta, n)
               const on = highlight !== undefined && highlight >= first && highlight <= last

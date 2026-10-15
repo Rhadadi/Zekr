@@ -1062,13 +1062,34 @@ test.describe('The printed mushaf as pictures (private build, made-up pictures h
     await page.locator('#page-5 .pg-no').click()
     await page.getByLabel('Go to page').fill('12')
     await page.keyboard.press('Enter')
-    await expect(page.locator('#page-12')).toBeInViewport()
-    await settle(page)
+    await expect(page.locator('#page-12 .pg-img')).toBeVisible()
     await page.locator('#page-12 .pg').click({ position: { x: 5, y: 5 } }) // not on an ayah: the reading options
     await page.getByTestId('page-options').getByRole('button', { name: 'Go to page' }).click()
     await page.getByLabel('Go to page').fill('20')
     await page.keyboard.press('Enter')
-    await expect(page.locator('#page-20')).toBeInViewport()
+    await expect(page.locator('#page-20 .pg-img')).toBeVisible()
+  })
+
+  test('one printed page at a time; small buttons in the bar turn to the next and the previous page', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/3')
+    await expect(page.locator('#page-3 .pg-img')).toBeVisible()
+    await expect(page.locator('.mpage')).toHaveCount(1) // not a long scroll of all the pages
+    const next = page.getByRole('button', { name: 'Next page' })
+    const prev = page.getByRole('button', { name: 'Previous page' })
+    await next.click()
+    await expect(page.locator('#page-4 .pg-img')).toBeVisible()
+    await expect(page.locator('.mpage')).toHaveCount(1)
+    await expect(page).toHaveURL(/#\/page\/4$/) // a reload comes back to this page
+    await prev.click()
+    await prev.click()
+    await expect(page.locator('#page-2')).toBeVisible()
+    await page.goto('/#/page/1')
+    await expect(prev).toBeDisabled()
+    await page.goto('/#/page/604')
+    await expect(next).toBeDisabled()
+    await prev.click()
+    await expect(page.locator('#page-603')).toBeVisible()
   })
 
   test('page colour is a filter on the picture only', async ({ page }) => {
