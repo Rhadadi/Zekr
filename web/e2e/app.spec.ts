@@ -293,39 +293,51 @@ test.describe('mushaf page view', () => {
     await expect(page.locator('#page-284 .ay').first()).toBeInViewport()
   })
 
-  test('tapping an ayah shows its translation in a box at the side, when chosen', async ({ page }) => {
-    await useSettings(page, { lang: 'en', pageBox: 'left' })
+  test('tapping an ayah opens the inspector beside the text, and the text does not move', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
     await page.goto('/#/page/305')
+    await settle(page)
+    const inspector = page.getByTestId('inspector')
+    await expect(inspector).toContainText('Tap an ayah') // there from the start, so nothing shifts when it fills
+    const flow = page.locator('#page-305 .flow').first()
+    const before = (await flow.boundingBox())!
+    const scrollBefore = await page.evaluate(() => scrollY)
     await page.locator('#page-305 .ay').nth(1).click()
-    const box = page.getByTestId('side-box')
-    await expect(box.getByTestId('ayah-panel')).toContainText('19:2')
-    await expect(box).toContainText('رحمت بخشی پروردگارت')
+    await expect(inspector.getByTestId('ayah-panel')).toContainText('19:2')
+    await expect(inspector).toContainText('رحمت بخشی پروردگارت')
     await expect(page.locator('.ay.sel')).toHaveCount(1)
-    await expect(page.locator('#page-305 .ay').nth(1)).toBeInViewport()
-    // on the left by default; the text makes room for it rather than being covered
-    const boxRect = (await box.boundingBox())!
-    const textRect = (await page.locator('#page-305 .flow').first().boundingBox())!
-    expect(boxRect.x + boxRect.width).toBeLessThanOrEqual(textRect.x + 1)
-    await box.getByRole('button', { name: 'Close' }).click()
-    await expect(page.getByTestId('side-box')).toHaveCount(0)
+    const after = (await flow.boundingBox())!
+    expect(after).toEqual(before)
+    expect(await page.evaluate(() => scrollY)).toBe(scrollBefore)
+    // at the start side (the left), in view, and not under the app bar
+    const box = (await inspector.boundingBox())!
+    expect(box.x + box.width).toBeLessThanOrEqual(after.x)
+    expect(box.y).toBeGreaterThanOrEqual(52)
+    await inspector.getByRole('button', { name: 'Close' }).click()
+    await expect(inspector).toContainText('Tap an ayah')
+    expect((await flow.boundingBox())!).toEqual(before)
   })
 
-  test('the box can be on the right, chosen in Settings', async ({ page }) => {
-    await useSettings(page, { lang: 'en' })
-    await page.goto('/#/settings')
-    await page.getByLabel('Translation on the page').selectOption({ label: 'In a box on the right' })
+  test('in Persian the inspector is on the right, and stays in view while the page scrolls', async ({ page }) => {
+    await useSettings(page, { lang: 'fa' })
     await page.goto('/#/page/305')
+    await settle(page)
     await page.locator('#page-305 .ay').nth(1).click()
-    const boxRect = (await page.getByTestId('side-box').boundingBox())!
-    const textRect = (await page.locator('#page-305 .flow').first().boundingBox())!
-    expect(boxRect.x).toBeGreaterThanOrEqual(textRect.x + textRect.width - 1)
+    const inspector = page.getByTestId('inspector')
+    await expect(inspector.getByTestId('ayah-panel')).toBeVisible()
+    const box = (await inspector.boundingBox())!
+    const text = (await page.locator('#page-305 .flow').first().boundingBox())!
+    expect(box.x).toBeGreaterThanOrEqual(text.x + text.width)
+    await page.mouse.wheel(0, 900)
+    await expect.poll(async () => (await inspector.boundingBox())!.y).toBeGreaterThanOrEqual(52)
+    await expect(inspector).toBeInViewport()
   })
 
   test('with two translations the box shows both in full', async ({ page }) => {
     await useSettings(page, { lang: 'en', translations: ['fa.safavi', 'en.sahih'] })
     await page.goto('/#/page/3')
     await page.locator('#page-3 .ay').nth(1).click()
-    const box = page.getByTestId('side-box')
+    const box = page.getByTestId('inspector')
     await expect(box.locator('.tr')).toHaveCount(2)
     await expect(box.locator('.tr').nth(1)).toBeVisible()
   })
@@ -341,7 +353,7 @@ test.describe('mushaf page view', () => {
     const a = (await ayah.boundingBox())!
     const b = (await pop.boundingBox())!
     expect(Math.abs(b.y - (a.y + a.height))).toBeLessThan(80) // right by the ayah
-    await expect(page.getByTestId('side-box')).toHaveCount(0)
+    await expect(page.getByTestId('inspector')).toHaveCount(0)
     await page.locator('.mb-surah').hover()
     await expect(pop).toHaveCount(0)
     await ayah.click()
@@ -654,10 +666,13 @@ test.describe('page view: recitation, tapping and pressing', () => {
     await page.locator('#page-305 .ay').first().click()
     const panel = page.getByTestId('ayah-panel')
     await expect(panel).toContainText('19:1')
+    const flow = page.locator('#page-305 .flow').first()
+    const wide = (await flow.boundingBox())!.width
     await panel.getByRole('button', { name: 'Play' }).click()
     await expect.poll(async () => (await played()).length).toBe(1)
     await finishRecording(page)
     await expect(panel).toContainText('19:2')
+    expect((await flow.boundingBox())!.width).toBe(wide) // the inspector follows; the text never changes width
     await expect(panel.locator('.tr')).toContainText('زکری')
     await expect(page.locator('.ay.sel')).toHaveCount(1)
     await expect(page.locator('.ay.sel')).toHaveAttribute('data-id', String(await page.locator('#page-305 .ay').nth(1).getAttribute('data-id')))
@@ -670,7 +685,7 @@ test.describe('page view: recitation, tapping and pressing', () => {
     await page.goto('/#/page/305')
     await page.locator('#page-305 .ay').first().click()
     await page.getByTestId('ayah-panel').getByRole('button', { name: 'Play' }).click()
-    await page.getByTestId('side-box').getByRole('button', { name: 'Close' }).click()
+    await page.getByTestId('inspector').getByRole('button', { name: 'Close' }).click()
     await expect.poll(async () => (await played()).length).toBe(1)
     await settle(page)
     await page.locator('#page-320').evaluate((el) => el.scrollIntoView())
@@ -686,7 +701,7 @@ test.describe('page view: recitation, tapping and pressing', () => {
     await page.goto('/#/page/305')
     await page.locator('#page-305 .ay').first().click()
     await page.getByTestId('ayah-panel').getByRole('button', { name: 'Play' }).click()
-    await page.getByTestId('side-box').getByRole('button', { name: 'Close' }).click()
+    await page.getByTestId('inspector').getByRole('button', { name: 'Close' }).click()
     await expect.poll(async () => (await played()).length).toBe(1)
     await settle(page)
     await page.locator('#page-320').evaluate((el) => el.scrollIntoView())

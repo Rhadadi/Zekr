@@ -11,7 +11,7 @@ import { type Meta, type MushafPageMap, juzOf, loadMushafMap, loadText, loadTran
 import { useAsync, useWide } from '../hooks'
 import { num, t } from '../i18n'
 import { href } from '../router'
-import { type PageTranslation, setLastRead, settings } from '../store'
+import { setLastRead, settings } from '../store'
 
 const ARABIC_INDIC = '٠١٢٣٤٥٦٧٨٩'
 /** Ayah numbers inside the text use the traditional Arabic-Indic digits, as printed mushafs do. */
@@ -133,11 +133,11 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   const touch = useRef<{ x: number; y: number; timer?: number; long?: boolean } | null>(null)
   const playingId = player.value?.ayahId
   const boxBottomRef = useRef(false)
-  // The translation shows in a box at the bottom (the default), in a box in the left or right margin (wide screens
-  // only), or in a card over the page under its ayah.
+  // The translation shows in the inspector beside the text (wide screens), in a box at the bottom (phones), or in a
+  // card over the page under its ayah.
   const wide = useWide()
-  const place: PageTranslation = !wide && (s.pageBox === 'left' || s.pageBox === 'right') ? 'bottom' : s.pageBox
-  const popup = place === 'popup'
+  const popup = s.pageBox === 'popup'
+  const inspector = wide && !popup
   const selected = panel?.kind === 'ayah' ? panel.id : undefined
   // One highlight at a time: the ayah being shown, otherwise the one being recited.
   const highlight = selected ?? playingId
@@ -285,18 +285,17 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
     panel?.kind === 'options' ? (
       <PageOptions wide={wide} pageNo={current} juz={juzOf(meta, pageRange(meta, current).first)} onPlay={() => { setPanel(null); playFrom(pageRange(meta, current).first) }} onJump={() => { setPanel(null); setJumping(true) }} onVerseView={toVerse} onClose={() => setPanel(null)} />
     ) : selected !== undefined && !popup ? ayahPanel(selected, 'box') : null
-  const side = place === 'popup' ? 'bottom' : place
-  boxBottomRef.current = box !== null && side === 'bottom'
+  const bottomBox = box !== null && !inspector
+  boxBottomRef.current = bottomBox
 
-  // Opening or closing the box narrows or widens the text, which reflows the pages: keep the ayah in view.
-  const boxOpen = box !== null
-  const boxWas = useRef(boxOpen)
+  // A box at the bottom covers the lower part of the screen: put the ayah near the top instead of the middle.
+  // (The inspector sits in its own column, so opening it moves nothing.)
+  const boxWas = useRef(bottomBox)
   useLayoutEffect(() => {
-    if (boxWas.current === boxOpen) return
-    boxWas.current = boxOpen
+    if (boxWas.current === bottomBox) return
+    boxWas.current = bottomBox
     const id = selected ?? playingId
-    // a box at the bottom covers the lower part of the screen: put the ayah near the top instead of the middle
-    if (id !== undefined) scrollTo(() => ayahEl(id), side === 'bottom' ? 'start' : 'center')
+    if (id !== undefined) scrollTo(() => ayahEl(id), 'start')
   })
 
   // Room under the page for a box at the bottom, so nothing is hidden behind it.
@@ -304,7 +303,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   useLayoutEffect(() => {
     const el = boxRef.current
     const root = document.documentElement
-    if (!el || side !== 'bottom') {
+    if (!el) {
       root.style.removeProperty('--box-h')
       return
     }
@@ -316,7 +315,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
       observer.disconnect()
       root.style.removeProperty('--box-h')
     }
-  }, [boxOpen, side])
+  }, [bottomBox])
 
   const surahOfPage = meta.surahs[locate(meta, pageRange(meta, current).first).surah - 1]!
   const jumpForm = (
@@ -364,7 +363,12 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
           </button>
         }
       />
-      <div class={`mushaf-layout${box ? ` with-box box-${side}` : ''}`}>
+      <div class={`mushaf-layout${inspector ? ' has-inspector' : bottomBox ? ' with-box' : ''}`}>
+        {inspector ? (
+          <section class="inspector" aria-label={t('inspectorLabel')} data-testid="inspector">
+            {box ?? <p class="inspector-hint muted">{t('inspectorHint')}</p>}
+          </section>
+        ) : null}
         <div
           class={`mushaf-flow${printed ? ' printed' : ''}`}
           data-page={current}
@@ -436,7 +440,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
           )}
           {popupId !== undefined ? ayahPanel(popupId, 'popup') : null}
         </div>
-        {box ? <aside ref={boxRef} class={`side-box side-${side}`} data-testid="side-box">{box}</aside> : null}
+        {bottomBox ? <aside ref={boxRef} class="side-box" data-testid="side-box">{box}</aside> : null}
       </div>
     </>
   )

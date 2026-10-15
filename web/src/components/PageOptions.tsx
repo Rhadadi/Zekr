@@ -45,10 +45,8 @@ export function PageOptions({ wide, pageNo, juz, onPlay, onVerseView, onJump, on
         </label>
         <label class="field">
           <span>{t('pageTranslation')}</span>
-          <select value={wide || s.pageBox === 'popup' ? s.pageBox : 'bottom'} onChange={(e) => updateSettings({ pageBox: e.currentTarget.value as PageTranslation })}>
-            <option value="bottom">{t('pageTranslationBottom')}</option>
-            {wide ? <option value="left">{t('pageTranslationLeft')}</option> : null}
-            {wide ? <option value="right">{t('pageTranslationRight')}</option> : null}
+          <select value={s.pageBox === 'popup' ? 'popup' : 'bottom'} onChange={(e) => updateSettings({ pageBox: e.currentTarget.value as PageTranslation })}>
+            <option value="bottom">{wide ? t('pageTranslationPanel') : t('pageTranslationBottom')}</option>
             <option value="popup">{t('pageTranslationPopup')}</option>
           </select>
         </label>
