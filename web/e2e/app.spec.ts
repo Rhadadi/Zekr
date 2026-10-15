@@ -679,6 +679,31 @@ test.describe('page view: recitation, tapping and pressing', () => {
     await expect(page.locator('.ay.playing')).toHaveCount(0)
   })
 
+  test('repeat this ayah plays the same recording again and again until it is turned off', async ({ page }) => {
+    const played = await trackAudio(page)
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/305')
+    await settle(page)
+    await page.locator('#page-305 .ay').first().click()
+    const panel = page.getByTestId('ayah-panel')
+    const repeat = panel.getByRole('button', { name: 'Repeat this ayah' })
+    await expect(repeat).toHaveAttribute('aria-pressed', 'false')
+    await repeat.click()
+    await expect(repeat).toHaveAttribute('aria-pressed', 'true')
+    await expect.poll(async () => (await played()).length).toBe(1)
+    for (let i = 2; i <= 4; i++) {
+      await finishRecording(page)
+      await expect.poll(async () => (await played()).length).toBe(i)
+    }
+    expect(new Set(await played()).size).toBe(1) // one recording, four times; it never moved on
+    await expect(panel).toContainText('19:1')
+    await repeat.click() // off: this recording finishes, then it carries on as planned
+    await expect(repeat).toHaveAttribute('aria-pressed', 'false')
+    expect((await played()).length).toBe(4) // and did not restart the recording mid-word
+    await finishRecording(page)
+    await expect(panel).toContainText('19:2')
+  })
+
   test('the ayah being recited is highlighted and brought back into view, even after scrolling away', async ({ page }) => {
     const played = await trackAudio(page)
     await useSettings(page, { lang: 'en' })

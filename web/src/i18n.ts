@@ -177,6 +177,8 @@ const strings = {
     tapAyah: 'Tap an ayah for its translation, or the page for reading options.',
     pageOptions: 'Reading options',
     playFromPage: 'Play from this page',
+    playFromHere: 'Play from here',
+    repeatAyah: 'Repeat this ayah',
     allSettings: 'All settings',
   },
   fa: {
@@ -344,6 +346,8 @@ const strings = {
     tapAyah: 'برای ترجمه روی یک آیه بزنید، و برای تنظیمات خواندن روی صفحه.',
     pageOptions: 'تنظیمات خواندن',
     playFromPage: 'پخش از این صفحه',
+    playFromHere: 'پخش از اینجا',
+    repeatAyah: 'تکرار این آیه',
     allSettings: 'همهٔ تنظیمات',
   },
 } as const
