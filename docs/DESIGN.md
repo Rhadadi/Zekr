@@ -1,6 +1,6 @@
 # Zekr: navigation and layout redesign (the plan)
 
-Status: **planned, not started.** Written October 14, 2026. Read `AGENTS.md` first for how to build, test and what is private.
+Status: **built on the web (steps 1–11 and 16); on the iPhone (steps 12–14) written and built by CI, not tried on a phone.** Written October 14, 2026, updated October 15, 2026. Differences from the plan are listed at the end of §10. Read `AGENTS.md` first for how to build, test and what is private.
 
 This document is the contract for the next piece of work, for the web app and the iPhone app. A different agent (or person) should be able to pick it up and implement it step by step. Each step in §10 is small, testable and leaves the tests green.
 
@@ -201,6 +201,13 @@ Risky first. Each step has its own tests and leaves everything green. Commit per
 14. **iPhone 3.** `translationPlace` migration (delete `PageBox`, `ReadMode`); trim `PageOptionsBox`; rewrite `testReadModeDefaultsToPageAndIsSaved`; add the five-item drawer's missing **Search** screen (the app has none yet; do it last, it is new feature work).
 15. **Docs.** Update `docs/PLAN.md` §9 and §1; add a short `docs/navigation.md` if this document drifts.
 16. **The mushaf page** (§7; any time after step 3, it does not depend on the layers): `tools/mushaf_pages.py` (extract, crop, WebP, `map.json`, count check), the private guards, the `<img>` page with ayah buttons over it in private builds, `pageColor`, then iPhone. New e2e (with a made-up 2-page fixture, never the real scans): *a page image shows with one button per ayah*, *tapping an ayah button selects that ayah*, *page colour applies a filter to the page only*, *the public build has no `data/mushaf`*.
+
+### What differs from the plan above
+
+- **Phone sheet and Back.** The sheet closes with Escape, the handle or a drag down; the browser's Back button does not close it (history entries per tap would fight the layers' history). Not done.
+- **Printed pages and the sheet.** On a printed page only the first rectangle of an ayah is kept clear of the sheet, so a long ayah can still end behind it.
+- **iPhone.** One `MushafReaderView`; the burger opens a custom drawer (`DrawerView`), layers are full-screen covers (`LayerView`), the ayah panel is a sheet with two detents on a phone and an `.inspector` column in regular width. A layer waits for the sheet to finish closing before it appears. The sheet's selection is cleared when a layer opens, where the web keeps it. Search is new (`QuranStore.search`: the Arabic text and the chosen translations).
+- **Settings.** `translationPlace` replaces `pageBox`/`readMode` on both platforms, with the migration in `store.ts#migrateSettings` and `ReaderSettings.init(from:)` (tested). On the iPhone the page-colour setting and the printed pages are in the code, and need the private pictures in `ios/Zekr/Resources/mushaf/` to show.
 
 ### Existing e2e that will change (by name)
 

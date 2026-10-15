@@ -1,6 +1,6 @@
 # Working in this repository (for any coding agent)
 
-Zekr is a personal Quran app: an iPhone app (with a Lock Screen widget) and a web app (PWA). Read `docs/PLAN.md` for the product plan and `docs/DESIGN.md` for the navigation redesign that is **next in line** (planned, not started).
+Zekr is a personal Quran app: an iPhone app (with a Lock Screen widget) and a web app (PWA). Read `docs/PLAN.md` for the product plan and `docs/DESIGN.md` for the navigation redesign (built on the web; the iPhone side is written and built by CI, not tried on a phone).
 
 ## Where things are
 
@@ -51,4 +51,4 @@ cd ios/ZekrKit && swift test                # needs Swift 6.1 (Linux or macOS)
 
 ## Current state and next step
 
-See `docs/PLAN.md` §9 for milestones and `docs/DESIGN.md` §10 for the numbered steps of the navigation redesign. Start at step 1 and go in order; each step is independently committable. The owner's decisions are in `docs/DESIGN.md` §2 and are fixed.
+See `docs/PLAN.md` §9 for milestones and `docs/DESIGN.md` §10 for the numbered steps of the navigation redesign and what differs from the plan. The owner's decisions are in `docs/DESIGN.md` §2 and are fixed. Open: the private hosting for the printed pages and the Study Quran, a real-phone check of the iPhone app, and Back closing the phone sheet.
