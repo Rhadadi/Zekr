@@ -71,6 +71,18 @@ Tests for the shared Swift code (no Xcode project needed): `cd ios/ZekrKit && sw
 
 The text is copyrighted, so it is for personal and family use: it is not committed to this repository, and the public website never has it. For a private web build (one only your family can reach), `python3 tools/build_data.py --almizan-web` puts it in the web data too; never deploy that build to the public GitHub Pages site.
 
+### The printed mushaf pages
+
+For the pages to look exactly like a printed Madani mushaf (page border, surah and juz tabs, round ayah numbers, the decorated first two pages, several surahs on a page), the web app can show the pages of a scanned PDF as pictures, with every ayah still tappable and highlighted while it is recited. The owner's edition is `https://www.pdfquran.com/download/big/big-quran.pdf` (Quran page n is PDF page n + 3). You need `pdfimages` (poppler), numpy and Pillow:
+
+```sh
+python3 tools/build_data.py                      # the usual data first
+python3 tools/mushaf_pages.py ~/Downloads/big-quran.pdf     # about 3 minutes; writes web/public/data/mushaf/ (about 90 MB) and updates meta.json
+cd web && npm run build && npx vite preview      # try it
+```
+
+The tool counts the ayah-end markers on every page and stops unless they add up to the 6,236 ayahs and cover every text line. This edition breaks pages in different places from Tanzil's data in 25 places, so the page of every ayah comes from the pictures. The pictures are the publisher's artwork: they are never committed, the public Pages build refuses them (the deploy fails if `data/mushaf` or a `mushaf` entry in `meta.json` is in it), and a build that has them is for your own private web hosting and, later, your iPhone. Settings then has a **Page colour** (blue as printed, green, purple, pink, dark), which recolours the picture with a filter.
+
 ## Credits
 
 Quran text and translations: [Tanzil Project](https://tanzil.net) (text unchanged; translations for non-commercial use). Recitation: [EveryAyah.com](https://everyayah.com). Tafsir: Al-Mizan (Allameh Tabatabaei), Persian translation by Mousavi Hamadani, text from the Zolal project (CRCIS Noor), for personal use. Fonts: KFGQPC Hafs and Naskh (King Fahd Glorious Quran Printing Complex, via Tanzil), Me-Quran (Meor Ridzuan, non-commercial use), Scheherazade New, Amiri Quran and Vazirmatn (SIL Open Font License); see `web/public/fonts/LICENSES.txt`.
