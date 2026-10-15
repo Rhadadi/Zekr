@@ -25,7 +25,9 @@ jobs:
         with:
           python-version: "3.12"
       - name: Build the data (downloads from Tanzil)
-        run: python3 tools/build_data.py
+        run: python3 tools/build_data.py --almizan-web
+      - name: Printed mushaf pages (published with the owner's confirmation of permission, October 15, 2026)
+        run: python3 tools/mushaf_pages.py --apply assets/mushaf
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -38,12 +40,13 @@ jobs:
       - run: npm run build
         working-directory: web
       - uses: actions/configure-pages@v5
-      - name: Make sure no private book text is published (Al-Mizan, The Study Quran; see docs/PLAN.md §8)
+      - name: Make sure the Study Quran and PDFs are not published
+        # Al-Mizan and the printed mushaf pages are published on purpose (the owner confirmed permission); the Study Quran is not.
         run: |
-          for d in almizan tafsir intro mushaf; do
+          for d in intro; do
             test ! -e "web/dist/data/$d" || { echo "error: web/dist/data/$d is private content"; exit 1; }
           done
-          if grep -q '"studyQuran"\|"mushaf"\|"tafsir":\[[^]]' web/dist/data/meta.json; then echo "error: meta.json lists private content"; exit 1; fi
+          if grep -q '"studyQuran"' web/dist/data/meta.json; then echo "error: meta.json lists the Study Quran"; exit 1; fi
           if find web/dist -iname '*.pdf' | grep -q .; then echo "error: a PDF is in web/dist"; exit 1; fi
       - uses: actions/upload-pages-artifact@v3
         with:
