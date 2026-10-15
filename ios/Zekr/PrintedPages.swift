@@ -73,31 +73,9 @@ struct PrintedPageView: View {
         if let entry = PrintedPages.entry(number), let image = PrintedPages.image(number) {
             GeometryReader { geo in
                 ZStack(alignment: .topLeading) {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFit()
-                        .modifier(PageTint(color: model.settings.settings.pageColor))
-                        .frame(width: geo.size.width, height: geo.size.height)
-                        .contentShape(Rectangle())
-                        .onTapGesture(perform: onPage)
-                        .accessibilityLabel(LocalizedText.pageTitle(number, language: model.language))
-                    ForEach(Array(entry.a.enumerated()), id: \.offset) { k, rects in
-                        let id = entry.first + k
-                        ForEach(Array(rects.enumerated()), id: \.offset) { j, r in
-                            if r.count == 4 {
-                                RoundedRectangle(cornerRadius: 5)
-                                    .fill(id == highlighted ? Color.yellow.opacity(0.38) : Color.clear)
-                                    .frame(width: geo.size.width * Double(r[2]) / 1000, height: geo.size.height * Double(r[3]) / 1000)
-                                    .contentShape(Rectangle())
-                                    .offset(x: geo.size.width * Double(r[0]) / 1000, y: geo.size.height * Double(r[1]) / 1000)
-                                    .onTapGesture(coordinateSpace: .global) { onAyah(id, $0) }
-                                    // each ayah is one element for VoiceOver (its first rectangle), with its text
-                                    .accessibilityElement(children: .ignore)
-                                    .accessibilityLabel(j == 0 ? ((try? model.store?.arabic(ayahID: id, script: model.settings.settings.script)) ?? "") : "")
-                                    .accessibilityHidden(j != 0)
-                                    .accessibilityAddTraits(.isButton)
-                            }
-                        }
+                    picture(image, in: geo.size)
+                    ForEach(0..<entry.a.count, id: \.self) { k in
+                        ayahAreas(id: entry.first + k, rects: entry.a[k], in: geo.size)
                     }
                 }
             }
@@ -105,6 +83,46 @@ struct PrintedPageView: View {
             .padding(.bottom, 8)
         } else {
             Color.clear.frame(height: 400)
+        }
+    }
+
+    private func picture(_ image: UIImage, in size: CGSize) -> some View {
+        Image(uiImage: image)
+            .resizable()
+            .scaledToFit()
+            .modifier(PageTint(color: model.settings.settings.pageColor))
+            .frame(width: size.width, height: size.height)
+            .contentShape(Rectangle())
+            .onTapGesture(perform: onPage)
+            .accessibilityLabel(LocalizedText.pageTitle(number, language: model.language))
+    }
+
+    /// The rectangles of one ayah, over the picture. The first is the ayah's element for VoiceOver, with its text.
+    private func ayahAreas(id: Int, rects: [[Int]], in size: CGSize) -> some View {
+        let label = (try? model.store?.arabic(ayahID: id, script: model.settings.settings.script)) ?? ""
+        let shown = id == highlighted
+        return ZStack(alignment: .topLeading) {
+            ForEach(0..<rects.count, id: \.self) { j in
+                area(rects[j], in: size, shown: shown, id: id)
+                    .accessibilityHidden(j != 0)
+                    .accessibilityLabel(j == 0 ? label : "")
+            }
+        }
+    }
+
+    @ViewBuilder private func area(_ r: [Int], in size: CGSize, shown: Bool, id: Int) -> some View {
+        if r.count == 4 {
+            let w = size.width * CGFloat(r[2]) / 1000
+            let h = size.height * CGFloat(r[3]) / 1000
+            let x = size.width * CGFloat(r[0]) / 1000
+            let y = size.height * CGFloat(r[1]) / 1000
+            RoundedRectangle(cornerRadius: 5)
+                .fill(shown ? Color.yellow.opacity(0.38) : Color.clear)
+                .frame(width: w, height: h)
+                .contentShape(Rectangle())
+                .offset(x: x, y: y)
+                .onTapGesture(coordinateSpace: .global) { point in onAyah(id, point) }
+                .accessibilityAddTraits(.isButton)
         }
     }
 }
