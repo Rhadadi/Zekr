@@ -1,5 +1,4 @@
 import { useState } from 'preact/hooks'
-import { PageHeader } from '../components/Page'
 import { type Meta } from '../data'
 import { num, surahName, surahSubtitle, t } from '../i18n'
 import { href } from '../router'
@@ -13,7 +12,6 @@ export function IndexView({ meta, tab }: { meta: Meta; tab: 'surah' | 'juz' }) {
   )
   return (
     <>
-      <PageHeader title={t('navIndex')} />
       <div class="tabs" role="tablist">
         <a role="tab" aria-selected={tab === 'surah'} class={tab === 'surah' ? 'on' : ''} href={href.index}>{t('surahs')}</a>
         <a role="tab" aria-selected={tab === 'juz'} class={tab === 'juz' ? 'on' : ''} href={href.juz}>{t('juz')}</a>

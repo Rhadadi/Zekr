@@ -1,15 +1,17 @@
 import { useEffect, useRef } from 'preact/hooks'
 import { initAudio } from './audio'
-import { MainMenu } from './components/MainMenu'
+import { AppBar } from './components/AppBar'
+import { Drawer } from './components/Drawer'
 import { Icon } from './components/Icon'
 import { LoadError, Loading } from './components/Page'
 import { PlayerBar } from './components/PlayerBar'
 import { type Meta, ayahIdOf, loadMeta, pageOf } from './data'
 import { useAsync } from './hooks'
-import { t } from './i18n'
+import { ayahRef, surahName, surahSubtitle, t } from './i18n'
 import { type Base, type Layer, type LayerName, closeLayer, mushafAt, route } from './router'
 import { lastRead } from './store'
 import { toast } from './toast'
+import { drawerOpen } from './ui'
 import { About } from './views/About'
 import { Daily } from './views/Daily'
 import { Home } from './views/Home'
@@ -48,8 +50,26 @@ function layerView(m: Meta, layer: Layer, query: URLSearchParams) {
   }
 }
 
+/** What the bar says for a layer. */
+function layerTitle(m: Meta, l: Layer): { title: string; sub?: string } {
+  const s = l.surah ? m.surahs[l.surah - 1] : undefined
+  switch (l.name) {
+    case 'study': return { title: surahName(s!), sub: surahSubtitle(s!) }
+    case 'commentary': return { title: t('commentary'), sub: `${t('studyQuranName')} · ${ayahRef(s!, l.ayah!)}` }
+    case 'intro': return { title: t('aboutSurah'), sub: `${t('studyQuranName')} · ${surahName(s!)}` }
+    case 'tafsir': return { title: t('almizan'), sub: ayahRef(s!, l.ayah!) }
+    case 'index': return { title: t('navIndex') }
+    case 'today': return { title: t('navToday') }
+    case 'daily': return { title: t('dailyTitle') }
+    case 'search': return { title: t('navSearch') }
+    case 'saved': return { title: t('saved') }
+    case 'settings': return { title: t('settings') }
+    case 'about': return { title: t('about') }
+  }
+}
+
 /** Every screen but the mushaf: fixed over it, with its own scrolling, closing back to the same place. */
-function LayerFrame({ children }: { children: preact.ComponentChildren }) {
+function LayerFrame({ title, sub, children }: { title: string; sub?: string; children: preact.ComponentChildren }) {
   const root = useRef<HTMLDivElement>(null)
   useEffect(() => {
     root.current?.focus({ preventScroll: true })
@@ -59,14 +79,12 @@ function LayerFrame({ children }: { children: preact.ComponentChildren }) {
   }, [])
   return (
     <div class="layer" ref={root} tabIndex={-1}>
-      <div class="layer-inner">
-        <div class="layer-bar">
-          <button class="icon-btn layer-close" onClick={closeLayer} aria-label={t('close')}>
-            <Icon name="close" size={22} />
-          </button>
-        </div>
-        {children}
-      </div>
+      <AppBar
+        sticky
+        centre={<div class="appbar-title"><h1>{title}</h1>{sub ? <p>{sub}</p> : null}</div>}
+        end={<button class="icon-btn layer-close" onClick={closeLayer} aria-label={t('close')}><Icon name="close" size={22} /></button>}
+      />
+      <div class="layer-inner">{children}</div>
     </div>
   )
 }
@@ -100,16 +118,16 @@ export function App() {
         <div class="mushaf-host" {...(layer ? { inert: true } : {})}>
           <PageReader key="mushaf" meta={m} pageNo={place.pageNo} focusId={place.focusId} paused={!!layer} />
         </div>
-        {layer ? <LayerFrame key={layer.name}>{layerView(m, layer, r.query)}</LayerFrame> : null}
+        {layer ? <LayerFrame key={layer.name} {...layerTitle(m, layer)}>{layerView(m, layer, r.query)}</LayerFrame> : null}
       </>
     )
   }
 
   return (
     <div class="app">
-      <main id="main">{content}</main>
+      <main id="main" {...(drawerOpen.value ? { inert: true } : {})}>{content}</main>
       {meta.value ? <PlayerBar meta={meta.value} /> : null}
-      <MainMenu active={active} />
+      <Drawer active={active} />
       {toast.value ? <div class="toast" role="status">{toast.value}</div> : null}
     </div>
   )

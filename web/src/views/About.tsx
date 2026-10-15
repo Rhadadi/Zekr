@@ -1,12 +1,9 @@
-import { PageHeader } from '../components/Page'
 import { type Meta } from '../data'
 import { t } from '../i18n'
-import { href } from '../router'
 
 export function About({ meta }: { meta: Meta }) {
   return (
     <>
-      <PageHeader title={t('about')} back={href.settings} />
       <p>{t('aboutText')}</p>
       <p>{t('creditsText')}</p>
       <ul class="plain">

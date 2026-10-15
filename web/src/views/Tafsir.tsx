@@ -1,8 +1,7 @@
-import { LoadError, Loading, PageHeader } from '../components/Page'
+import { LoadError, Loading } from '../components/Page'
 import { type Meta, ayahIdOf } from '../data'
 import { useAsync } from '../hooks'
-import { ayahRef, t } from '../i18n'
-import { href } from '../router'
+import { t } from '../i18n'
 import { settings } from '../store'
 import { type TafsirBlock, checkTafsir, loadSection, sectionIdFor } from '../tafsir'
 
@@ -34,11 +33,9 @@ export function TafsirView({ meta, surah, ayah }: { meta: Meta; surah: number; a
     const sid = sectionIdFor(index, id)
     return sid ? loadSection(sid) : null
   }, [id])
-  const back = href.ayah(surah, ayah)
   const sec = data.value
   return (
     <>
-      <PageHeader title={t('almizan')} sub={ayahRef(meta.surahs[surah - 1]!, ayah)} back={back} />
       {data.error ? <LoadError retry={data.retry} /> : data.value === undefined ? <Loading /> : !sec ? (
         <p class="status">{t('tafsirMissing')}</p>
       ) : (

@@ -27,7 +27,7 @@
   --font-ui: 'Vazirmatn Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   /* main.tsx sets this from the Quran font setting (src/fonts.ts). */
   --font-quran: 'Zekr Hafs', 'Geeza Pro', 'Noto Naskh Arabic', serif;
-  --nav-h: 0px; /* there is no bottom bar: the menu is one small button at the top left */
+  --player-h: 0px; /* the height of the recitation bar while it shows; PlayerBar sets it */
   color-scheme: light;
 }
 :root[data-theme='sepia'] {
@@ -111,25 +111,6 @@ button, select, input { font: inherit; color: inherit; }
 .tip { margin: 12px 0; }
 .status { text-align: center; color: var(--muted); padding: 32px 0; }
 .link-row { margin: 12px 0; }
-
-/* Header */
-.top {
-  display: grid;
-  grid-template-columns: 44px 1fr 44px;
-  align-items: center;
-  gap: 4px;
-  padding: calc(10px + env(safe-area-inset-top)) 0 8px;
-  position: sticky;
-  top: 0;
-  background: var(--bg);
-  z-index: 5;
-}
-.top-title { text-align: center; min-width: 0; }
-.top-title h1 { font-size: 1.15rem; font-weight: 700; line-height: 1.4; }
-.top-title p { font-size: 0.8rem; color: var(--muted); line-height: 1.3; }
-.top-spacer { width: 44px; }
-.back svg { transform: scaleX(-1); }
-:root[dir='rtl'] .back svg { transform: none; }
 
 /* Buttons */
 .icon-btn {
@@ -267,7 +248,7 @@ input[type='checkbox'] { width: 20px; height: 20px; accent-color: var(--accent);
 /* Player */
 .player {
   position: fixed; inset-inline: 0; margin-inline: auto; max-width: 720px;
-  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
+  bottom: env(safe-area-inset-bottom);
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
   padding: 8px 12px; background: var(--surface); border-top: 1px solid var(--line);
   box-shadow: 0 -4px 14px rgb(0 0 0 / 0.08); z-index: 8;
@@ -286,7 +267,7 @@ input[type='checkbox'] { width: 20px; height: 20px; accent-color: var(--accent);
 
 .toast {
   position: fixed; inset-inline: 0; margin-inline: auto; width: max-content; max-width: 90vw;
-  bottom: calc(var(--nav-h) + 80px + env(safe-area-inset-bottom)); background: var(--ink); color: var(--bg);
+  bottom: calc(var(--player-h) + 24px + env(safe-area-inset-bottom)); background: var(--ink); color: var(--bg);
   padding: 8px 16px; border-radius: 999px; z-index: 30; font-size: 0.9rem;
 }
 
@@ -295,11 +276,6 @@ input[type='checkbox'] { width: 20px; height: 20px; accent-color: var(--accent);
 }
 
 /* Mushaf page view */
-.mushaf-bar {
-  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px;
-  padding: calc(10px + env(safe-area-inset-top)) 4px 8px; position: sticky; top: 0; z-index: 5;
-  background: var(--bg); border-bottom: 1px solid var(--line); font-family: var(--font-quran); font-size: 1.1rem;
-}
 .mb-surah { text-align: start; }
 .mb-juz { text-align: end; color: var(--muted); font-family: var(--font-ui); font-size: 0.9rem; }
 .mb-page {
@@ -307,11 +283,11 @@ input[type='checkbox'] { width: 20px; height: 20px; accent-color: var(--accent);
   background: none; color: var(--gold); font-family: var(--font-ui); font-weight: 700; cursor: pointer;
 }
 .mb-jump input { width: 84px; min-height: 40px; text-align: center; border-radius: 999px; border: 1.5px solid var(--gold); background: var(--surface); }
-.mushaf-flow { position: relative; padding: 8px 0 12px; }
+.mushaf-flow { position: relative; padding: calc(var(--bar-h) + 4px) 0 12px; }
 .flow {
   font-family: var(--font-quran); line-height: 2.15; text-align: justify; text-justify: inter-word; margin: 6px 0; word-spacing: 0.05em;
 }
-.ay { cursor: pointer; border-radius: 6px; padding: 2px 3px; scroll-margin-top: 110px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.ay { cursor: pointer; border-radius: 6px; padding: 2px 3px; scroll-margin-top: calc(var(--bar-h) + 60px); -webkit-box-decoration-break: clone; box-decoration-break: clone; }
 .ay.playing { background: var(--hl); }
 .mark { color: var(--accent); font-size: 0.7em; margin-inline: 0.1em; white-space: nowrap; unicode-bidi: isolate; }
 .banner {
@@ -337,7 +313,6 @@ input[type='checkbox'] { width: 20px; height: 20px; accent-color: var(--accent);
 :root[dir='rtl'] .chev-prev { transform: scaleX(-1); }
 :root[dir='rtl'] .chev-next { transform: none; }
 .sheet-body { overflow-y: auto; padding-bottom: 4px; }
-.app.has-player { --player-h: 64px; }
 
 /* Home: the ayah of the day and where you left off, nothing else */
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -363,8 +338,6 @@ input[type='checkbox'] { width: 20px; height: 20px; accent-color: var(--accent);
 .ayah-bar .ayah-actions { margin-inline-start: auto; }
 .num { border: 1px solid var(--line); color: var(--muted); font-weight: 600; }
 a.player-info { color: var(--ink); text-decoration: none; }
-/* Sticky headers cover the side gutters too, so text scrolling underneath never peeks out at the edges. */
-.top, .mushaf-bar { margin-inline: -16px; padding-inline: 16px; }
 .chip {
   display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 6px 14px; border-radius: 999px;
   border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; font-size: 0.9rem;
@@ -398,7 +371,7 @@ a.player-info { color: var(--ink); text-decoration: none; }
 
 /* Page view: the whole mushaf scrolls; pages render only near the screen */
 /* content-visibility clips to the box, which cut the end of each line; the padding gives the glyphs room */
-.mpage { content-visibility: auto; contain-intrinsic-size: auto var(--page-h, 1400px); scroll-margin-top: 64px; padding-inline: 12px; margin-inline: -12px; }
+.mpage { content-visibility: auto; contain-intrinsic-size: auto var(--page-h, 1400px); scroll-margin-top: calc(var(--bar-h) + 4px); padding-inline: 12px; margin-inline: -12px; }
 .page-no { display: flex; align-items: center; gap: 10px; margin: 18px 0 22px; color: var(--muted); font-size: 0.8rem; }
 .page-no::before, .page-no::after { content: ''; flex: 1; border-top: 1px solid var(--line); }
 @media (hover: hover) { .ay:not(.sel):not(.playing):hover { background: var(--sel); } }
@@ -410,7 +383,7 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .side-box {
   position: fixed; z-index: 4; width: var(--box-w); overflow-y: auto;
   top: calc(76px + env(safe-area-inset-top)); height: fit-content;
-  max-height: calc(100dvh - 76px - var(--nav-h) - env(safe-area-inset-bottom) - var(--player-h, 0px) - 16px);
+  max-height: calc(100dvh - 76px - env(safe-area-inset-bottom) - var(--player-h) - 16px);
   background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 6px 20px rgb(0 0 0 / 0.12); padding: 8px 12px;
 }
 .side-box.side-left { left: max(8px, calc((100vw - 720px) / 2)); }
@@ -470,28 +443,11 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .mushaf-layout.with-box.box-bottom .mushaf-flow { padding-bottom: calc(var(--box-h, 0px) + 16px); }
 .side-box.side-bottom {
   top: auto; left: 8px; right: 8px; margin-inline: auto; width: auto; max-width: 704px;
-  bottom: calc(8px + env(safe-area-inset-bottom) + var(--player-h, 0px)); max-height: 42dvh;
+  bottom: calc(8px + env(safe-area-inset-bottom) + var(--player-h)); max-height: 42dvh;
 }
-
-/* The one small menu button at the top left */
-.menu-wrap { position: fixed; z-index: 30; top: calc(8px + env(safe-area-inset-top)); left: 8px; }
-.menu-btn {
-  display: grid; place-items: center; width: 40px; height: 40px; border-radius: 999px; cursor: pointer;
-  background: color-mix(in srgb, var(--surface) 92%, transparent); border: 1px solid var(--line); color: var(--ink); box-shadow: var(--shadow);
-}
-.menu-pop {
-  position: absolute; top: 46px; left: 0; min-width: 190px; padding: 6px; display: grid; gap: 2px;
-  background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 8px 24px rgb(0 0 0 / 0.16);
-}
-.menu-pop a { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; color: var(--ink); font-weight: 500; }
-.menu-pop a.on { background: var(--hl); color: var(--accent); font-weight: 700; }
-/* room for the button beside page headers, and on the Today screen */
-.top, .mushaf-bar { padding-left: 56px; }
-.home { padding-top: calc(60px + env(safe-area-inset-top)); }
 
 /* The owner's printed mushaf as pictures (private builds): each page is an image with a tappable area per ayah */
-.mushaf-flow.printed { padding-top: 48px; }
-.mpage.printed { content-visibility: visible; contain-intrinsic-size: none; scroll-margin-top: 44px; padding-inline: 0; margin-inline: 0; margin-bottom: 8px; }
+.mpage.printed { content-visibility: visible; contain-intrinsic-size: none; scroll-margin-top: calc(var(--bar-h) + 4px); padding-inline: 0; margin-inline: 0; margin-bottom: 8px; }
 .pg { position: relative; width: 100%; }
 .pg-img { display: block; width: 100%; height: 100%; -webkit-user-select: none; user-select: none; }
 .mushaf-flow[data-color='green'] .pg-img { filter: hue-rotate(-60deg); }
@@ -509,18 +465,42 @@ a.player-info { color: var(--ink); text-decoration: none; }
   .printed .ay:not(.sel):not(.playing):hover .seg { background: rgb(255 196 40 / 0.16); }
 }
 .pg-no { position: absolute; left: 42%; width: 16%; bottom: 0; height: 6%; border: 0; background: none; cursor: pointer; padding: 0; }
-.jump-pop { position: fixed; top: calc(10px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); z-index: 6; }
+
+/* The bar: burger, centre, end. The same for the mushaf and every layer. */
+:root { --bar-h: calc(52px + env(safe-area-inset-top)); }
+.appbar { position: fixed; top: 0; inset-inline: 0; z-index: 5; padding-top: env(safe-area-inset-top); background: var(--bg); border-bottom: 1px solid var(--line); }
+.appbar.sticky { position: sticky; }
+.appbar-in { max-width: 720px; height: 52px; margin-inline: auto; padding-inline: 4px; display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 4px; }
+.appbar-centre { min-width: 0; display: flex; justify-content: center; align-items: center; }
+.appbar-end { display: flex; justify-content: flex-end; }
+.appbar-title { text-align: center; min-width: 0; }
+.appbar-title h1 { font-size: 1.05rem; font-weight: 700; line-height: 1.35; }
+.appbar-title p { font-size: 0.78rem; color: var(--muted); line-height: 1.3; }
+.mushaf-id { display: flex; align-items: center; justify-content: center; gap: 14px; font-family: var(--font-quran); font-size: 1.05rem; }
 
 /* Layers: every screen but the mushaf is fixed over it and scrolls on its own */
 .mushaf-host { min-height: 100dvh; }
 .layer {
   position: fixed; inset: 0; z-index: 7; overflow-y: auto; overscroll-behavior: contain; background: var(--bg);
-  padding-bottom: calc(var(--player-h, 0px) + 24px + env(safe-area-inset-bottom));
+  padding-bottom: calc(var(--player-h) + 24px + env(safe-area-inset-bottom));
 }
 .layer:focus { outline: none; }
-.layer-inner { position: relative; max-width: 720px; margin-inline: auto; padding: 0 16px; min-height: 100%; }
-.layer-bar {
-  position: sticky; top: 0; z-index: 6; display: flex; justify-content: flex-end; align-items: center; direction: ltr;
-  height: calc(52px + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top); background: var(--bg);
+.layer-inner { max-width: 720px; margin-inline: auto; padding: 8px 16px 0; min-height: 100%; }
+
+/* The navigation drawer */
+.drawer-wrap { position: fixed; inset: 0; z-index: 20; }
+.drawer-backdrop { position: absolute; inset: 0; background: rgb(0 0 0 / 0.4); animation: fade-in 0.15s ease-out; }
+.drawer {
+  position: absolute; inset-block: 0; inset-inline-start: 0; width: min(320px, 86vw); padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  background: var(--surface); box-shadow: 0 0 30px rgb(0 0 0 / 0.25); display: flex; flex-direction: column; animation: drawer-in 0.18s ease-out;
 }
-.layer .top { top: calc(52px + env(safe-area-inset-top)); padding-top: 0; }
+.drawer-head { display: flex; align-items: center; justify-content: space-between; height: 52px; padding: 0 12px 0 20px; border-bottom: 1px solid var(--line); }
+:root[dir='rtl'] .drawer-head { padding: 0 20px 0 12px; }
+.drawer nav { display: grid; gap: 2px; padding: 10px; }
+.drawer nav a { display: flex; align-items: center; gap: 14px; min-height: 48px; padding: 0 14px; border-radius: 12px; color: var(--ink); font-weight: 500; }
+.drawer nav a.on { background: var(--hl); color: var(--accent); font-weight: 700; }
+@keyframes drawer-in { from { transform: translateX(-100%); } to { transform: none; } }
+:root[dir='rtl'] .drawer { animation-name: drawer-in-rtl; }
+@keyframes drawer-in-rtl { from { transform: translateX(100%); } to { transform: none; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .drawer, .drawer-backdrop { animation: none; } }

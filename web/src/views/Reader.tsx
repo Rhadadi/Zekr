@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from 'preact/hooks'
 import { playSurah, player } from '../audio'
 import { AyahCard } from '../components/AyahCard'
 import { Icon } from '../components/Icon'
-import { LoadError, Loading, PageHeader } from '../components/Page'
+import { LoadError, Loading } from '../components/Page'
 import { type Meta, ayahIdOf, loadText, loadTranslation } from '../data'
 import { useAsync } from '../hooks'
-import { num, surahName, surahSubtitle, t } from '../i18n'
+import { num, surahName, t } from '../i18n'
 import { href } from '../router'
 import { SurahBanner } from '../components/SurahBanner'
 import { TranslationAudioToggle } from '../components/TranslationAudioToggle'
@@ -76,7 +76,6 @@ export function Reader({ meta, surahId, ayah }: { meta: Meta; surahId: number; a
 
   return (
     <>
-      <PageHeader title={surahName(surah)} sub={surahSubtitle(surah)} back={href.index} />
       <div class="surah-head">
         <SurahBanner name={surah.ar} />
         <p class="muted small">

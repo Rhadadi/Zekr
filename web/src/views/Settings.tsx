@@ -1,6 +1,5 @@
 import { useState } from 'preact/hooks'
 import { PlaybackOptions } from '../components/PlaybackOptions'
-import { PageHeader } from '../components/Page'
 import { type Meta, type Script, downloadAll } from '../data'
 import { QURAN_FONTS, type QuranFont } from '../fonts'
 import { useWide } from '../hooks'
@@ -36,7 +35,6 @@ export function SettingsView({ meta }: { meta: Meta }) {
   )
   return (
     <>
-      <PageHeader title={t('settings')} />
       <div class="form">
         <label class="field">
           <span>{t('language')}</span>

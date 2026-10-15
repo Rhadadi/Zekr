@@ -1,7 +1,9 @@
 import { memo } from 'preact/compat'
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks'
 import { player, playFrom } from '../audio'
+import { AppBar } from '../components/AppBar'
 import { AyahPanel } from '../components/AyahPanel'
+import { Icon } from '../components/Icon'
 import { LoadError, Loading } from '../components/Page'
 import { PageOptions } from '../components/PageOptions'
 import { SurahBanner } from '../components/SurahBanner'
@@ -337,22 +339,31 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   )
   return (
     <>
-      {printed ? (
-        // The printed page shows its own surah, juz and page number; the page number opens "go to page".
-        jumping ? <div class="jump-pop">{jumpForm}</div> : null
-      ) : (
-        <header class="mushaf-bar" dir="rtl">
-          <span class="mb-surah" lang="ar">سورة {surahOfPage.ar}</span>
-          {jumping ? (
-            jumpForm
+      <AppBar
+        centre={
+          printed ? (
+            // The printed page shows its own surah, juz and page number; its page number opens "go to page".
+            jumping ? jumpForm : null
           ) : (
-            <button class="mb-page" onClick={() => setJumping(true)} aria-label={`${t('goToPage')}: ${t('pageN', { n: current })}`}>
-              {num(current)}
-            </button>
-          )}
-          <span class="mb-juz">{t('juzN', { n: juzOf(meta, pageRange(meta, current).first) })}</span>
-        </header>
-      )}
+            <div class="mushaf-id" dir="rtl">
+              <span class="mb-surah" lang="ar">سورة {surahOfPage.ar}</span>
+              {jumping ? (
+                jumpForm
+              ) : (
+                <button class="mb-page" onClick={() => setJumping(true)} aria-label={`${t('goToPage')}: ${t('pageN', { n: current })}`}>
+                  {num(current)}
+                </button>
+              )}
+              <span class="mb-juz">{t('juzN', { n: juzOf(meta, pageRange(meta, current).first) })}</span>
+            </div>
+          )
+        }
+        end={
+          <button class="icon-btn" aria-label={t('pageOptions')} aria-expanded={panel?.kind === 'options'} onClick={() => setPanel(panel?.kind === 'options' ? null : { kind: 'options' })}>
+            <Icon name="sliders" size={22} />
+          </button>
+        }
+      />
       <div class={`mushaf-layout${box ? ` with-box box-${side}` : ''}`}>
         <div
           class={`mushaf-flow${printed ? ' printed' : ''}`}

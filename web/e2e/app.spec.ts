@@ -28,6 +28,9 @@ async function useSettings(page: Page, settings: Record<string, unknown>) {
 // The page view holds the page or ayah it opened at in place for a moment while the text settles (heights of pages
 // not yet laid out are estimates). Wait until the text is there and the scroll position has stopped moving, then do
 // what a reader does first, scroll a little, which ends that holding for good.
+// The burger of the bar that is on top (a layer has its own bar over the mushaf's).
+const menu = (page: Page) => page.getByRole('button', { name: 'Menu' }).last()
+
 async function settle(page: Page) {
   await expect(page.locator('.mpage .ay').first()).toBeAttached()
   let last = -1
@@ -380,7 +383,7 @@ test.describe('layers over the mushaf', () => {
     // where page 320 sits on the screen (the scroll offset itself moves when pages near the screen are laid out)
     const top = () => page.locator('#page-320').evaluate((el) => el.getBoundingClientRect().top)
     const before = await top()
-    await page.getByRole('button', { name: 'Menu' }).click()
+    await menu(page).click()
     await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Settings' }).click()
     await expect(page.locator('.layer')).toBeVisible()
     await expect(page.locator('.mushaf-host')).toHaveAttribute('inert', '')
@@ -395,13 +398,16 @@ test.describe('layers over the mushaf', () => {
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/page/305')
     await expect(page.locator('#page-305 .ay').first()).toBeVisible()
-    await page.getByRole('button', { name: 'Menu' }).click()
+    await menu(page).click()
     await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Saved' }).click()
     await expect(page.locator('.layer')).toBeVisible()
+    await expect(page).toHaveURL(/#\/saved$/)
     await page.goBack()
+    await expect(page).toHaveURL(/#\/page\/305$/)
     await expect(page.locator('.layer')).toHaveCount(0)
     await page.goForward()
-    await expect(page.locator('.layer')).toBeVisible()
+    await expect(page).toHaveURL(/#\/saved$/)
+    await expect(page.locator('.layer')).toBeFocused() // focus and the Escape listener are set up together
     await page.keyboard.press('Escape')
     await expect(page.locator('.layer')).toHaveCount(0)
     await expect(page).toHaveURL(/#\/page\/305$/)
@@ -625,7 +631,7 @@ test.describe('opening the app', () => {
     await expect(page.locator('#page-1 .ay').first()).toBeVisible()
     await expect(page.locator('.layer')).toHaveCount(0)
     await expect(page.getByTestId('daily-card')).toHaveCount(0)
-    await page.getByRole('button', { name: 'Menu' }).click()
+    await menu(page).click()
     await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Quran' })).toHaveAttribute('aria-current', 'page')
     await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Today' }).click()
     await expect(page.getByTestId('daily-card')).toBeVisible()
@@ -737,11 +743,25 @@ test.describe('page view on a phone', () => {
     await expect(page.locator('.ayah-popup')).toContainText('1:3')
   })
 
+  test('the recitation bar never covers the translation box at the bottom', async ({ page }) => {
+    await trackAudio(page)
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/1')
+    await settle(page)
+    await page.locator('#page-1 .ay').nth(2).click()
+    await page.getByTestId('ayah-panel').getByRole('button', { name: 'Play' }).click()
+    await expect(page.locator('.player')).toBeVisible()
+    await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--player-h'))).not.toBe('0px')
+    const box = (await page.getByTestId('side-box').boundingBox())!
+    const bar = (await page.locator('.player').boundingBox())!
+    expect(box.y + box.height).toBeLessThanOrEqual(bar.y + 1)
+  })
+
   test('no bottom bar: one small menu button at the top left opens Quran, Today, Search, Saved and Settings', async ({ page }) => {
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/settings')
     await expect(page.locator('.bottom-nav')).toHaveCount(0)
-    const btn = page.getByRole('button', { name: 'Menu' })
+    const btn = menu(page)
     const r = (await btn.boundingBox())!
     expect(r.x).toBeLessThan(20)
     expect(r.y).toBeLessThan(20)
@@ -902,5 +922,57 @@ test.describe('The printed mushaf as pictures (private build, made-up pictures h
     await page.getByLabel('Page colour').selectOption({ label: 'Pink' })
     await page.goto('/#/page/3')
     await expect(page.locator('#page-3 .pg-img')).toHaveCSS('filter', /hue-rotate/)
+  })
+})
+
+test.describe('the drawer', () => {
+  test('the burger opens it, Escape, the backdrop, a choice and Back close it, and focus returns to the burger', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/305')
+    await expect(page.locator('#page-305 .ay').first()).toBeVisible()
+    const drawer = page.getByRole('dialog', { name: 'Menu' })
+    await menu(page).click()
+    await expect(drawer).toBeVisible()
+    await expect(drawer.getByRole('link').first()).toBeFocused()
+    await page.keyboard.press('Escape')
+    await expect(drawer).toHaveCount(0)
+    await expect(menu(page)).toBeFocused()
+
+    await menu(page).click()
+    await page.locator('.drawer-backdrop').click({ position: { x: 380, y: 400 } })
+    await expect(drawer).toHaveCount(0)
+
+    await menu(page).click()
+    await page.goBack()
+    await expect(drawer).toHaveCount(0)
+    await expect(page).toHaveURL(/#\/page\/305$/) // Back closed the drawer and nothing else
+
+    await menu(page).click()
+    await drawer.getByRole('link', { name: 'Saved' }).click()
+    await expect(page).toHaveURL(/#\/saved$/)
+    await expect(drawer).toHaveCount(0)
+    await page.goBack()
+    await expect(page).toHaveURL(/#\/page\/305$/) // choosing from the drawer left no twin of the page behind
+  })
+
+  test('Tab stays inside the open drawer, and nothing behind it can be reached', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/305')
+    await menu(page).click()
+    const drawer = page.getByRole('dialog', { name: 'Menu' })
+    for (let i = 0; i < 9; i++) {
+      await page.keyboard.press('Tab')
+      expect(await drawer.evaluate((d) => d.contains(document.activeElement))).toBe(true)
+    }
+    await expect(page.locator('#main')).toHaveAttribute('inert', '')
+  })
+
+  test('in Persian it comes from the right', async ({ page }) => {
+    await useSettings(page, { lang: 'fa' })
+    await page.goto('/#/page/305')
+    await page.getByRole('button', { name: 'منو' }).last().click()
+    await page.waitForTimeout(400) // the slide
+    const box = (await page.getByRole('dialog', { name: 'منو' }).boundingBox())!
+    expect(box.x + box.width).toBeGreaterThan(page.viewportSize()!.width - 2)
   })
 })

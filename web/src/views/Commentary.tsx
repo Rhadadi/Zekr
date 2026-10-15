@@ -1,5 +1,5 @@
 import { Note, Paragraphs, rangeLabel } from '../components/StudyQuranPanel'
-import { LoadError, Loading, PageHeader } from '../components/Page'
+import { LoadError, Loading } from '../components/Page'
 import { type Meta, ayahIdOf } from '../data'
 import { useAsync } from '../hooks'
 import { ayahRef, surahName, t } from '../i18n'
@@ -21,7 +21,6 @@ export function CommentaryView({ meta, surah, ayah }: { meta: Meta; surah: numbe
   const strip = Array.from({ length: Math.min(last - first + 1, 60) }, (_, i) => first + i)
   return (
     <>
-      <PageHeader title={t('commentary')} sub={`${t('studyQuranName')} · ${ayahRef(s, ayah)}`} back={href.ayah(surah, ayah)} />
       {data.error ? <LoadError retry={data.retry} /> : !data.value ? <Loading /> : (
         <article class="commentary" lang="en" dir="ltr">
           <section class="comm-strip" aria-label={t('showAyahs')}>
@@ -45,11 +44,9 @@ export function CommentaryView({ meta, surah, ayah }: { meta: Meta; surah: numbe
 
 /** The Study Quran's introduction to a surah, on its own screen. */
 export function IntroView({ meta, surah }: { meta: Meta; surah: number }) {
-  const s = meta.surahs[surah - 1]!
   const data = useAsync(async () => loadStudyIntroduction(meta, surah), [surah, meta.version])
   return (
     <>
-      <PageHeader title={t('aboutSurah')} sub={`${t('studyQuranName')} · ${surahName(s)}`} back={href.surah(surah)} />
       {data.error ? <LoadError retry={data.retry} /> : !data.value ? <Loading /> : (
         <article class="commentary" lang="en" dir="ltr">
           <Paragraphs text={data.value.text} />
