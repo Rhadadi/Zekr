@@ -285,15 +285,39 @@ def opening_rects(n: int, w: int = 674, h: int = 935) -> list:
             for ayah in OPENING_SEGMENTS[n]]
 
 
+def apply_built(src: Path, web_dir: Path, meta_path: Path) -> int:
+    """Use pages built earlier (`assets/mushaf`, committed for the public site): copy them next to the web data and
+    tell meta.json where each page starts. No PDF needed."""
+    built = json.loads((src / "map.json").read_text())
+    pages = built["pages"]
+    if len(pages) != PAGES or sum(1 for _ in src.glob("[0-9][0-9][0-9].webp")) != PAGES:
+        print(f"ERROR: {src} does not hold {PAGES} pages", file=sys.stderr)
+        return 1
+    web_dir.mkdir(parents=True, exist_ok=True)
+    for f in src.iterdir():
+        shutil.copy2(f, web_dir / f.name)
+    meta = json.loads(meta_path.read_text())
+    meta["pages"] = [p["first"] for p in pages]
+    meta["mushaf"] = {"v": built["v"], "w": OUT_W, "h": OUT_H}
+    meta_path.write_text(json.dumps(meta, ensure_ascii=False, separators=(",", ":")))
+    print(f"ok: {PAGES} printed pages applied, version {built['v']}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("pdf", type=Path, help="the scanned mushaf PDF (624 pages; Quran page 1 is PDF page 4)")
+    ap.add_argument("pdf", type=Path, nargs="?", help="the scanned mushaf PDF (624 pages; Quran page 1 is PDF page 4)")
+    ap.add_argument("--apply", type=Path, metavar="DIR", help="use pages built earlier (no PDF): copy DIR to --web-dir and patch meta.json")
     ap.add_argument("--meta", type=Path, default=ROOT / "web" / "public" / "data" / "meta.json")
     ap.add_argument("--web-dir", type=Path, default=ROOT / "web" / "public" / "data" / "mushaf")
     ap.add_argument("--ios-dir", type=Path, help="also write the pages for the iPhone app")
     ap.add_argument("--check", action="store_true", help="find the markers and report problems; write nothing")
     ap.add_argument("--no-meta", action="store_true", help="do not change meta.json")
     args = ap.parse_args(argv)
+    if args.apply:
+        return apply_built(args.apply, args.web_dir, args.meta)
+    if not args.pdf:
+        ap.error("give the PDF, or --apply DIR")
     try:
         dirs = [args.web_dir] + ([args.ios_dir] if args.ios_dir else [])
         return build(args.pdf, args.meta, dirs, None if args.no_meta else args.meta, args.check)

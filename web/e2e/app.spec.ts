@@ -365,6 +365,7 @@ test.describe('mushaf page view', () => {
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/ayah/17/24')
     await expect(page.locator('.ay.sel')).toHaveCount(1)
+    await settle(page) // the page in view (which the Study view opens at) is known only once the scroll has settled
     await expect(page.getByRole('group', { name: 'Reading view' })).toHaveCount(0)
     await page.locator('.mushaf-flow').dispatchEvent('click') // closes the ayah box
     await page.locator('.mushaf-flow').dispatchEvent('click') // opens the reading options
