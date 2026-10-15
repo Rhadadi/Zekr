@@ -45,6 +45,12 @@ jobs:
         run: python3 -m unittest discover -s tools/tests -v
       - name: Build the data (downloads from Tanzil)
         run: python3 tools/build_data.py
+      - name: The public data build has no private book text
+        run: |
+          for d in almizan tafsir intro mushaf; do
+            test ! -e "web/public/data/$d" || { echo "error: web/public/data/$d"; exit 1; }
+          done
+          if grep -q '"studyQuran"\|"mushaf"\|"tafsir":\[[^]]' web/public/data/meta.json; then echo "error: meta.json lists private content"; exit 1; fi
       - uses: actions/setup-node@v4
         with:
           node-version: 22

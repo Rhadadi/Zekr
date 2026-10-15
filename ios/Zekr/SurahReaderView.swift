@@ -75,6 +75,7 @@ struct SurahReaderView: View {
             .buttonStyle(.borderedProminent)
             .padding(.top, 4)
             TranslationAudioButton()
+            if model.store?.hasStudyQuran == true { StudyIntroRow(surahID: surah.id).padding(.horizontal) }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)

@@ -19,3 +19,13 @@ xcuserdata/
 DerivedData/
 web/test-results/
 web/playwright-report/
+
+# Private Study Quran source/import artifacts (code and schema may be committed).
+*.pdf
+study_quran.sqlite*
+page-lines.jsonl
+output/
+
+# Private printed-mushaf page scans (docs/DESIGN.md §7).
+ios/Zekr/Resources/mushaf/
+*.webp.map.json

@@ -26,6 +26,19 @@ export function useAsync<T>(fn: () => Promise<T>, deps: unknown[]): AsyncState<T
   return { value: state.value, error: state.error, loading: state.loading, retry: () => setAttempt((a) => a + 1) }
 }
 
+/** Whether the screen is wide enough (a computer or tablet) for a box beside the text. Phones never get one. */
+export const WIDE_QUERY = '(min-width: 1000px)'
+export function useWide(): boolean {
+  const [wide, setWide] = useState(() => matchMedia(WIDE_QUERY).matches)
+  useEffect(() => {
+    const q = matchMedia(WIDE_QUERY)
+    const on = () => setWide(q.matches)
+    q.addEventListener('change', on)
+    return () => q.removeEventListener('change', on)
+  }, [])
+  return wide
+}
+
 /** Current time in ms, refreshed every `intervalMs`. */
 export function useNow(intervalMs: number): number {
   const [now, setNow] = useState(Date.now())

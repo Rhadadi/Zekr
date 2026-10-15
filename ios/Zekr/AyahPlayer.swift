@@ -10,6 +10,8 @@ final class AyahPlayer {
     private(set) var cursor: PlaybackCursor?
     private(set) var isPlaying = false
     private(set) var failed = false
+    /// "Repeat this ayah" is on: the ayah being recited plays again and again until it is turned off.
+    private(set) var isLooping = false
 
     var playingAyahID: Int? { cursor?.ayahID }
 
@@ -34,6 +36,7 @@ final class AyahPlayer {
     /// Start at `ayahID` and keep going until the end of `scope` (the setting, unless given).
     func play(from ayahID: Int, scope: PlayTo? = nil, withBasmala: Bool = false) {
         guard let store, let settings, let location = try? store.location(ofAyahID: ayahID) else { return }
+        isLooping = false
         let s = settings.settings
         let end = (try? store.endOfPlayback(from: ayahID, to: scope ?? s.playTo)) ?? ayahID
         plan = PlaybackPlan(end: end, repeatCount: s.repeatCount, translation: s.audioTranslation != nil)
@@ -54,6 +57,36 @@ final class AyahPlayer {
         }
     }
 
+    /// Turns "repeat this ayah" on or off for `ayahID`. On: plays that ayah (from the start, unless it is the one
+    /// playing) with an endless repeat, which the playback rules already honour. Off: the recording finishes, then
+    /// playback carries on as planned, so the audio does not restart mid-word.
+    func loop(ayahID: Int, on: Bool) {
+        guard let settings else { return }
+        if !on {
+            isLooping = false
+            plan = PlaybackPlan(end: plan.end, repeatCount: settings.settings.repeatCount, translation: plan.translation)
+            if var c = cursor {
+                c.repeatLeft = 1
+                cursor = c
+            }
+            return
+        }
+        if cursor?.ayahID != ayahID || failed { play(from: ayahID) }
+        isLooping = true
+        plan = PlaybackPlan(end: plan.end, repeatCount: Int.max, translation: plan.translation)
+        if var c = cursor {
+            c.repeatLeft = Int.max
+            cursor = c
+        }
+    }
+
+    /// Skipping to another ayah ends "repeat this ayah": the new one plays as the settings say.
+    private func endLoop() {
+        guard isLooping, let settings else { return }
+        isLooping = false
+        plan = PlaybackPlan(end: plan.end, repeatCount: settings.settings.repeatCount, translation: plan.translation)
+    }
+
     func togglePause() {
         guard let cursor else { return }
         if failed || player.currentItem == nil {
@@ -66,11 +99,13 @@ final class AyahPlayer {
     }
 
     func next() {
+        endLoop()
         guard let cursor, let c = Playback.skipNext(cursor, plan: plan) else { return }
         load(c)
     }
 
     func previous() {
+        endLoop()
         guard let cursor, let c = Playback.skipPrevious(cursor, plan: plan) else { return }
         load(c)
     }
@@ -81,6 +116,7 @@ final class AyahPlayer {
         removeObservers()
         cursor = nil
         isPlaying = false
+        isLooping = false
         failed = false
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
     }
@@ -154,7 +190,7 @@ final class AyahPlayer {
         if isPlaying { player.rate = Float(s.speed) }
         if let cursor, let store {
             let end = (try? store.endOfPlayback(from: cursor.ayahID, to: s.playTo)) ?? cursor.ayahID
-            plan = PlaybackPlan(end: end, repeatCount: s.repeatCount, translation: s.audioTranslation != nil)
+            plan = PlaybackPlan(end: end, repeatCount: isLooping ? Int.max : s.repeatCount, translation: s.audioTranslation != nil)
         }
     }
 

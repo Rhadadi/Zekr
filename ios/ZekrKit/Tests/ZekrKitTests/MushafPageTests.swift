@@ -63,16 +63,39 @@ final class MushafPageTests: XCTestCase {
         XCTAssertEqual(MushafPage.marker(286), "﴿٢٨٦﴾")
     }
 
-    func testReadModeDefaultsToPageAndIsSaved() throws {
-        XCTAssertEqual(ReaderSettings().readMode, .page)
-        let old = try JSONDecoder().decode(ReaderSettings.self, from: Data(#"{"arabicSize": 30}"#.utf8))
-        XCTAssertEqual(old.readMode, .page)
-        let verse = try JSONDecoder().decode(ReaderSettings.self, from: Data(#"{"readMode": "verse"}"#.utf8))
-        XCTAssertEqual(verse.readMode, .verse)
-        XCTAssertEqual(old.pageTranslation, .left)
-        XCTAssertTrue(old.followRecitation)
-        let saved = try JSONDecoder().decode(ReaderSettings.self, from: Data(#"{"pageTranslation": "popup", "followRecitation": false}"#.utf8))
-        XCTAssertEqual(saved.pageTranslation, .popup)
-        XCTAssertFalse(saved.followRecitation)
+    func testTranslationPlaceDefaultsToPanelAndOldBoxChoicesCarryOver() throws {
+        XCTAssertEqual(ReaderSettings().translationPlace, .panel)
+        let fresh = try JSONDecoder().decode(ReaderSettings.self, from: Data(#"{"arabicSize": 30}"#.utf8))
+        XCTAssertEqual(fresh.translationPlace, .panel)
+        XCTAssertTrue(fresh.followRecitation)
+        // saved by an older version: a card over the page stays a card, every other box position becomes the panel
+        let popup = try JSONDecoder().decode(ReaderSettings.self, from: Data(#"{"pageBox": "popup", "readMode": "verse"}"#.utf8))
+        XCTAssertEqual(popup.translationPlace, .card)
+        let bottom = try JSONDecoder().decode(ReaderSettings.self, from: Data(#"{"pageBox": "bottom"}"#.utf8))
+        XCTAssertEqual(bottom.translationPlace, .panel)
+        // a choice made after the change wins over the old key
+        let both = try JSONDecoder().decode(ReaderSettings.self, from: Data(#"{"translationPlace": "inline", "pageBox": "popup"}"#.utf8))
+        XCTAssertEqual(both.translationPlace, .inline)
+    }
+
+    func testRetiredKeysAreNotWrittenBack() throws {
+        var s = ReaderSettings()
+        s.translationPlace = .off
+        s.pageColor = .green
+        let data = try JSONEncoder().encode(s)
+        let json = try XCTUnwrap(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        XCTAssertNil(json["pageBox"])
+        XCTAssertNil(json["readMode"])
+        XCTAssertEqual(json["translationPlace"] as? String, "off")
+        let back = try JSONDecoder().decode(ReaderSettings.self, from: data)
+        XCTAssertEqual(back, s)
+    }
+
+    func testPageColorDefaultsToTheEditionAsPrinted() throws {
+        XCTAssertEqual(ReaderSettings().pageColor, .blue)
+        let saved = try JSONDecoder().decode(ReaderSettings.self, from: Data(#"{"pageColor": "pink"}"#.utf8))
+        XCTAssertEqual(saved.pageColor, .pink)
+        let unknown = try JSONDecoder().decode(ReaderSettings.self, from: Data(#"{"pageColor": "orange"}"#.utf8))
+        XCTAssertEqual(unknown.pageColor, .blue)
     }
 }

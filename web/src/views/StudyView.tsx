@@ -2,16 +2,18 @@ import { useEffect, useRef, useState } from 'preact/hooks'
 import { playSurah, player } from '../audio'
 import { AyahCard } from '../components/AyahCard'
 import { Icon } from '../components/Icon'
-import { LoadError, Loading, PageHeader } from '../components/Page'
+import { LoadError, Loading } from '../components/Page'
 import { type Meta, ayahIdOf, loadText, loadTranslation } from '../data'
 import { useAsync } from '../hooks'
-import { num, surahName, surahSubtitle, t } from '../i18n'
+import { num, surahName, t } from '../i18n'
 import { href } from '../router'
 import { SurahBanner } from '../components/SurahBanner'
 import { TranslationAudioToggle } from '../components/TranslationAudioToggle'
 import { setLastRead, settings } from '../store'
+import { StudyIntroLink } from '../components/StudyQuranPanel'
 
-export function Reader({ meta, surahId, ayah }: { meta: Meta; surahId: number; ayah?: number }) {
+/** The Study view: one surah ayah by ayah, with its translations, as a layer over the mushaf. */
+export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number; ayah?: number }) {
   const s = settings.value
   const surah = meta.surahs[surahId - 1]!
   const trKey = s.translations.join(',')
@@ -34,7 +36,6 @@ export function Reader({ meta, surahId, ayah }: { meta: Meta; surahId: number; a
       const id = setTimeout(() => setFocused(undefined), 2500)
       return () => clearTimeout(id)
     }
-    window.scrollTo(0, 0)
   }, [!!data.value, surahId, ayah])
 
   // Remember where the reader is: the ayah near the top of the screen.
@@ -76,7 +77,6 @@ export function Reader({ meta, surahId, ayah }: { meta: Meta; surahId: number; a
 
   return (
     <>
-      <PageHeader title={surahName(surah)} sub={surahSubtitle(surah)} back={href.index} />
       <div class="surah-head">
         <SurahBanner name={surah.ar} />
         <p class="muted small">
@@ -87,6 +87,7 @@ export function Reader({ meta, surahId, ayah }: { meta: Meta; surahId: number; a
         </button>
         <TranslationAudioToggle />
       </div>
+      <StudyIntroLink meta={meta} surah={surahId} />
       {data.error ? <LoadError retry={data.retry} /> : !data.value ? <Loading /> : (
         <div class="ayahs" ref={listRef}>
           {showBasmala ? (
@@ -107,8 +108,8 @@ export function Reader({ meta, surahId, ayah }: { meta: Meta; surahId: number; a
         </div>
       )}
       <nav class="surah-nav" aria-label={t('surahs')}>
-        {prev ? <a class="btn" href={href.surah(prev.id)}>{num(prev.id)}. {surahName(prev)}</a> : <span />}
-        {nextSurah ? <a class="btn" href={href.surah(nextSurah.id)}>{num(nextSurah.id)}. {surahName(nextSurah)}</a> : <span />}
+        {prev ? <a class="btn" href={href.verse(prev.id)}>{num(prev.id)}. {surahName(prev)}</a> : <span />}
+        {nextSurah ? <a class="btn" href={href.verse(nextSurah.id)}>{num(nextSurah.id)}. {surahName(nextSurah)}</a> : <span />}
       </nav>
     </>
   )

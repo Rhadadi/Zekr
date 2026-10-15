@@ -38,9 +38,13 @@ jobs:
       - run: npm run build
         working-directory: web
       - uses: actions/configure-pages@v5
-      - name: Make sure the Al-Mizan text is not published (copyrighted, see docs/PLAN.md §8)
+      - name: Make sure no private book text is published (Al-Mizan, The Study Quran; see docs/PLAN.md §8)
         run: |
-          test ! -e web/dist/data/almizan || { echo "error: web/dist contains Al-Mizan"; exit 1; }
+          for d in almizan tafsir intro mushaf; do
+            test ! -e "web/dist/data/$d" || { echo "error: web/dist/data/$d is private content"; exit 1; }
+          done
+          if grep -q '"studyQuran"\|"mushaf"\|"tafsir":\[[^]]' web/dist/data/meta.json; then echo "error: meta.json lists private content"; exit 1; fi
+          if find web/dist -iname '*.pdf' | grep -q .; then echo "error: a PDF is in web/dist"; exit 1; fi
       - uses: actions/upload-pages-artifact@v3
         with:
           path: web/dist

@@ -1,18 +1,21 @@
 import Foundation
 
-/// Where the page view shows an ayah's translation: in a box in the left or right margin, or in a card over the page.
-public enum PageTranslation: String, Codable, CaseIterable, Sendable {
-    case left
-    case right
-    case popup
+/// Where the mushaf shows an ayah's translation: in the panel (the sheet on a phone, the inspector on an iPad), in a card
+/// over the page, inline under every ayah, or not on the page at all.
+public enum TranslationPlace: String, Codable, CaseIterable, Sendable {
+    case panel
+    case card
+    case inline
+    case off
 }
 
-/// How the Quran tab shows the text.
-public enum ReadMode: String, Codable, CaseIterable, Sendable {
-    /// One ayah at a time, with translations.
-    case verse
-    /// Flowing mushaf pages; tap an ayah for its translation.
-    case page
+/// The printed mushaf pages are recoloured with a filter; `blue` is the edition as printed.
+public enum PageColor: String, Codable, CaseIterable, Sendable {
+    case blue
+    case green
+    case purple
+    case pink
+    case dark
 }
 
 /// Reading and recitation settings, saved as JSON in UserDefaults. Missing keys fall back to the defaults,
@@ -20,8 +23,8 @@ public enum ReadMode: String, Codable, CaseIterable, Sendable {
 public struct ReaderSettings: Codable, Equatable, Sendable {
     /// Translation ids shown under each ayah, in this order.
     public var translations: [String] = ["fa.safavi"]
-    public var readMode = ReadMode.page
-    public var pageTranslation = PageTranslation.left
+    public var translationPlace = TranslationPlace.panel
+    public var pageColor = PageColor.blue
     /// While reciting, keep the ayah being recited on screen (even after scrolling elsewhere).
     public var followRecitation = true
     public var useUthmaniScript = true
@@ -41,15 +44,23 @@ public struct ReaderSettings: Codable, Equatable, Sendable {
     public init() {}
 
     private enum CodingKeys: String, CodingKey {
-        case translations, readMode, pageTranslation, followRecitation, useUthmaniScript, quranFontID, arabicSize, translationSize, reciterID, speed, repeatCount, playTo, audioTranslationID, lastAudioTranslationID
+        case translations, translationPlace, pageBox, readMode, pageColor, followRecitation, useUthmaniScript, quranFontID, arabicSize, translationSize, reciterID, speed, repeatCount, playTo, audioTranslationID, lastAudioTranslationID
     }
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let d = ReaderSettings()
         translations = try c.decodeIfPresent([String].self, forKey: .translations) ?? d.translations
-        readMode = (try? c.decodeIfPresent(ReadMode.self, forKey: .readMode)) ?? d.readMode
-        pageTranslation = (try? c.decodeIfPresent(PageTranslation.self, forKey: .pageTranslation)) ?? d.pageTranslation
+        // Older versions saved a box position (and a reading view, which is gone: the mushaf is the only reading
+        // screen). Over the page stays a card; every other box position becomes the panel.
+        if let place = try? c.decodeIfPresent(TranslationPlace.self, forKey: .translationPlace) {
+            translationPlace = place
+        } else if let old = try? c.decodeIfPresent(String.self, forKey: .pageBox) {
+            translationPlace = old == "popup" ? .card : .panel
+        } else {
+            translationPlace = d.translationPlace
+        }
+        pageColor = (try? c.decodeIfPresent(PageColor.self, forKey: .pageColor)) ?? d.pageColor
         followRecitation = try c.decodeIfPresent(Bool.self, forKey: .followRecitation) ?? d.followRecitation
         useUthmaniScript = try c.decodeIfPresent(Bool.self, forKey: .useUthmaniScript) ?? d.useUthmaniScript
         quranFontID = try c.decodeIfPresent(String.self, forKey: .quranFontID) ?? d.quranFontID
@@ -61,6 +72,24 @@ public struct ReaderSettings: Codable, Equatable, Sendable {
         playTo = (try? c.decodeIfPresent(PlayTo.self, forKey: .playTo)) ?? d.playTo
         audioTranslationID = try c.decodeIfPresent(String.self, forKey: .audioTranslationID)
         lastAudioTranslationID = try c.decodeIfPresent(String.self, forKey: .lastAudioTranslationID)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(translations, forKey: .translations)
+        try c.encode(translationPlace, forKey: .translationPlace)
+        try c.encode(pageColor, forKey: .pageColor)
+        try c.encode(followRecitation, forKey: .followRecitation)
+        try c.encode(useUthmaniScript, forKey: .useUthmaniScript)
+        try c.encode(quranFontID, forKey: .quranFontID)
+        try c.encode(arabicSize, forKey: .arabicSize)
+        try c.encode(translationSize, forKey: .translationSize)
+        try c.encode(reciterID, forKey: .reciterID)
+        try c.encode(speed, forKey: .speed)
+        try c.encode(repeatCount, forKey: .repeatCount)
+        try c.encode(playTo, forKey: .playTo)
+        try c.encodeIfPresent(audioTranslationID, forKey: .audioTranslationID)
+        try c.encodeIfPresent(lastAudioTranslationID, forKey: .lastAudioTranslationID)
     }
 
     /// One tap to hear the translation after each ayah, one tap to stop. Brings back the recording chosen last;

@@ -14,8 +14,12 @@ export interface DailySettings {
   salt: number
 }
 
-/** Where the page view shows an ayah's translation: in a box in the left or right margin, or over the page under the ayah (on hover, or on tap). */
-export type PageTranslation = 'left' | 'right' | 'popup'
+/** Where the mushaf shows an ayah's translation: in the side panel (the sheet on a phone), in a card over the page under
+ * the ayah, inline under every ayah in the text, or not on the page at all. */
+export type TranslationPlace = 'panel' | 'card' | 'inline' | 'off'
+
+/** The printed pages are recoloured with a filter; 'blue' is the edition as printed. */
+export type PageColor = 'blue' | 'green' | 'purple' | 'pink' | 'dark'
 
 export interface Settings {
   lang: 'auto' | 'fa' | 'en'
@@ -23,9 +27,8 @@ export interface Settings {
   script: Script
   /** Arabic font for the Quran text. */
   quranFont: QuranFont
-  /** 'verse': one ayah at a time with translations. 'page': flowing mushaf page. */
-  readMode: 'verse' | 'page'
-  pageTranslation: PageTranslation
+  translationPlace: TranslationPlace
+  pageColor: PageColor
   arabicSize: number
   trSize: number
   /** Translation ids shown in the reader, in order. */
@@ -48,8 +51,8 @@ export const defaultSettings: Settings = {
   theme: 'auto',
   script: 'uthmani',
   quranFont: DEFAULT_QURAN_FONT,
-  readMode: 'verse',
-  pageTranslation: 'left',
+  translationPlace: 'panel',
+  pageColor: 'blue',
   arabicSize: 30,
   trSize: 17,
   translations: ['fa.safavi'],
@@ -80,8 +83,16 @@ function write(key: string, value: unknown) {
   }
 }
 
+/** Settings as saved by older versions: the box-position choice became "where translations show", and the reading
+ * view is gone (the mushaf is the only reading screen). The old keys are not kept. */
+export function migrateSettings(saved: Record<string, unknown>): Partial<Settings> {
+  const { pageBox, readMode: _readMode, ...rest } = saved as Record<string, unknown> & { pageBox?: string; readMode?: string }
+  if (rest.translationPlace === undefined && pageBox !== undefined) rest.translationPlace = pageBox === 'popup' ? 'card' : 'panel'
+  return rest as Partial<Settings>
+}
+
 function loadSettings(): Settings {
-  const saved = read<Partial<Settings>>('zekr.settings') ?? {}
+  const saved = migrateSettings(read<Record<string, unknown>>('zekr.settings') ?? {})
   return { ...defaultSettings, ...saved, daily: { ...defaultSettings.daily, ...saved.daily } }
 }
 

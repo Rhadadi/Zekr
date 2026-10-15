@@ -1,6 +1,6 @@
 import { memo } from 'preact/compat'
 import { useState } from 'preact/hooks'
-import { toggleAyah } from '../audio'
+import { loopAyah, looping, toggleAyah } from '../audio'
 import { type Meta, type TranslationInfo, locate } from '../data'
 import { ayahRef, num, t } from '../i18n'
 import { href } from '../router'
@@ -9,6 +9,7 @@ import { copyText, ayahLink, ayahText, shareText } from '../share'
 import { isBookmarked, settings, toggleBookmark } from '../store'
 import { tafsirIndex } from '../tafsir'
 import { Icon } from './Icon'
+import { StudyChips } from './StudyQuranPanel'
 
 export interface TranslationText {
   info: TranslationInfo
@@ -21,7 +22,7 @@ interface Props {
   ar: string
   translations: TranslationText[]
   playing?: boolean
-  /** Reader: highlight briefly after jumping to this ayah. */
+  /** Study view: highlight briefly after jumping to this ayah. */
   focused?: boolean
   /** Search and saved lists: show the surah reference (a link) instead of just the number. */
   showRef?: boolean
@@ -43,6 +44,7 @@ function AyahCardView({ meta, id, ar, translations, playing, focused, showRef, q
   const s = settings.value
   const saved = isBookmarked(id)
   const [open, setOpen] = useState(false)
+  const repeating = looping.value && !!playing
   const labelled = translations.length > 1
   const trTexts = translations.map((x) => x.text || t('mergedTranslation'))
   const text = () => ayahText(meta, id, ar, trTexts)
@@ -62,6 +64,9 @@ function AyahCardView({ meta, id, ar, translations, playing, focused, showRef, q
             <>
               <button class="icon-btn" onClick={() => toggleBookmark(id)} aria-label={saved ? t('unbookmark') : t('bookmark')} aria-pressed={saved}>
                 <Icon name={saved ? 'bookmarkFilled' : 'bookmark'} size={20} />
+              </button>
+              <button class="icon-btn" onClick={() => loopAyah(id, !repeating)} aria-label={t('repeatAyah')} aria-pressed={repeating}>
+                <Icon name="repeat" size={20} />
               </button>
               <button class="icon-btn" onClick={() => copyText(text())} aria-label={t('copy')}>
                 <Icon name="copy" size={20} />
@@ -95,6 +100,7 @@ function AyahCardView({ meta, id, ar, translations, playing, focused, showRef, q
           </p>
         </div>
       ))}
+      {meta.studyQuran ? <StudyChips meta={meta} ayahID={id} /> : null}
     </article>
   )
 }

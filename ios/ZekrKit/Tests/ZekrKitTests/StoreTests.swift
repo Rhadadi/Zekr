@@ -57,11 +57,57 @@ final class StoreTests: XCTestCase {
         let id = store.ayahID(surah: 17, ayah: 24)
         XCTAssertTrue(try store.arabic(ayahID: id, script: .uthmani).contains("ٱرْحَمْهُمَا"))
         XCTAssertTrue(try store.arabic(ayahID: id, script: .simple).contains("ارْحَمْهُمَا"))
-        XCTAssertEqual(try store.translations().count, 10)
+        let translations = try store.translations()
+        XCTAssertEqual(translations.count, store.hasStudyQuran ? 11 : 10)
+        XCTAssertEqual(translations.contains { $0.id == "en.study_quran" }, store.hasStudyQuran)
     }
 
     func testMissingDatabaseThrows() {
         XCTAssertThrowsError(try QuranStore(databaseURL: URL(fileURLWithPath: "/nonexistent/db.sqlite")))
+    }
+}
+
+final class StudyQuranQueriesTests: XCTestCase {
+    /// Runs on the private package or on the made-up one from tools/tests/study_fixture.py.
+    private func privateStore() throws -> QuranStore {
+        let store = try QuranStore(databaseURL: try Repo.database(Repo.fullDB))
+        guard store.hasStudyQuran else { throw XCTSkip("Private Study Quran content is not supplied") }
+        return store
+    }
+
+    func testVerseTranslationAndIntroduction() throws {
+        let store = try privateStore()
+        let id = store.ayahID(surah: 2, ayah: 255)
+        // Structure only: the exact wording of the book is checked privately, never in this public repository.
+        let study = try store.translation(ayahID: id, translationID: "en.study_quran")
+        XCTAssertFalse(study.isEmpty)
+        XCTAssertNotEqual(study, try store.translation(ayahID: id, translationID: "en.sahih"), "the book is its own translation")
+        XCTAssertFalse(try XCTUnwrap(store.studyQuranIntroduction(surahID: 114)).isEmpty)
+    }
+
+    func testSharedAndOverlappingCommentary() throws {
+        let store = try privateStore()
+        let a = try store.studyQuranEntries(ayahID: store.ayahID(surah: 2, ayah: 11))
+        let b = try store.studyQuranEntries(ayahID: store.ayahID(surah: 2, ayah: 12))
+        XCTAssertFalse(a.isEmpty)
+        XCTAssertEqual(a.map(\.id), b.map(\.id))
+        let notes = try store.studyQuranEntries(ayahID: store.ayahID(surah: 2, ayah: 275))
+        XCTAssertEqual(Set(notes.map(\.lastAyah)), Set([275, 281]))
+    }
+
+    func testSearchAndSourceExceptions() throws {
+        let store = try privateStore()
+        XCTAssertTrue(try store.searchStudyQuran("usury").contains { $0.surah == 2 && $0.firstAyah == 275 })
+        XCTAssertTrue(try store.studyQuranEntries(ayahID: store.ayahID(surah: 26, ayah: 110)).isEmpty)
+        XCTAssertTrue(try store.studyQuranEntries(ayahID: store.ayahID(surah: 38, ayah: 5)).contains { $0.coverageKind == "quoted_header" })
+    }
+
+    func testWidgetHasNoPrivateContentAndDoesNotQueryMissingTables() throws {
+        let store = try QuranStore(databaseURL: try Repo.database(Repo.widgetDB))
+        XCTAssertFalse(store.hasStudyQuran)
+        XCTAssertTrue(try store.studyQuranEntries(ayahID: 1).isEmpty)
+        XCTAssertNil(try store.studyQuranIntroduction(surahID: 1))
+        XCTAssertTrue(try store.searchStudyQuran("mercy").isEmpty)
     }
 }
 

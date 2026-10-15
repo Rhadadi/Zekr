@@ -14,6 +14,8 @@ export interface PlayerView {
 }
 
 export const player = signal<PlayerView | null>(null)
+/** "Repeat this ayah" is on: the ayah being recited plays again and again until it is turned off. */
+export const looping = signal(false)
 
 const audio = new Audio()
 const preloader = new Audio()
@@ -30,7 +32,7 @@ export function initAudio(m: Meta) {
 
 function currentPlan(end: number): Plan {
   const s = settings.value
-  return { end, repeat: s.repeat, translation: audioTranslations.some((a) => a.id === s.audioTranslation) }
+  return { end, repeat: looping.peek() ? Number.POSITIVE_INFINITY : s.repeat, translation: audioTranslations.some((a) => a.id === s.audioTranslation) }
 }
 
 function urlFor(c: Cursor): string {
@@ -103,6 +105,7 @@ audio.addEventListener('ended', () => {
 /** Start playing at `ayahId` and keep going until the end of `scope`. */
 export function playFrom(ayahId: number, scope: PlayTo = settings.value.playTo, withBasmala = false) {
   if (!meta) return
+  looping.value = false
   plan = currentPlan(endOf(meta, ayahId, scope))
   const { surah, ayah } = locate(meta, ayahId)
   load(startCursor(ayahId, surah, ayah, plan, withBasmala))
@@ -120,6 +123,23 @@ export function toggleAyah(ayahId: number, scope?: PlayTo) {
   else playFrom(ayahId, scope)
 }
 
+/** Turn "repeat this ayah" on or off for `ayahId`. Turning it on plays that ayah (from the start, unless it is the one
+ * playing) with an endless repeat, which the playback rules already honour; turning it off lets the current
+ * recording finish and carries on as planned, so the audio does not restart mid-word. */
+export function loopAyah(ayahId: number, on: boolean) {
+  if (!meta) return
+  if (!on) {
+    looping.value = false
+    plan = { ...plan, repeat: settings.peek().repeat }
+    if (cursor) cursor = { ...cursor, repeatLeft: 1 }
+    return
+  }
+  if (!cursor || cursor.ayahId !== ayahId || player.peek()?.status === 'error') playFrom(ayahId)
+  looping.value = true
+  plan = { ...plan, repeat: Number.POSITIVE_INFINITY }
+  if (cursor) cursor = { ...cursor, repeatLeft: Number.POSITIVE_INFINITY }
+}
+
 export function toggle() {
   const p = player.value
   if (!p || !cursor) return
@@ -129,12 +149,21 @@ export function toggle() {
   else audio.pause()
 }
 
+/** Skipping to another ayah ends "repeat this ayah": the new one plays as the settings say. */
+function endLoop() {
+  if (!looping.peek()) return
+  looping.value = false
+  plan = { ...plan, repeat: settings.peek().repeat }
+}
+
 export function next() {
+  endLoop()
   const c = cursor && skipNext(cursor, plan, TOTAL_AYAHS)
   if (c) load(c)
 }
 
 export function previous() {
+  endLoop()
   const c = cursor && skipPrevious(cursor, plan)
   if (c) load(c)
 }
@@ -145,6 +174,7 @@ export function stop() {
   audio.load()
   preloader.removeAttribute('src')
   cursor = null
+  looping.value = false
   player.value = null
 }
 

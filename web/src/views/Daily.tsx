@@ -1,6 +1,5 @@
 import { DailyCard } from '../components/DailyCard'
 import { Icon } from '../components/Icon'
-import { PageHeader } from '../components/Page'
 import { type Meta } from '../data'
 import { type DailyAyah, dailyAyah, poolName } from '../daily'
 import { useAsync, useNow } from '../hooks'
@@ -50,7 +49,6 @@ export function Daily({ meta }: { meta: Meta }) {
 
   return (
     <>
-      <PageHeader title={t('dailyTitle')} back={href.today} />
       <DailyCard meta={meta} />
       <p class="muted small tip">{t('dailyHelp')}</p>
 

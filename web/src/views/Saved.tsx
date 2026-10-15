@@ -1,5 +1,5 @@
 import { AyahCard } from '../components/AyahCard'
-import { LoadError, Loading, PageHeader } from '../components/Page'
+import { LoadError, Loading } from '../components/Page'
 import { type Meta, loadText, loadTranslation } from '../data'
 import { useAsync } from '../hooks'
 import { t } from '../i18n'
@@ -15,7 +15,6 @@ export function Saved({ meta }: { meta: Meta }) {
   const list = bookmarks.value
   return (
     <>
-      <PageHeader title={t('saved')} />
       {list.length === 0 ? <p class="status">{t('savedEmpty')}</p> : data.error ? <LoadError retry={data.retry} /> : !data.value ? <Loading /> : (
         <div class="ayahs">
           {list.map((b) => {

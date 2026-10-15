@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks'
+import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks'
 import { next, player, previous, stop, toggle } from '../audio'
 import { type Meta, locate } from '../data'
 import { ayahRef, t } from '../i18n'
@@ -10,6 +10,22 @@ import { TranslationAudioToggle } from './TranslationAudioToggle'
 export function PlayerBar({ meta }: { meta: Meta }) {
   const p = player.value
   const [open, setOpen] = useState(false)
+  const bar = useRef<HTMLDivElement>(null)
+  // Everything that sits at the bottom of the screen (the translation box, layers, the toast) leaves room for the bar.
+  const showing = !!p
+  useLayoutEffect(() => {
+    const el = bar.current
+    const root = document.documentElement
+    if (!el) return
+    const set = () => root.style.setProperty('--player-h', `${el.offsetHeight}px`)
+    set()
+    const observer = new ResizeObserver(set)
+    observer.observe(el)
+    return () => {
+      observer.disconnect()
+      root.style.removeProperty('--player-h')
+    }
+  }, [showing])
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
@@ -21,7 +37,7 @@ export function PlayerBar({ meta }: { meta: Meta }) {
   const playing = p.status === 'playing' || p.status === 'loading'
   return (
     <>
-      <div class="player" role="region" aria-label={t('recitation')} data-status={p.status}>
+      <div class="player" ref={bar} role="region" aria-label={t('recitation')} data-status={p.status}>
         <a class="player-info" href={href.ayah(surah, ayah)} aria-label={`${t('nowReciting')}: ${ayahRef(meta.surahs[surah - 1]!, ayah)}`}>
           <strong>{ayahRef(meta.surahs[surah - 1]!, ayah)}</strong>
           <span class="muted small">{p.status === 'error' ? t('audioError') : p.phase === 'translation' ? t('audioTranslation') : p.phase === 'basmala' ? 'بسم الله' : ''}</span>

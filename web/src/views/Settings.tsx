@@ -1,13 +1,14 @@
 import { useState } from 'preact/hooks'
 import { PlaybackOptions } from '../components/PlaybackOptions'
-import { PageHeader } from '../components/Page'
 import { type Meta, type Script, downloadAll } from '../data'
 import { QURAN_FONTS, type QuranFont } from '../fonts'
+import { useWide } from '../hooks'
 import { lang, t } from '../i18n'
 import { href } from '../router'
-import { type PageTranslation, settings, updateSettings } from '../store'
+import { type PageColor, type TranslationPlace, settings, updateSettings } from '../store'
 
 export function SettingsView({ meta }: { meta: Meta }) {
+  const wide = useWide()
   const s = settings.value
   const [dl, setDl] = useState<{ done: number; total: number; state: 'idle' | 'running' | 'ok' | 'failed' }>({ done: 0, total: 0, state: 'idle' })
   const toggleTranslation = (id: string, on: boolean) =>
@@ -34,7 +35,6 @@ export function SettingsView({ meta }: { meta: Meta }) {
   )
   return (
     <>
-      <PageHeader title={t('settings')} />
       <div class="form">
         <label class="field">
           <span>{t('language')}</span>
@@ -53,21 +53,29 @@ export function SettingsView({ meta }: { meta: Meta }) {
             <option value="dark">{t('themeDark')}</option>
           </select>
         </label>
-        <label class="field">
-          <span>{t('readingView')}</span>
-          <select value={s.readMode} onChange={(e) => updateSettings({ readMode: e.currentTarget.value as typeof s.readMode })}>
-            <option value="verse">{t('viewVerseFull')}</option>
-            <option value="page">{t('viewPageFull')}</option>
-          </select>
-        </label>
+        <h2 class="section">{t('reading')}</h2>
         <label class="field">
           <span>{t('pageTranslation')}</span>
-          <select value={s.pageTranslation} onChange={(e) => updateSettings({ pageTranslation: e.currentTarget.value as PageTranslation })}>
-            <option value="left">{t('pageTranslationLeft')}</option>
-            <option value="right">{t('pageTranslationRight')}</option>
-            <option value="popup">{t('pageTranslationPopup')}</option>
+          <select value={s.translationPlace} onChange={(e) => updateSettings({ translationPlace: e.currentTarget.value as TranslationPlace })}>
+            <option value="panel">{wide ? t('pageTranslationPanel') : t('pageTranslationBottom')}</option>
+            <option value="card">{t('pageTranslationPopup')}</option>
+            {meta.mushaf ? null : <option value="inline">{t('pageTranslationInline')}</option>}
+            <option value="off">{t('pageTranslationOff')}</option>
           </select>
+          {s.translationPlace === 'inline' ? <span class="muted small hint">{t('inlineHint')}</span> : null}
         </label>
+        {meta.mushaf ? (
+          <label class="field">
+            <span>{t('pageColor')}</span>
+            <select value={s.pageColor} onChange={(e) => updateSettings({ pageColor: e.currentTarget.value as PageColor })}>
+              <option value="blue">{t('colorBlue')}</option>
+              <option value="green">{t('colorGreen')}</option>
+              <option value="purple">{t('colorPurple')}</option>
+              <option value="pink">{t('colorPink')}</option>
+              <option value="dark">{t('colorDark')}</option>
+            </select>
+          </label>
+        ) : null}
         <label class="field">
           <span>{t('script')}</span>
           <select value={s.script} onChange={(e) => updateSettings({ script: e.currentTarget.value as Script })}>

@@ -17,6 +17,7 @@ public final class QuranStore {
     var hasUthmaniText: Bool { hasUthmani }
     public let surahs: [Surah]
     private let hasUthmani: Bool
+    public let hasStudyQuran: Bool
 
     public init(databaseURL: URL) throws {
         db = try SQLiteDatabase(url: databaseURL)
@@ -30,6 +31,7 @@ public final class QuranStore {
         }
         guard surahs.count == 114 else { throw StoreError.missing("114 surahs (found \(surahs.count))") }
         hasUthmani = try db.query("PRAGMA table_info(ayah)") { $0.text(1) }.contains("text_uthmani")
+        hasStudyQuran = try db.query("SELECT value FROM meta WHERE key='study_quran'") { $0.text(0) }.first == "1"
     }
 
     /// Opens a bundled database by resource name, e.g. `QuranStore(resource: "widget", in: .main)`.
@@ -150,5 +152,54 @@ public final class QuranStore {
 
     public func metaValue(_ key: String) throws -> String? {
         try db.query("SELECT value FROM meta WHERE key = ?", [.text(key)]) { $0.text(0) }.first
+    }
+
+    public struct StudyReference: Hashable, Sendable {
+        public let raw: String
+        public let kind: String
+        public let surah: Int
+        public let ayah: Int
+    }
+
+    public struct StudyEntry: Identifiable, Hashable, Sendable {
+        public let id: String
+        public let surah: Int
+        public let firstAyah: Int
+        public let lastAyah: Int
+        public let coverageKind: String
+        public let text: String
+        public let pages: [Int]
+        public let references: [StudyReference]
+    }
+
+    private func studyEntry(_ id: String) throws -> StudyEntry? {
+        let rows = try db.query("SELECT surah_id,first_ayah,last_ayah,coverage_kind,text FROM tafsir_entry WHERE id=?", [.text(id)]) {
+            ($0.int(0), $0.int(1), $0.int(2), $0.text(3), $0.text(4))
+        }
+        guard let r = rows.first else { return nil }
+        let pages = try db.query("SELECT DISTINCT pdf_page FROM source_span WHERE record_type='tafsir' AND record_id=? ORDER BY pdf_page", [.text(id)]) { $0.int(0) }
+        let refs = try db.query("SELECT raw,target_kind,target_surah,COALESCE(first_ayah,0) FROM cross_reference WHERE record_type='tafsir' AND record_id=? ORDER BY char_start", [.text(id)]) {
+            StudyReference(raw: $0.text(0), kind: $0.text(1), surah: $0.int(2), ayah: $0.int(3))
+        }
+        return StudyEntry(id: id, surah: r.0, firstAyah: r.1, lastAyah: r.2, coverageKind: r.3, text: r.4, pages: pages, references: refs)
+    }
+
+    public func studyQuranEntries(ayahID: Int) throws -> [StudyEntry] {
+        guard hasStudyQuran else { return [] }
+        let ids = try db.query("SELECT e.id FROM tafsir_entry e JOIN tafsir_ayah a ON a.entry_id=e.id WHERE a.ayah_id=? ORDER BY e.source_order", [.int(ayahID)]) { $0.text(0) }
+        return try ids.compactMap { try studyEntry($0) }
+    }
+
+    public func studyQuranIntroduction(surahID: Int) throws -> String? {
+        guard hasStudyQuran else { return nil }
+        return try db.query("SELECT text FROM surah_introduction WHERE source_id='study_quran' AND surah_id=?", [.int(surahID)]) { $0.text(0) }.first
+    }
+
+    public func searchStudyQuran(_ query: String) throws -> [StudyEntry] {
+        guard hasStudyQuran else { return [] }
+        let words = query.split(whereSeparator: { $0.isWhitespace }).map { "\"" + $0.replacingOccurrences(of: "\"", with: "\"\"") + "\"" }
+        guard !words.isEmpty else { return [] }
+        let ids = try db.query("SELECT entry_id FROM tafsir_search WHERE tafsir_search MATCH ? ORDER BY rank LIMIT 50", [.text(words.joined(separator: " AND "))]) { $0.text(0) }
+        return try ids.compactMap { try studyEntry($0) }
     }
 }

@@ -78,6 +78,7 @@ struct AyahRowView: View {
                         .environment(\.layoutDirection, item.info.isRightToLeft ? .rightToLeft : .leftToRight)
                 }
             }
+            StudyChips(ayahID: row.id)
         }
         .padding(.vertical, 12)
         .padding(.horizontal, (playing || focused) ? 10 : 0)

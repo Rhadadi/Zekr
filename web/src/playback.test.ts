@@ -24,6 +24,14 @@ describe('playback order', () => {
     expect(seq.map((c) => c.ayahId)).toEqual([1, 1, 2, 2])
   })
 
+  it('an endless repeat never moves on', () => {
+    let c: Cursor | null = { ayahId: 4, phase: 'ayah', repeatLeft: Number.POSITIVE_INFINITY }
+    for (let i = 0; i < 200; i++) {
+      c = afterEnded(c!, plan({ end: 9, repeat: Number.POSITIVE_INFINITY }))
+      expect(c).toEqual({ ayahId: 4, phase: 'ayah', repeatLeft: Number.POSITIVE_INFINITY })
+    }
+  })
+
   it('plays the translation recording after each ayah, before repeating', () => {
     const seq = run({ ayahId: 5, phase: 'ayah', repeatLeft: 2 }, plan({ end: 6, repeat: 2, translation: true }))
     expect(seq.map((c) => `${c.ayahId}${c.phase[0]}`)).toEqual(['5a', '5t', '5a', '5t', '6a', '6t', '6a', '6t'])

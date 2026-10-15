@@ -33,14 +33,24 @@ struct SettingsView: View {
             }
 
             Section(model.text(.reading)) {
-                Picker(model.text(.readingView), selection: settings.binding(\.readMode)) {
-                    Text(model.text(.viewPageFull)).tag(ReadMode.page)
-                    Text(model.text(.viewVerseFull)).tag(ReadMode.verse)
+                Picker(model.text(.placeTranslation), selection: settings.binding(\.translationPlace)) {
+                    Text(model.text(.placePanel)).tag(TranslationPlace.panel)
+                    Text(model.text(.placeCard)).tag(TranslationPlace.card)
+                    // the printed pages are pictures: there is no text to put translations under
+                    if !model.printedPages { Text(model.text(.placeInline)).tag(TranslationPlace.inline) }
+                    Text(model.text(.placeOff)).tag(TranslationPlace.off)
                 }
-                Picker(model.text(.pageTranslation), selection: settings.binding(\.pageTranslation)) {
-                    Text(model.text(.pageTranslationLeft)).tag(PageTranslation.left)
-                    Text(model.text(.pageTranslationRight)).tag(PageTranslation.right)
-                    Text(model.text(.pageTranslationPopup)).tag(PageTranslation.popup)
+                if s.translationPlace == .inline {
+                    Text(model.text(.inlineHint)).font(.footnote).foregroundStyle(.secondary)
+                }
+                if model.printedPages {
+                    Picker(model.text(.pageColor), selection: settings.binding(\.pageColor)) {
+                        Text(model.text(.colorBlue)).tag(PageColor.blue)
+                        Text(model.text(.colorGreen)).tag(PageColor.green)
+                        Text(model.text(.colorPurple)).tag(PageColor.purple)
+                        Text(model.text(.colorPink)).tag(PageColor.pink)
+                        Text(model.text(.colorDark)).tag(PageColor.dark)
+                    }
                 }
                 Toggle(model.text(.followRecitation), isOn: settings.binding(\.followRecitation))
                 Picker(model.text(.script), selection: settings.binding(\.useUthmaniScript)) {

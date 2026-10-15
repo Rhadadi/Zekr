@@ -56,9 +56,8 @@ public enum Str: CaseIterable {
     case mergedTranslation
     case audioError
     case translationAudio
-    case readingView
-    case viewVerseFull
-    case viewPageFull
+    case studyView
+    case readingOptions
     case goToPage
     case goTo
     case cancel
@@ -67,10 +66,25 @@ public enum Str: CaseIterable {
     case nextPage
     case prevPage
     case playFromPage
-    case pageTranslation
-    case pageTranslationLeft
-    case pageTranslationRight
-    case pageTranslationPopup
+    case menu
+    case placeTranslation
+    case placePanel
+    case placeCard
+    case placeInline
+    case placeOff
+    case inlineHint
+    case playFromHere
+    case repeatAyah
+    case allSettings
+    case tabSearch
+    case searchPrompt
+    case noResults
+    case pageColor
+    case colorBlue
+    case colorGreen
+    case colorPurple
+    case colorPink
+    case colorDark
     case followRecitation
     case tafsir
     case almizan
@@ -141,9 +155,8 @@ public enum Str: CaseIterable {
         case .mergedTranslation: return "(translated together with the previous ayah)"
         case .audioError: return "Could not play this recording."
         case .translationAudio: return "Translation audio"
-        case .readingView: return "Reading view"
-        case .viewVerseFull: return "Verse by verse, with translations"
-        case .viewPageFull: return "Mushaf page"
+        case .studyView: return "Open in Study view"
+        case .readingOptions: return "Reading options"
         case .goToPage: return "Go to page"
         case .goTo: return "Go"
         case .cancel: return "Cancel"
@@ -152,10 +165,25 @@ public enum Str: CaseIterable {
         case .nextPage: return "Next page"
         case .prevPage: return "Previous page"
         case .playFromPage: return "Play from this page"
-        case .pageTranslation: return "Translation on the page"
-        case .pageTranslationLeft: return "In a box on the left"
-        case .pageTranslationRight: return "In a box on the right"
-        case .pageTranslationPopup: return "In a card over the page"
+        case .menu: return "Menu"
+        case .placeTranslation: return "Translation on the page"
+        case .placePanel: return "In a panel (a sheet at the bottom on a phone)"
+        case .placeCard: return "In a card over the ayah"
+        case .placeInline: return "Under each ayah, in the text"
+        case .placeOff: return "Not on the page"
+        case .inlineHint: return "Under each ayah the lines are no longer justified. Not available with the printed pages."
+        case .playFromHere: return "Play from here"
+        case .repeatAyah: return "Repeat this ayah"
+        case .allSettings: return "All settings"
+        case .tabSearch: return "Search"
+        case .searchPrompt: return "Search the translations"
+        case .noResults: return "Nothing found."
+        case .pageColor: return "Page colour"
+        case .colorBlue: return "Blue (as printed)"
+        case .colorGreen: return "Green"
+        case .colorPurple: return "Purple"
+        case .colorPink: return "Pink"
+        case .colorDark: return "Dark"
         case .followRecitation: return "Follow the recitation (show the ayah being recited)"
         case .tafsir: return "Tafsir"
         case .almizan: return "Al-Mizan"
@@ -222,9 +250,8 @@ public enum Str: CaseIterable {
         case .mergedTranslation: return "(ترجمهٔ این آیه همراه آیهٔ قبل آمده است)"
         case .audioError: return "پخش این فایل صوتی ممکن نشد."
         case .translationAudio: return "ترجمهٔ گویا"
-        case .readingView: return "نحوهٔ نمایش قرآن"
-        case .viewVerseFull: return "آیه‌به‌آیه، با ترجمه"
-        case .viewPageFull: return "صفحهٔ قرآن"
+        case .studyView: return "باز کردن در نمای مطالعه"
+        case .readingOptions: return "تنظیمات خواندن"
         case .goToPage: return "رفتن به صفحه"
         case .goTo: return "برو"
         case .cancel: return "انصراف"
@@ -233,10 +260,25 @@ public enum Str: CaseIterable {
         case .nextPage: return "صفحهٔ بعد"
         case .prevPage: return "صفحهٔ قبل"
         case .playFromPage: return "پخش از این صفحه"
-        case .pageTranslation: return "ترجمه در صفحه"
-        case .pageTranslationLeft: return "در کادری در سمت چپ"
-        case .pageTranslationRight: return "در کادری در سمت راست"
-        case .pageTranslationPopup: return "در کارتی روی صفحه"
+        case .menu: return "منو"
+        case .placeTranslation: return "ترجمه در صفحه"
+        case .placePanel: return "در پنل (در گوشی، برگه‌ای در پایین)"
+        case .placeCard: return "در کارتی روی آیه"
+        case .placeInline: return "زیر هر آیه، در متن"
+        case .placeOff: return "در صفحه نشان داده نشود"
+        case .inlineHint: return "با این گزینه سطرها زیر هر آیه دیگر تراز نیستند. با صفحه‌های چاپی در دسترس نیست."
+        case .playFromHere: return "پخش از اینجا"
+        case .repeatAyah: return "تکرار این آیه"
+        case .allSettings: return "همهٔ تنظیمات"
+        case .tabSearch: return "جستجو"
+        case .searchPrompt: return "جستجو در ترجمه‌ها"
+        case .noResults: return "چیزی پیدا نشد."
+        case .pageColor: return "رنگ صفحه"
+        case .colorBlue: return "آبی (مانند چاپ)"
+        case .colorGreen: return "سبز"
+        case .colorPurple: return "بنفش"
+        case .colorPink: return "صورتی"
+        case .colorDark: return "تیره"
         case .followRecitation: return "همراهی با قرائت (نمایش آیه‌ای که خوانده می‌شود)"
         case .tafsir: return "تفسیر"
         case .almizan: return "المیزان"
