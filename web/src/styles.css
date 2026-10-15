@@ -510,3 +510,7 @@ a.player-info { color: var(--ink); text-decoration: none; }
 @keyframes drawer-in-rtl { from { transform: translateX(100%); } to { transform: none; } }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .drawer, .drawer-backdrop { animation: none; } }
+
+/* Translations inline: each ayah of the text is followed by its translation. Justified lines are lost in this mode. */
+.tr-inline { margin: 0 0 14px; padding-inline: 4px; }
+.tr-inline .tr { margin: 2px 0; color: var(--ink); opacity: 0.88; line-height: 1.7; }

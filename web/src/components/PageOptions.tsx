@@ -1,11 +1,8 @@
-import { QURAN_FONTS, type QuranFont } from '../fonts'
 import { t } from '../i18n'
 import { href } from '../router'
-import { type PageTranslation, settings, updateSettings } from '../store'
 import { Icon } from './Icon'
 
 interface Props {
-  wide: boolean
   pageNo: number
   juz: number
   onPlay: () => void
@@ -14,9 +11,8 @@ interface Props {
   onClose: () => void
 }
 
-/** What tapping the page (not an ayah) shows in the side box: play from here, where translations show, following the recitation, the Quran font and size, and verse view. */
-export function PageOptions({ wide, pageNo, juz, onPlay, onVerseView, onJump, onClose }: Props) {
-  const s = settings.value
+/** What the page's options button shows: play from this page, go to a page, the Study view, and a way to all settings. */
+export function PageOptions({ pageNo, juz, onPlay, onVerseView, onJump, onClose }: Props) {
   return (
     <div class="page-options" role="region" aria-label={t('pageOptions')} data-testid="page-options" onClick={(e) => e.stopPropagation()}>
       <div class="sheet-head">
@@ -37,27 +33,6 @@ export function PageOptions({ wide, pageNo, juz, onPlay, onVerseView, onJump, on
             <Icon name="list" size={18} /> {t('openVerseView')}
           </button>
         </div>
-        <label class="field">
-          <span>{t('quranFont')}</span>
-          <select value={s.quranFont} onChange={(e) => updateSettings({ quranFont: e.currentTarget.value as QuranFont })}>
-            {QURAN_FONTS.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
-          </select>
-        </label>
-        <label class="field">
-          <span>{t('pageTranslation')}</span>
-          <select value={s.pageBox === 'popup' ? 'popup' : 'bottom'} onChange={(e) => updateSettings({ pageBox: e.currentTarget.value as PageTranslation })}>
-            <option value="bottom">{wide ? t('pageTranslationPanel') : t('pageTranslationBottom')}</option>
-            <option value="popup">{t('pageTranslationPopup')}</option>
-          </select>
-        </label>
-        <label class="field row">
-          <input type="checkbox" checked={s.autoScroll} onChange={(e) => updateSettings({ autoScroll: e.currentTarget.checked })} />
-          <span>{t('autoScroll')}</span>
-        </label>
-        <label class="field">
-          <span>{t('arabicSize')}</span>
-          <input type="range" min={22} max={52} step={1} value={s.arabicSize} onInput={(e) => updateSettings({ arabicSize: Number(e.currentTarget.value) })} />
-        </label>
         <a class="link-row small" href={href.settings}>{t('allSettings')}</a>
       </div>
     </div>

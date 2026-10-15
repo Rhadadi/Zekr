@@ -17,13 +17,15 @@ interface Props {
   playing: boolean
   /** 'box': in the side box; 'popup': over the page, under the ayah. */
   variant: 'box' | 'popup'
+  /** False when translations show elsewhere (inline) or not at all: the panel is then only the actions. */
+  showTranslations?: boolean
   style?: JSX.CSSProperties
   panelRef?: preact.Ref<HTMLDivElement>
   onClose: () => void
 }
 
 /** Translation and actions for an ayah on a mushaf page. */
-export function AyahPanel({ meta, id, ar, translations, playing, variant, style, panelRef, onClose }: Props) {
+export function AyahPanel({ meta, id, ar, translations, playing, variant, showTranslations = true, style, panelRef, onClose }: Props) {
   const { surah, ayah } = locate(meta, id)
   const saved = isBookmarked(id)
   const texts = translations.map((x) => x.text || t('mergedTranslation'))
@@ -65,15 +67,15 @@ export function AyahPanel({ meta, id, ar, translations, playing, variant, style,
         </button>
       </div>
       <div class="sheet-body">
-        {translations.length === 0 ? <p class="muted small">{t('translationsHint')}</p> : null}
-        {translations.map((x, i) => (
+        {showTranslations && translations.length === 0 ? <p class="muted small">{t('translationsHint')}</p> : null}
+        {showTranslations ? translations.map((x, i) => (
           <div class="tr-block" key={x.info.id}>
             {translations.length > 1 ? <p class="tr-label">{x.info.name}</p> : null}
             <p class={`tr${x.text ? '' : ' merged'}`} lang={x.info.lang} dir={x.info.dir}>
               {texts[i]}
             </p>
           </div>
-        ))}
+        )) : null}
         {meta.studyQuran ? <StudyChips meta={meta} ayahID={id} all /> : null}
       </div>
     </div>

@@ -5,7 +5,7 @@ import { QURAN_FONTS, type QuranFont } from '../fonts'
 import { useWide } from '../hooks'
 import { lang, t } from '../i18n'
 import { href } from '../router'
-import { type PageColor, type PageTranslation, settings, updateSettings } from '../store'
+import { type PageColor, type TranslationPlace, settings, updateSettings } from '../store'
 
 export function SettingsView({ meta }: { meta: Meta }) {
   const wide = useWide()
@@ -53,19 +53,16 @@ export function SettingsView({ meta }: { meta: Meta }) {
             <option value="dark">{t('themeDark')}</option>
           </select>
         </label>
-        <label class="field">
-          <span>{t('readingView')}</span>
-          <select value={s.readMode} onChange={(e) => updateSettings({ readMode: e.currentTarget.value as typeof s.readMode })}>
-            <option value="verse">{t('viewVerseFull')}</option>
-            <option value="page">{t('viewPageFull')}</option>
-          </select>
-        </label>
+        <h2 class="section">{t('reading')}</h2>
         <label class="field">
           <span>{t('pageTranslation')}</span>
-          <select value={s.pageBox === 'popup' ? 'popup' : 'bottom'} onChange={(e) => updateSettings({ pageBox: e.currentTarget.value as PageTranslation })}>
-            <option value="bottom">{wide ? t('pageTranslationPanel') : t('pageTranslationBottom')}</option>
-            <option value="popup">{t('pageTranslationPopup')}</option>
+          <select value={s.translationPlace} onChange={(e) => updateSettings({ translationPlace: e.currentTarget.value as TranslationPlace })}>
+            <option value="panel">{wide ? t('pageTranslationPanel') : t('pageTranslationBottom')}</option>
+            <option value="card">{t('pageTranslationPopup')}</option>
+            {meta.mushaf ? null : <option value="inline">{t('pageTranslationInline')}</option>}
+            <option value="off">{t('pageTranslationOff')}</option>
           </select>
+          {s.translationPlace === 'inline' ? <span class="muted small hint">{t('inlineHint')}</span> : null}
         </label>
         {meta.mushaf ? (
           <label class="field">

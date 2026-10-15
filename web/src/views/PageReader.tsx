@@ -1,5 +1,5 @@
 import { memo } from 'preact/compat'
-import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { player, playFrom } from '../audio'
 import { AppBar } from '../components/AppBar'
 import { AyahPanel } from '../components/AyahPanel'
@@ -8,11 +8,11 @@ import { LoadError, Loading } from '../components/Page'
 import { PageOptions } from '../components/PageOptions'
 import { Sheet } from '../components/Sheet'
 import { SurahBanner } from '../components/SurahBanner'
-import { type Meta, type MushafPageMap, juzOf, loadMushafMap, loadText, loadTranslation, locate, mushafImage, pageRange } from '../data'
+import { type Meta, type MushafPageMap, type TranslationInfo, juzOf, loadMushafMap, loadText, loadTranslation, locate, mushafImage, pageRange } from '../data'
 import { useAsync, useWide } from '../hooks'
 import { num, t } from '../i18n'
 import { href } from '../router'
-import { setLastRead, settings } from '../store'
+import { type TranslationPlace, setLastRead, settings } from '../store'
 
 const ARABIC_INDIC = '٠١٢٣٤٥٦٧٨٩'
 /** Ayah numbers inside the text use the traditional Arabic-Indic digits, as printed mushafs do. */
@@ -31,10 +31,12 @@ interface PageProps {
   highlight?: number
   /** 'sel' for the ayah being shown, 'playing' for the one being recited. */
   kind?: 'sel' | 'playing'
+  /** Translations under every ayah ("inline" placement), one entry per chosen translation. */
+  inline?: { info: TranslationInfo[]; texts: string[][]; size: number }
 }
 
 /** One mushaf page: a banner and basmala where a surah starts, then flowing ayahs, then the page number. */
-const MushafPage = memo(function MushafPage({ meta, n, ar, basmala, size, highlight, kind }: PageProps) {
+const MushafPage = memo(function MushafPage({ meta, n, ar, basmala, size, highlight, kind, inline }: PageProps) {
   const { first, last } = pageRange(meta, n)
   const out: preact.ComponentChildren[] = []
   let run: preact.ComponentChildren[] = []
@@ -58,6 +60,16 @@ const MushafPage = memo(function MushafPage({ meta, n, ar, basmala, size, highli
       </span>,
       ' ',
     )
+    if (inline) {
+      flush()
+      out.push(
+        <div class="tr-inline" key={`t${id}`}>
+          {inline.info.map((info, k) => (
+            <p class="tr" key={info.id} lang={info.lang} dir={info.dir} style={{ fontSize: `${inline.size}px` }}>{inline.texts[k]![id - 1] || t('mergedTranslation')}</p>
+          ))}
+        </div>,
+      )
+    }
   }
   flush()
   return (
@@ -137,8 +149,14 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   // The translation shows in the inspector beside the text (wide screens), in a box at the bottom (phones), or in a
   // card over the page under its ayah.
   const wide = useWide()
-  const popup = s.pageBox === 'popup'
+  // The printed pages are pictures, so there is no text to put translations under.
+  const place: TranslationPlace = printed && s.translationPlace === 'inline' ? 'panel' : s.translationPlace
+  const popup = place === 'card'
   const inspector = wide && !popup
+  const inlineTr = useMemo(
+    () => (place === 'inline' && data.value ? { info: data.value.ids.map((id) => meta.translations.find((x) => x.id === id)!), texts: data.value.trs, size: Math.round(s.trSize * 0.9) } : undefined),
+    [place, data.value, s.trSize],
+  )
   const selected = panel?.kind === 'ayah' ? panel.id : undefined
   // One highlight at a time: the ayah being shown, otherwise the one being recited.
   const highlight = selected ?? playingId
@@ -273,6 +291,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
         translations={data.value.ids.map((trId, k) => ({ info: meta.translations.find((x) => x.id === trId)!, text: data.value!.trs[k]![id - 1] as string }))}
         playing={playingId === id && (player.value?.status === 'playing' || player.value?.status === 'loading')}
         variant={variant}
+        showTranslations={place === 'panel' || place === 'card'}
         panelRef={variant === 'popup' ? popRef : undefined}
         onClose={() => {
           setPanel(null)
@@ -284,7 +303,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   // The side box: the ayah's panel (unless translations show over the page), or the reading options.
   const box =
     panel?.kind === 'options' ? (
-      <PageOptions wide={wide} pageNo={current} juz={juzOf(meta, pageRange(meta, current).first)} onPlay={() => { setPanel(null); playFrom(pageRange(meta, current).first) }} onJump={() => { setPanel(null); setJumping(true) }} onVerseView={toVerse} onClose={() => setPanel(null)} />
+      <PageOptions pageNo={current} juz={juzOf(meta, pageRange(meta, current).first)} onPlay={() => { setPanel(null); playFrom(pageRange(meta, current).first) }} onJump={() => { setPanel(null); setJumping(true) }} onVerseView={toVerse} onClose={() => setPanel(null)} />
     ) : selected !== undefined && !popup ? ayahPanel(selected, 'box') : null
   // On a phone the sheet covers the lower part of the screen. It is not hidden while a layer is open (the layer
   // covers the mushaf), and the ayah is kept clear of it by scroll-margin rather than by padding or jumping.
@@ -413,7 +432,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
               }
               return (
                 <MushafPage key={n} meta={meta} n={n} ar={data.value!.ar} basmala={meta.basmala[s.script]} size={size}
-                  highlight={on ? highlight : undefined} kind={on ? highlightKind : undefined} />
+                  highlight={on ? highlight : undefined} kind={on ? highlightKind : undefined} inline={inlineTr} />
               )
             })
           )}

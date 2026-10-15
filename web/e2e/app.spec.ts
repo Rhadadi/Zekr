@@ -343,7 +343,7 @@ test.describe('mushaf page view', () => {
   })
 
   test('over the ayah: a mouse shows the translation on hover, a tap keeps it', async ({ page }) => {
-    await useSettings(page, { lang: 'en', pageBox: 'popup' })
+    await useSettings(page, { lang: 'en', translationPlace: 'card' })
     await page.goto('/#/page/305')
     await settle(page)
     const ayah = page.locator('#page-305 .ay').nth(3)
@@ -661,8 +661,8 @@ test.describe('opening the app', () => {
     await expect(page.getByTestId('daily-card')).toBeVisible()
   })
 
-  test('then where you left off, in the page view if that is your reading view', async ({ page }) => {
-    await useSettings(page, { lang: 'en', readMode: 'page' })
+  test('then where you left off', async ({ page }) => {
+    await useSettings(page, { lang: 'en', readMode: 'verse' }) // a retired setting: the Quran opens on the mushaf whatever it says
     await page.addInitScript(() => localStorage.setItem('zekr.lastRead', JSON.stringify({ surah: 19, ayah: 5 })))
     await page.goto('/')
     await expect(page.locator('.mb-page')).toHaveText('305')
@@ -755,8 +755,10 @@ test.describe('page view: recitation, tapping and pressing', () => {
     await page.locator('#page-305 .banner').click()
     const options = page.getByTestId('page-options')
     await expect(options).toContainText(/Page 30[45]/)
-    await options.getByLabel('Quran font').selectOption({ label: 'Amiri Quran' })
-    await expect(page.locator('#page-305 .flow').first()).toHaveCSS('font-family', /^"?Zekr Amiri/)
+    // the options do not repeat Settings: no font, size, translation placement or follow-the-recitation here
+    await expect(options.getByRole('combobox')).toHaveCount(0)
+    await expect(options.getByRole('checkbox')).toHaveCount(0)
+    await expect(options.getByRole('link', { name: 'All settings' })).toBeVisible()
     await page.locator('#page-305 .banner').click()
     await expect(options).toHaveCount(0)
 
@@ -781,9 +783,9 @@ test.describe('page view on a phone', () => {
     await expect.poll(async () => (await ayah.boundingBox())!.y + (await ayah.boundingBox())!.height).toBeLessThan(b.y)
     const after = (await page.locator('#page-1 .flow').first().boundingBox())!
     expect(after.width).toBeGreaterThanOrEqual(before.width - 1)
-    // left and right boxes are for wide screens: the phone's settings only offer bottom and over-the-ayah
+    // the four places a translation can show
     await page.goto('/#/settings')
-    await expect(page.getByLabel('Translation on the page').locator('option')).toHaveText(['In a box at the bottom', 'Over the ayah (hover or tap)'])
+    await expect(page.getByLabel('Translation on the page').locator('option')).toHaveText(['In a sheet at the bottom', 'Over the ayah (hover or tap)', 'Under each ayah, in the text', 'Not on the page'])
   })
 
   test('the sheet has two heights: the handle toggles them, dragging it up grows it and down closes it, Escape closes it', async ({ page }) => {
@@ -841,8 +843,35 @@ test.describe('page view on a phone', () => {
     expect((await first.boundingBox())!.y).toBe(before)
   })
 
+  test('translations can be under every ayah, in the text', async ({ page }) => {
+    await useSettings(page, { lang: 'en', translationPlace: 'inline' })
+    await page.goto('/#/page/1')
+    await settle(page)
+    await expect(page.locator('#page-1 .tr-inline')).toHaveCount(7) // one under each ayah
+    await expect(page.locator('#page-1 .tr-inline').nth(2)).toContainText('مهربان') // Safavi, the default translation
+    await page.locator('#page-1 .ay').nth(2).click()
+    const sheet = page.getByTestId('sheet')
+    await expect(sheet).toContainText('1:3')
+    await expect(sheet.locator('.tr')).toHaveCount(0) // already on the page, so not again in the sheet
+    await page.keyboard.press('Escape')
+    await page.goto('/#/settings')
+    await expect(page.getByLabel('Translation on the page')).toHaveValue('inline')
+  })
+
+  test('translations can be left off the page, and an ayah still opens its actions', async ({ page }) => {
+    await useSettings(page, { lang: 'en', translationPlace: 'off' })
+    await page.goto('/#/page/1')
+    await settle(page)
+    await expect(page.locator('#page-1 .tr-inline')).toHaveCount(0)
+    await page.locator('#page-1 .ay').nth(2).click()
+    const sheet = page.getByTestId('sheet')
+    await expect(sheet).toContainText('1:3')
+    await expect(sheet.getByRole('button', { name: 'Play from here' })).toBeVisible()
+    await expect(sheet.locator('.tr')).toHaveCount(0)
+  })
+
   test('over the ayah, as a card, when chosen', async ({ page }) => {
-    await useSettings(page, { lang: 'en', pageBox: 'popup' })
+    await useSettings(page, { lang: 'en', pageBox: 'popup' }) // the old setting, from before translationPlace: it still means "over the ayah"
     await page.goto('/#/page/1')
     await settle(page)
     await page.locator('#page-1 .ay').nth(2).click()
