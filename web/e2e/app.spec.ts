@@ -891,7 +891,8 @@ test.describe('page view on a phone', () => {
     // an ayah low on the screen: the card goes above it rather than under the player bar
     await page.locator('#page-1 .ay').nth(6).evaluate((el) => el.scrollIntoView({ block: 'end' }))
     await page.locator('#page-1 .ay').nth(6).click()
-    await page.locator('#page-1 .ay').nth(6).click() // closes, then opens again, so the card is placed afresh
+    await expect(page.locator('.ayah-popup')).toContainText('1:7')
+    await expect.poll(() => page.locator('.ayah-popup').evaluate((el) => (el as HTMLElement).style.top)).not.toBe('') // placed
     const card = (await page.locator('.ayah-popup').boundingBox())!
     const bar = (await page.locator('.player').boundingBox())!
     const top = (await page.locator('.appbar').boundingBox())!

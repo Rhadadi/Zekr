@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks'
+import { useLayoutEffect, useRef, useState } from 'preact/hooks'
 import { t } from '../i18n'
 import { drawerOpen } from '../ui'
 
@@ -32,7 +32,8 @@ export function Sheet({ children, onClose }: { children: preact.ComponentChildre
     }
   }, [])
 
-  useEffect(() => {
+  // a layout effect, so the listener is there as soon as the sheet is on screen
+  useLayoutEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || e.defaultPrevented || drawerOpen.peek()) return
       e.preventDefault()
