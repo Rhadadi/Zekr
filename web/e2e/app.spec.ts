@@ -879,6 +879,26 @@ test.describe('page view on a phone', () => {
     await expect(page.locator('.ayah-popup')).toContainText('1:3')
   })
 
+  test('the card never sits under the recitation bar, or under the app bar', async ({ page }) => {
+    await trackAudio(page)
+    await useSettings(page, { lang: 'en', translationPlace: 'card' })
+    await page.goto('/#/page/1')
+    await settle(page)
+    await page.locator('#page-1 .ay').nth(2).click()
+    await page.locator('.ayah-popup').getByRole('button', { name: 'Play from here' }).click()
+    await expect(page.locator('.player')).toBeVisible()
+    await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--player-h'))).not.toBe('0px')
+    // an ayah low on the screen: the card goes above it rather than under the player bar
+    await page.locator('#page-1 .ay').nth(6).evaluate((el) => el.scrollIntoView({ block: 'end' }))
+    await page.locator('#page-1 .ay').nth(6).click()
+    await page.locator('#page-1 .ay').nth(6).click() // closes, then opens again, so the card is placed afresh
+    const card = (await page.locator('.ayah-popup').boundingBox())!
+    const bar = (await page.locator('.player').boundingBox())!
+    const top = (await page.locator('.appbar').boundingBox())!
+    expect(card.y + card.height).toBeLessThanOrEqual(bar.y + 1)
+    expect(card.y).toBeGreaterThanOrEqual(top.y + top.height - 1)
+  })
+
   test('the recitation bar never covers the translation box at the bottom', async ({ page }) => {
     await trackAudio(page)
     await useSettings(page, { lang: 'en' })

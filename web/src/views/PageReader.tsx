@@ -257,8 +257,9 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
       const firstLine = lines[0]!
       const lastLine = lines[lines.length - 1]!
       const below = lastLine.bottom + 6
-      const room = window.innerHeight - 70 // the bottom bar
-      pop.style.top = `${below + pop.offsetHeight <= room ? below : Math.max(70, firstLine.top - pop.offsetHeight - 6)}px`
+      const bar = document.querySelector<HTMLElement>('.appbar')?.offsetHeight ?? 0
+      const room = window.innerHeight - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--player-h')) || 0) // above the player bar
+      pop.style.top = `${below + pop.offsetHeight <= room ? below : Math.max(bar + 6, firstLine.top - pop.offsetHeight - 6)}px`
     }
     place()
     window.addEventListener('scroll', place, { passive: true })
