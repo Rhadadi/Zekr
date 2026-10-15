@@ -46,6 +46,5 @@ struct SavedView: View {
             }
         }
         .navigationTitle(model.text(.savedTitle))
-        .mainMenu()
     }
 }

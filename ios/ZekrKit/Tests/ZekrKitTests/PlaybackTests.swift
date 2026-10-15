@@ -21,6 +21,17 @@ final class PlaybackTests: XCTestCase {
         XCTAssertEqual(seq.map(\.ayahID), [1, 2, 3])
     }
 
+    func testAnEndlessRepeatNeverMovesOn() {
+        let plan = PlaybackPlan(end: 9, repeatCount: Int.max)
+        var cursor = PlaybackCursor(ayahID: 4, phase: .ayah, repeatLeft: Int.max)
+        for _ in 0..<200 {
+            guard let next = Playback.afterEnded(cursor, plan: plan) else { return XCTFail("stopped") }
+            XCTAssertEqual(next.ayahID, 4)
+            XCTAssertEqual(next.phase, .ayah)
+            cursor = next
+        }
+    }
+
     func testRepeatsEachAyah() {
         let plan = PlaybackPlan(end: 2, repeatCount: 2)
         let seq = run(PlaybackCursor(ayahID: 1, phase: .ayah, repeatLeft: 2), plan)

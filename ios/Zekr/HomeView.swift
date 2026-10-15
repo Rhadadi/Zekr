@@ -23,7 +23,6 @@ struct HomeView: View {
             .padding()
         }
         .navigationTitle(Str.appName.text(language: model.language))
-        .mainMenu()
     }
 }
 

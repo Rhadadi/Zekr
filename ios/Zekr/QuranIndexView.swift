@@ -37,21 +37,25 @@ struct QuranIndexView: View {
 
             if segment == 0 {
                 ForEach(surahs, id: \.id) { surah in
-                    NavigationLink(value: model.route(surah: surah.id, ayah: nil)) {
+                    Button { model.open(surah: surah.id, ayah: nil) } label: {
                         SurahRow(surah: surah, language: model.language)
                     }
+                    .buttonStyle(.plain)
                 }
             } else {
                 ForEach(juzRows) { row in
                     if let store = model.store, let location = try? store.location(ofAyahID: row.ayahID) {
-                        NavigationLink(value: model.route(surah: location.surah, ayah: location.ayah, select: false)) {
+                        Button { model.open(surah: location.surah, ayah: location.ayah, select: false) } label: {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(LocalizedText.juzTitle(row.juz, language: model.language)).font(.headline)
                                 Text("\(store.surah(location.surah).name(language: model.language)) \(LocalizedText.digits("\(location.surah):\(location.ayah)", language: model.language))")
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                             }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
                         }
+                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -59,7 +63,6 @@ struct QuranIndexView: View {
         .listStyle(.plain)
         .searchable(text: $filter, prompt: model.text(.filterSurahs))
         .navigationTitle(model.text(.tabQuran))
-        .mainMenu()
         .task {
             if let starts = try? model.store?.juzStarts() {
                 juzRows = starts.map { JuzRow(juz: $0.juz, ayahID: $0.ayahID) }
@@ -91,5 +94,6 @@ private struct SurahRow: View {
                 .foregroundStyle(.secondary)
         }
         .padding(.vertical, 4)
+        .contentShape(Rectangle())
     }
 }

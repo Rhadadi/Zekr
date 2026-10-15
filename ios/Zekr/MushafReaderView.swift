@@ -2,12 +2,12 @@ import SwiftUI
 import UIKit
 import ZekrKit
 
-/// The mushaf as one scrolling text, page after page. Tap an ayah for its translation (in a box at the side,
-/// or a card over the page, as chosen in Settings); tap the page for reading options. While reciting, the
-/// ayah being recited is highlighted and its page kept on screen. Same behaviour as the web page view.
+/// The mushaf as one scrolling run of pages. Tap an ayah for its panel (a sheet on a phone, a column beside the text on
+/// an iPad, or a card over the page, as chosen in Settings); tap the page for reading options. While reciting, the ayah
+/// being recited is highlighted and its page kept on screen. The same behaviour as the web app.
 struct MushafReaderView: View {
     @Environment(AppModel.self) private var model
-    private let startPage: Int
+    @Environment(\.horizontalSizeClass) private var sizeClass
     /// The page at the top of the screen.
     @State private var visiblePage: Int?
     /// The ayah being shown. While shown during a recitation, it follows the ayah being recited.
@@ -15,60 +15,57 @@ struct MushafReaderView: View {
     @State private var panel: Panel?
     /// Where the ayah was tapped, for the card over the page.
     @State private var tapPoint: CGPoint?
-    /// A tap in the lower half of the screen would put the bottom box over the ayah, so the box goes to the top.
-    @State private var boxAtTop = false
     @State private var jumping = false
     @State private var jumpText = ""
+    @State private var started = false
 
     enum Panel {
         case ayah
         case options
     }
 
-    init(page: Int, focus: Int?) {
-        startPage = min(max(page, 1), MushafPage.count)
-        _visiblePage = State(initialValue: startPage)
-        _selectedID = State(initialValue: focus)
-        _panel = State(initialValue: focus == nil ? nil : .ayah)
+    private var currentPage: Int { visiblePage ?? model.mushafTarget.page }
+
+    /// Where translations show. The printed pages are pictures, so there is nothing to put them under.
+    private var place: TranslationPlace {
+        let chosen = model.settings.settings.translationPlace
+        return (chosen == .inline && model.printedPages) ? .panel : chosen
     }
 
-    private var currentPage: Int { visiblePage ?? startPage }
+    /// The ayah panel is a card (not a sheet or column) when translations are chosen to show over the page.
+    private var panelIsCard: Bool { panel == .ayah && place == .card }
 
     /// One highlight at a time: the ayah being shown, otherwise the one being recited.
     private var highlighted: Int? { panel == .ayah ? selectedID : model.player.playingAyahID }
 
     var body: some View {
         GeometryReader { geo in
-            // The text keeps the full width; the translation is a card under the tapped ayah
-            // (there is no side box on the phone), and reading options are a card near the top.
-            let bottomMode = model.settings.settings.pageBox == .bottom
             pages
                 .environment(\.layoutDirection, .leftToRight)
-                // the translation in a box at the bottom (the default); the text scrolls clear of it
-                .safeAreaInset(edge: .bottom, spacing: 0) {
-                    if (panel == .ayah && bottomMode && !boxAtTop), let selectedID {
-                        card { AyahBox(ayahID: selectedID, onClose: close) }.padding(.bottom, 8)
-                    } else if panel == .options {
-                        card { optionsBox }.padding(.bottom, 8)
-                    }
-                }
                 .overlay(alignment: .top) {
-                    if panel == .ayah, let selectedID {
-                        if !bottomMode {
-                            card { AyahBox(ayahID: selectedID, onClose: close) }
-                                .offset(y: cardOffset(geo))
-                        } else if boxAtTop {
-                            card { AyahBox(ayahID: selectedID, onClose: close) }
-                                .offset(y: 8)
-                        }
+                    if panelIsCard, let selectedID {
+                        card { AyahBox(ayahID: selectedID, showTranslations: true, onClose: close) }
+                            .offset(y: cardOffset(geo))
                     }
                 }
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) { header }
-            ToolbarItem(placement: .topBarLeading) { MainMenu() }
+            ToolbarItem(placement: .topBarLeading) {
+                Button { model.drawerOpen = true } label: { Image(systemName: "line.3.horizontal") }
+                    .accessibilityLabel(model.text(.menu))
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button { panel = panel == .options ? nil : .options } label: { Image(systemName: "slider.horizontal.3") }
+                    .accessibilityLabel(model.text(.readingOptions))
+                    .accessibilityAddTraits(panel == .options ? .isSelected : [])
+            }
         }
+        .modifier(PanelPresenter(isPresented: Binding(
+            get: { panel != nil && !panelIsCard },
+            set: { if !$0 { panel = nil } }
+        )) { panelContent })
         .alert(model.text(.goToPage), isPresented: $jumping) {
             TextField("1–604", text: $jumpText).keyboardType(.numberPad)
             Button(model.text(.goTo)) {
@@ -81,13 +78,18 @@ struct MushafReaderView: View {
         .onChange(of: visiblePage) { _, page in
             if let page { model.saveLastRead(page: try? model.store?.page(page)) }
         }
+        // a layer opening over the mushaf takes the sheet down first
+        .onChange(of: model.layer) { _, layer in
+            if layer != nil { panel = nil }
+        }
+        .onChange(of: panel) { _, _ in model.panelOpen = panel != nil && !panelIsCard }
         // While reciting: a shown ayah moves on with the recitation, and (unless turned off in Settings) the
         // page of the ayah being recited is brought on screen, even after scrolling elsewhere.
         .onChange(of: model.player.playingAyahID) { _, new in
             guard let new else { return }
             if panel == .ayah { selectedID = new }
             guard model.settings.settings.followRecitation, let page = try? model.store?.pageNumber(ofAyahID: new),
-                  !isOnScreen(page) else { return }
+                  page != currentPage else { return }
             withAnimation { visiblePage = page }
         }
     }
@@ -98,35 +100,83 @@ struct MushafReaderView: View {
             ScrollView {
                 LazyVStack(spacing: 0) {
                     ForEach(1...MushafPage.count, id: \.self) { n in
-                        MushafPageView(
-                            number: n,
-                            highlighted: highlighted,
-                            onAyah: { id, point in
-                                selectedID = id
-                                tapPoint = point
-                                boxAtTop = point.y > UIScreen.main.bounds.height * 0.5
-                                panel = .ayah
-                            },
-                            onPage: { panel = panel == nil ? .options : nil }
-                        )
-                        .id(n)
+                        pageView(n).id(n)
                     }
                 }
                 .scrollTargetLayout()
             }
             .scrollPosition(id: $visiblePage, anchor: .top)
-            .onAppear { proxy.scrollTo(startPage, anchor: .top) }
+            // room to scroll an ayah up above the sheet, without the page being pushed around when it opens
+            .contentMargins(.bottom, sheetRoom, for: .scrollContent)
+            .onAppear {
+                guard !started else { return }
+                started = true
+                go(to: model.mushafTarget, proxy)
+            }
+            .onChange(of: model.mushafTarget) { _, target in go(to: target, proxy) }
         }
     }
 
-    private var optionsBox: some View {
-        PageOptionsBox(page: currentPage) {
+    private var sheetRoom: CGFloat {
+        panel != nil && !panelIsCard && sizeClass != .regular ? UIScreen.main.bounds.height * 0.45 : 0
+    }
+
+    /// A link, the index or a search result asks the mushaf to show a page (and, maybe, an ayah's panel).
+    private func go(to target: MushafTarget, _ proxy: ScrollViewProxy) {
+        visiblePage = target.page
+        selectedID = target.focus
+        panel = target.focus == nil ? nil : .ayah
+        proxy.scrollTo(target.page, anchor: .top)
+    }
+
+    @ViewBuilder private func pageView(_ n: Int) -> some View {
+        if model.printedPages {
+            PrintedPageView(number: n, highlighted: highlighted, onAyah: select, onPage: tapPage)
+        } else {
+            MushafPageView(number: n, highlighted: highlighted, inline: place == .inline, onAyah: select, onPage: tapPage)
+        }
+    }
+
+    private func select(_ id: Int, at point: CGPoint) {
+        if panel == .ayah, selectedID == id {
             panel = nil
-            if let first = try? model.store?.page(currentPage).ayahIDs.lowerBound { model.player.play(from: first) }
-        } onVerseView: {
-            panel = nil
-            model.switchReadMode(to: .verse, at: (try? model.store?.page(currentPage).ayahIDs.lowerBound) ?? 1)
-        } onClose: { panel = nil }
+            return
+        }
+        selectedID = id
+        tapPoint = point
+        panel = .ayah
+    }
+
+    private func tapPage() { panel = panel == nil ? .options : nil }
+
+    @ViewBuilder private var panelContent: some View {
+        switch panel {
+        case .ayah:
+            if let selectedID {
+                AyahBox(ayahID: selectedID, showTranslations: place == .panel || place == .card, onClose: close)
+            }
+        case .options:
+            PageOptionsBox(
+                page: currentPage,
+                onPlay: {
+                    panel = nil
+                    if let first = try? model.store?.page(currentPage).ayahIDs.lowerBound { model.player.play(from: first) }
+                },
+                onJump: {
+                    // the alert waits for the sheet to finish closing
+                    panel = nil
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        jumpText = ""
+                        jumping = true
+                    }
+                },
+                onStudy: { model.openStudy(at: (try? model.store?.page(currentPage).ayahIDs.lowerBound) ?? 1) },
+                onSettings: { model.layer = .settings },
+                onClose: { panel = nil }
+            )
+        case nil:
+            EmptyView()
+        }
     }
 
     private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
@@ -149,25 +199,52 @@ struct MushafReaderView: View {
         panel = nil
     }
 
-    private func isOnScreen(_ page: Int) -> Bool { page == currentPage }
+    /// The text pages show the surah and page in the bar; the printed pages show their own.
+    @ViewBuilder private var header: some View {
+        if model.printedPages {
+            EmptyView()
+        } else {
+            let page = try? model.store?.page(currentPage)
+            Button {
+                jumpText = ""
+                jumping = true
+            } label: {
+                VStack(spacing: 0) {
+                    Text("سورة \(model.store?.surah(page?.surah ?? 1).nameArabic ?? "")")
+                        .font(.quran(model.settings.settings.quranFont, size: 17))
+                        .lineLimit(1)
+                    Text("\(LocalizedText.pageTitle(currentPage, language: model.language)) · \(LocalizedText.juzTitle(page?.juz ?? 1, language: model.language))")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("\(LocalizedText.pageTitle(currentPage, language: model.language)), \(model.text(.goToPage))")
+        }
+    }
+}
 
-    private var header: some View {
-        let page = try? model.store?.page(currentPage)
-        return Button {
-            jumpText = ""
-            jumping = true
-        } label: {
-            VStack(spacing: 0) {
-                Text("سورة \(model.store?.surah(page?.surah ?? 1).nameArabic ?? "")")
-                    .font(.quran(model.settings.settings.quranFont, size: 17))
-                    .lineLimit(1)
-                Text("\(LocalizedText.pageTitle(currentPage, language: model.language)) · \(LocalizedText.juzTitle(page?.juz ?? 1, language: model.language))")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+/// Shows the panel as a sheet on a phone (two heights, with the mushaf still usable behind the lower one), or as an
+/// inspector column beside the text where there is room (iPad).
+private struct PanelPresenter<Panel: View>: ViewModifier {
+    @Binding var isPresented: Bool
+    @ViewBuilder let panel: () -> Panel
+    @Environment(\.horizontalSizeClass) private var sizeClass
+
+    func body(content: Content) -> some View {
+        if sizeClass == .regular {
+            content.inspector(isPresented: $isPresented) {
+                panel().inspectorColumnWidth(min: 300, ideal: 340, max: 400)
+            }
+        } else {
+            content.sheet(isPresented: $isPresented) {
+                panel()
+                    .padding(.top, 8)
+                    .presentationDetents([.fraction(0.45), .large])
+                    .presentationDragIndicator(.visible)
+                    .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.45)))
             }
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel("\(LocalizedText.pageTitle(currentPage, language: model.language)), \(model.text(.goToPage))")
     }
 }
 
@@ -175,6 +252,8 @@ struct MushafReaderView: View {
 private struct MushafPageView: View {
     let number: Int
     let highlighted: Int?
+    /// Translations under every ayah, in the text.
+    let inline: Bool
     let onAyah: (Int, CGPoint) -> Void
     let onPage: () -> Void
     @Environment(AppModel.self) private var model
@@ -198,7 +277,9 @@ private struct MushafPageView: View {
                             .contentShape(Rectangle())
                             .onTapGesture(perform: onPage)
                     case let .ayahs(run):
-                        MushafTextView(ayahs: run, font: settings.quranFont, size: size, highlighted: highlighted, onAyah: onAyah, onPage: onPage)
+                        MushafTextView(ayahs: run, font: settings.quranFont, size: size, highlighted: highlighted,
+                                       inline: inline ? inlineTexts(for: run) : [:], inlineSize: (settings.translationSize * 0.9).rounded(),
+                                       onAyah: onAyah, onPage: onPage)
                     }
                 }
             }
@@ -215,6 +296,21 @@ private struct MushafPageView: View {
         .padding(.horizontal, 10)
         .environment(\.layoutDirection, .rightToLeft)
     }
+
+    /// The chosen translations of each ayah of a run, for the inline placement.
+    private func inlineTexts(for run: [MushafPage.Ayah]) -> [Int: [(text: String, rightToLeft: Bool)]] {
+        guard let store = model.store else { return [:] }
+        let available = (try? store.translations()) ?? []
+        let chosen = model.settings.settings.translations.compactMap { id in available.first { $0.id == id } }
+        var out: [Int: [(text: String, rightToLeft: Bool)]] = [:]
+        for ayah in run {
+            out[ayah.id] = chosen.compactMap { info in
+                guard let text = try? store.translation(ayahID: ayah.id, translationID: info.id) else { return nil }
+                return (text.isEmpty ? model.text(.mergedTranslation) : text, info.isRightToLeft)
+            }
+        }
+        return out
+    }
 }
 
 /// The ayahs of one surah on a page, as a justified right-to-left paragraph. A plain (non-selectable) text view,
@@ -224,6 +320,9 @@ private struct MushafTextView: UIViewRepresentable {
     let font: QuranFont
     let size: Double
     let highlighted: Int?
+    /// Translations under every ayah ("inline" placement): per ayah id, one text per chosen translation.
+    let inline: [Int: [(text: String, rightToLeft: Bool)]]
+    let inlineSize: Double
     /// The ayah, and where it was tapped (in screen coordinates).
     let onAyah: (Int, CGPoint) -> Void
     let onPage: () -> Void
@@ -282,6 +381,20 @@ private struct MushafTextView: UIViewRepresentable {
             mark[Self.ayahKey] = ayah.id
             mark[.foregroundColor] = accent
             out.append(NSAttributedString(string: " " + MushafPage.marker(ayah.number) + " ", attributes: mark))
+            if let translations = inline[ayah.id] {
+                // its own paragraphs, not justified, in the reading direction of each translation
+                for item in translations {
+                    let style = NSMutableParagraphStyle()
+                    style.alignment = .natural
+                    style.baseWritingDirection = item.rightToLeft ? .rightToLeft : .leftToRight
+                    style.paragraphSpacing = size * 0.25
+                    var attrs: [NSAttributedString.Key: Any] = [
+                        .font: UIFont.systemFont(ofSize: inlineSize), .paragraphStyle: style, .foregroundColor: UIColor.secondaryLabel,
+                    ]
+                    attrs[Self.ayahKey] = ayah.id
+                    out.append(NSAttributedString(string: "\n" + item.text + "\n", attributes: attrs))
+                }
+            }
         }
         return out
     }
@@ -315,9 +428,11 @@ private struct MushafTextView: UIViewRepresentable {
     }
 }
 
-/// An ayah's translations and actions, compact enough for the side box or the card over the page.
+/// An ayah's actions and translations: Play from here and Repeat this ayah as labelled buttons, then an icon row.
 private struct AyahBox: View {
     let ayahID: Int
+    /// False when translations show inline in the text, or not at all: the panel is then only the actions.
+    let showTranslations: Bool
     let onClose: () -> Void
     @Environment(AppModel.self) private var model
     @State private var showingTafsir = false
@@ -332,27 +447,39 @@ private struct AyahBox: View {
             return (info, text)
         }
         let playing = model.player.playingAyahID == ayahID && model.player.isPlaying
+        let repeating = model.player.isLooping && model.player.playingAyahID == ayahID
         let saved = model.bookmarks.contains(ayahID)
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             if let store, let location {
                 Text(LocalizedText.header(surah: store.surah(location.surah), ayah: location.ayah, language: model.language))
                     .font(.subheadline.weight(.semibold))
             }
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 34), spacing: 2)], alignment: .leading, spacing: 2) {
-                Button { model.player.toggle(ayahID: ayahID) } label: { icon(playing ? "pause.fill" : "play.fill") }
-                    .accessibilityLabel(playing ? model.text(.pause) : model.text(.play))
+            HStack(spacing: 8) {
+                Button { model.player.toggle(ayahID: ayahID) } label: {
+                    Label(playing ? model.text(.pause) : model.text(.playFromHere), systemImage: playing ? "pause.fill" : "play.fill")
+                        .frame(minHeight: 32)
+                }
+                .buttonStyle(.borderedProminent)
+                Button { model.player.loop(ayahID: ayahID, on: !repeating) } label: {
+                    Label(model.text(.repeatAyah), systemImage: "repeat").frame(minHeight: 32)
+                }
+                .buttonStyle(.bordered)
+                .tint(repeating ? .accentColor : .secondary)
+                .accessibilityAddTraits(repeating ? .isSelected : [])
+            }
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 44), spacing: 2)], alignment: .leading, spacing: 2) {
                 Button { model.bookmarks.toggle(ayahID) } label: { icon(saved ? "bookmark.fill" : "bookmark") }
                     .accessibilityLabel(saved ? model.text(.removeBookmark) : model.text(.bookmark))
-                ShareLink(item: shareText(translations)) { icon("square.and.arrow.up") }
-                    .accessibilityLabel(model.text(.share))
                 Button { UIPasteboard.general.string = shareText(translations) } label: { icon("doc.on.doc") }
                     .accessibilityLabel(model.text(.copy))
+                ShareLink(item: shareText(translations)) { icon("square.and.arrow.up") }
+                    .accessibilityLabel(model.text(.share))
                 if model.tafsir != nil {
                     Button { showingTafsir = true } label: { icon("text.book.closed") }
                         .accessibilityLabel("\(model.text(.tafsir)): \(model.text(.almizan))")
                 }
-                Button { model.switchReadMode(to: .verse, at: ayahID) } label: { icon("list.bullet") }
-                    .accessibilityLabel(model.text(.viewVerseFull))
+                Button { model.openStudy(at: ayahID) } label: { icon("list.bullet") }
+                    .accessibilityLabel(model.text(.studyView))
                 Button(action: onClose) { icon("xmark") }
                     .accessibilityLabel(model.text(.close))
             }
@@ -361,20 +488,23 @@ private struct AyahBox: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 8) {
                     StudyChips(ayahID: ayahID, all: true)
-                    ForEach(translations, id: \.info.id) { item in
-                        VStack(alignment: .leading, spacing: 2) {
-                            if translations.count > 1 {
-                                Text(item.info.name).font(.caption).foregroundStyle(.secondary)
+                    if showTranslations {
+                        ForEach(translations, id: \.info.id) { item in
+                            VStack(alignment: .leading, spacing: 2) {
+                                if translations.count > 1 {
+                                    Text(item.info.name).font(.caption).foregroundStyle(.secondary)
+                                }
+                                Text(item.text.isEmpty ? model.text(.mergedTranslation) : item.text)
+                                    .font(.system(size: settings.translationSize - 1))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .environment(\.layoutDirection, item.info.isRightToLeft ? .rightToLeft : .leftToRight)
                             }
-                            Text(item.text.isEmpty ? model.text(.mergedTranslation) : item.text)
-                                .font(.system(size: settings.translationSize - 1))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .environment(\.layoutDirection, item.info.isRightToLeft ? .rightToLeft : .leftToRight)
                         }
                     }
                 }
             }
         }
+        .padding(.horizontal, 16)
         .environment(\.layoutDirection, model.language == "fa" ? .rightToLeft : .leftToRight)
         .sheet(isPresented: $showingTafsir) {
             TafsirView(ayahID: ayahID).environment(model)
@@ -382,7 +512,7 @@ private struct AyahBox: View {
     }
 
     private func icon(_ name: String) -> some View {
-        Image(systemName: name).frame(width: 34, height: 34)
+        Image(systemName: name).frame(width: 44, height: 44)
     }
 
     private func shareText(_ translations: [(info: TranslationInfo, text: String)]) -> String {
@@ -394,39 +524,36 @@ private struct AyahBox: View {
     }
 }
 
-/// What tapping the page shows in the side box: play from here, where translations show, following the
-/// recitation, the Quran font and size, and verse view.
+/// What the options button shows: play from this page, go to a page, the Study view, and all settings. (The font,
+/// size, translation place and following the recitation are in Settings, one tap away.)
 private struct PageOptionsBox: View {
     let page: Int
     let onPlay: () -> Void
-    let onVerseView: () -> Void
+    let onJump: () -> Void
+    let onStudy: () -> Void
+    let onSettings: () -> Void
     let onClose: () -> Void
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        let settings = model.settings
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Text(LocalizedText.pageTitle(page, language: model.language)).font(.subheadline.weight(.semibold))
                     Spacer()
-                    Button(action: onClose) { Image(systemName: "xmark") }
+                    Button(action: onClose) { Image(systemName: "xmark").frame(width: 44, height: 44) }
                         .accessibilityLabel(model.text(.close))
                 }
-                Button(action: onPlay) { Label(model.text(.playFromPage), systemImage: "play.fill") }
+                Button(action: onPlay) { Label(model.text(.playFromPage), systemImage: "play.fill").frame(maxWidth: .infinity, minHeight: 32) }
                     .buttonStyle(.borderedProminent)
-                Button(action: onVerseView) { Label(model.text(.viewVerseFull), systemImage: "list.bullet") }
+                Button(action: onJump) { Label(model.text(.goToPage), systemImage: "number").frame(maxWidth: .infinity, minHeight: 32) }
                     .buttonStyle(.bordered)
-                Toggle(model.text(.followRecitation), isOn: settings.binding(\.followRecitation))
-                    .font(.subheadline)
-                Text(model.text(.quranFont)).font(.caption).foregroundStyle(.secondary)
-                Picker(model.text(.quranFont), selection: settings.binding(\.quranFontID)) {
-                    ForEach(QuranFont.all) { Text($0.name).tag($0.id) }
-                }
-                .pickerStyle(.menu)
-                Text(model.text(.arabicSize)).font(.caption).foregroundStyle(.secondary)
-                Slider(value: settings.binding(\.arabicSize), in: 22...48, step: 1)
+                Button(action: onStudy) { Label(model.text(.studyView), systemImage: "list.bullet").frame(maxWidth: .infinity, minHeight: 32) }
+                    .buttonStyle(.bordered)
+                Button(action: onSettings) { Label(model.text(.allSettings), systemImage: "slider.horizontal.3").frame(maxWidth: .infinity, minHeight: 32) }
+                    .buttonStyle(.bordered)
             }
+            .padding(.horizontal, 16)
         }
         .environment(\.layoutDirection, model.language == "fa" ? .rightToLeft : .leftToRight)
     }
