@@ -12,7 +12,8 @@ import { TranslationAudioToggle } from '../components/TranslationAudioToggle'
 import { setLastRead, settings } from '../store'
 import { StudyIntroLink } from '../components/StudyQuranPanel'
 
-export function Reader({ meta, surahId, ayah }: { meta: Meta; surahId: number; ayah?: number }) {
+/** The Study view: one surah ayah by ayah, with its translations, as a layer over the mushaf. */
+export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number; ayah?: number }) {
   const s = settings.value
   const surah = meta.surahs[surahId - 1]!
   const trKey = s.translations.join(',')
@@ -107,8 +108,8 @@ export function Reader({ meta, surahId, ayah }: { meta: Meta; surahId: number; a
         </div>
       )}
       <nav class="surah-nav" aria-label={t('surahs')}>
-        {prev ? <a class="btn" href={href.surah(prev.id)}>{num(prev.id)}. {surahName(prev)}</a> : <span />}
-        {nextSurah ? <a class="btn" href={href.surah(nextSurah.id)}>{num(nextSurah.id)}. {surahName(nextSurah)}</a> : <span />}
+        {prev ? <a class="btn" href={href.verse(prev.id)}>{num(prev.id)}. {surahName(prev)}</a> : <span />}
+        {nextSurah ? <a class="btn" href={href.verse(nextSurah.id)}>{num(nextSurah.id)}. {surahName(nextSurah)}</a> : <span />}
       </nav>
     </>
   )

@@ -17,7 +17,7 @@ import { Daily } from './views/Daily'
 import { Home } from './views/Home'
 import { IndexView } from './views/Index'
 import { PageReader } from './views/PageReader'
-import { Reader } from './views/Reader'
+import { StudyView } from './views/StudyView'
 import { SearchView } from './views/Search'
 import { Saved } from './views/Saved'
 import { SettingsView } from './views/Settings'
@@ -36,7 +36,7 @@ function placeOf(m: Meta, base: Base): { pageNo: number; focusId?: number } {
 /** The screen over the mushaf for a layer. */
 function layerView(m: Meta, layer: Layer, query: URLSearchParams) {
   switch (layer.name) {
-    case 'study': return <Reader key={layer.surah} meta={m} surahId={layer.surah!} ayah={layer.ayah} />
+    case 'study': return <StudyView key={layer.surah} meta={m} surahId={layer.surah!} ayah={layer.ayah} />
     case 'commentary': return <CommentaryView key={`${layer.surah}:${layer.ayah}`} meta={m} surah={layer.surah!} ayah={layer.ayah!} />
     case 'intro': return <IntroView key={layer.surah} meta={m} surah={layer.surah!} />
     case 'tafsir': return <TafsirView meta={m} surah={layer.surah!} ayah={layer.ayah!} />

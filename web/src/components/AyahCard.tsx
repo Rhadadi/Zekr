@@ -22,7 +22,7 @@ interface Props {
   ar: string
   translations: TranslationText[]
   playing?: boolean
-  /** Reader: highlight briefly after jumping to this ayah. */
+  /** Study view: highlight briefly after jumping to this ayah. */
   focused?: boolean
   /** Search and saved lists: show the surah reference (a link) instead of just the number. */
   showRef?: boolean

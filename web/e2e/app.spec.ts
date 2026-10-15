@@ -368,7 +368,7 @@ test.describe('mushaf page view', () => {
     await expect(page.getByRole('group', { name: 'Reading view' })).toHaveCount(0)
     await page.locator('.mushaf-flow').dispatchEvent('click') // closes the ayah box
     await page.locator('.mushaf-flow').dispatchEvent('click') // opens the reading options
-    await page.getByTestId('page-options').getByRole('button', { name: 'Open in verse view' }).click()
+    await page.getByTestId('page-options').getByRole('button', { name: 'Open in Study view' }).click()
     await expect(page).toHaveURL(/#\/verse\/17\/\d+$/)
     await expect(page.locator('.layer article.ayah').first()).toBeVisible()
     await page.locator('.layer-close').click()
@@ -423,6 +423,18 @@ test.describe('layers over the mushaf', () => {
     await page.keyboard.press('Escape')
     await expect(page.locator('.layer')).toHaveCount(0)
     await expect(page).toHaveURL(/#\/page\/305$/)
+  })
+
+  test('the Study view stays a layer when it moves to the next surah, and Close still lands on the mushaf', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/305')
+    await expect(page.locator('#page-305 .ay').first()).toBeVisible()
+    await page.goto('/#/verse/19')
+    await page.locator('.layer').getByRole('link', { name: /^20\./ }).click()
+    await expect(page).toHaveURL(/#\/verse\/20$/)
+    await expect(page.locator('.layer')).toBeVisible()
+    await page.locator('.layer-close').click()
+    await expect(page.locator('.layer')).toHaveCount(0)
   })
 
   test('nobody is stranded: a link straight into a layer still closes onto the mushaf', async ({ page }) => {
@@ -907,7 +919,7 @@ test.describe('The Study Quran (private content, made-up text here)', () => {
   })
   test.use({ serviceWorkers: 'block' })
 
-  test('verse view: one chip where a note starts, none repeated under the ayahs it also covers', async ({ page }) => {
+  test('Study view: one chip where a note starts, none repeated under the ayahs it also covers', async ({ page }) => {
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/verse/2')
     await expect(page.locator('article#a-1 .study-chip')).toHaveText(/Commentary on 2:1–5/)
