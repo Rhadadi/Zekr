@@ -6,6 +6,7 @@ import { AyahPanel } from '../components/AyahPanel'
 import { Icon } from '../components/Icon'
 import { LoadError, Loading } from '../components/Page'
 import { PageOptions } from '../components/PageOptions'
+import { Sheet } from '../components/Sheet'
 import { SurahBanner } from '../components/SurahBanner'
 import { type Meta, type MushafPageMap, juzOf, loadMushafMap, loadText, loadTranslation, locate, mushafImage, pageRange } from '../data'
 import { useAsync, useWide } from '../hooks'
@@ -222,7 +223,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
     if (playingId === undefined) return
     if (panel?.kind === 'ayah') setPanel({ kind: 'ayah', id: playingId })
     if (settings.peek().autoScroll) {
-      ayahEl(playingId)?.scrollIntoView({ block: boxBottomRef.current ? 'start' : 'center', behavior: 'smooth' })
+      ayahEl(playingId)?.scrollIntoView({ block: boxBottomRef.current ? 'nearest' : 'center', behavior: 'smooth' })
     }
   }, [playingId])
 
@@ -285,37 +286,15 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
     panel?.kind === 'options' ? (
       <PageOptions wide={wide} pageNo={current} juz={juzOf(meta, pageRange(meta, current).first)} onPlay={() => { setPanel(null); playFrom(pageRange(meta, current).first) }} onJump={() => { setPanel(null); setJumping(true) }} onVerseView={toVerse} onClose={() => setPanel(null)} />
     ) : selected !== undefined && !popup ? ayahPanel(selected, 'box') : null
-  const bottomBox = box !== null && !inspector
+  // On a phone the sheet covers the lower part of the screen. It is not hidden while a layer is open (the layer
+  // covers the mushaf), and the ayah is kept clear of it by scroll-margin rather than by padding or jumping.
+  const bottomBox = box !== null && !inspector && !paused
   boxBottomRef.current = bottomBox
-
-  // A box at the bottom covers the lower part of the screen: put the ayah near the top instead of the middle.
-  // (The inspector sits in its own column, so opening it moves nothing.)
-  const boxWas = useRef(bottomBox)
   useLayoutEffect(() => {
-    if (boxWas.current === bottomBox) return
-    boxWas.current = bottomBox
-    const id = selected ?? playingId
-    if (id !== undefined) scrollTo(() => ayahEl(id), 'start')
-  })
-
-  // Room under the page for a box at the bottom, so nothing is hidden behind it.
-  const boxRef = useRef<HTMLElement>(null)
-  useLayoutEffect(() => {
-    const el = boxRef.current
-    const root = document.documentElement
-    if (!el) {
-      root.style.removeProperty('--box-h')
-      return
-    }
-    const set = () => root.style.setProperty('--box-h', `${el.offsetHeight}px`)
-    set()
-    const observer = new ResizeObserver(set)
-    observer.observe(el)
-    return () => {
-      observer.disconnect()
-      root.style.removeProperty('--box-h')
-    }
-  }, [bottomBox])
+    if (!bottomBox || selected === undefined) return
+    const id = selected
+    scrollTo(() => ayahEl(id), 'nearest')
+  }, [bottomBox, selected])
 
   const surahOfPage = meta.surahs[locate(meta, pageRange(meta, current).first).surah - 1]!
   const jumpForm = (
@@ -363,7 +342,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
           </button>
         }
       />
-      <div class={`mushaf-layout${inspector ? ' has-inspector' : bottomBox ? ' with-box' : ''}`}>
+      <div class={`mushaf-layout${inspector ? ' has-inspector' : ''}`}>
         {inspector ? (
           <section class="inspector" aria-label={t('inspectorLabel')} data-testid="inspector">
             {box ?? <p class="inspector-hint muted">{t('inspectorHint')}</p>}
@@ -440,7 +419,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
           )}
           {popupId !== undefined ? ayahPanel(popupId, 'popup') : null}
         </div>
-        {bottomBox ? <aside ref={boxRef} class="side-box" data-testid="side-box">{box}</aside> : null}
+        {bottomBox ? <Sheet onClose={() => setPanel(null)}>{box}</Sheet> : null}
       </div>
     </>
   )

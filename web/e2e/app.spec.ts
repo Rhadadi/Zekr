@@ -736,7 +736,7 @@ test.describe('page view on a phone', () => {
     const before = (await page.locator('#page-1 .flow').first().boundingBox())!
     const ayah = page.locator('#page-1 .ay').nth(2)
     await ayah.click()
-    const box = page.getByTestId('side-box')
+    const box = page.getByTestId('sheet')
     await expect(box).toContainText('1:3')
     const b = (await box.boundingBox())!
     const vp = page.viewportSize()!
@@ -749,12 +749,67 @@ test.describe('page view on a phone', () => {
     await expect(page.getByLabel('Translation on the page').locator('option')).toHaveText(['In a box at the bottom', 'Over the ayah (hover or tap)'])
   })
 
+  test('the sheet has two heights: the handle toggles them, dragging it up grows it and down closes it, Escape closes it', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/1')
+    await settle(page)
+    const sheet = page.getByTestId('sheet')
+    const grab = sheet.getByRole('button', { name: 'Show more' })
+    await page.locator('#page-1 .ay').nth(2).click()
+    await expect(sheet).toContainText('1:3')
+    await expect(grab).toHaveAttribute('aria-expanded', 'false')
+    const half = (await sheet.boundingBox())!.height
+    expect(half).toBeLessThanOrEqual(page.viewportSize()!.height * 0.46)
+    await grab.click()
+    await expect(sheet.getByRole('button', { name: 'Show less' })).toHaveAttribute('aria-expanded', 'true')
+    await expect.poll(async () => (await sheet.boundingBox())!.height).toBeGreaterThan(page.viewportSize()!.height * 0.8)
+    await sheet.getByRole('button', { name: 'Show less' }).click()
+    await expect.poll(async () => (await sheet.boundingBox())!.height).toBeLessThanOrEqual(half + 1)
+
+    // dragging the handle: up for the tall sheet, down to put it away
+    const drag = async (dy: number) => {
+      const h = (await sheet.locator('.asheet-grab').boundingBox())!
+      const x = h.x + h.width / 2
+      const y = h.y + h.height / 2
+      await page.mouse.move(x, y)
+      await page.mouse.down()
+      await page.mouse.move(x, y + dy / 2, { steps: 4 })
+      await page.mouse.move(x, y + dy, { steps: 4 })
+      await page.mouse.up()
+      await page.waitForTimeout(300) // the sheet's height eases to where it was let go
+    }
+    await drag(-200)
+    await expect(sheet.getByRole('button', { name: 'Show less' })).toBeVisible()
+    await drag(120) // from the tall sheet, down: back to the lower height, not closed
+    await expect(sheet.getByRole('button', { name: 'Show more' })).toBeVisible()
+    await drag(160)
+    await expect(sheet).toHaveCount(0)
+    await expect(page.locator('.ay.sel')).toHaveCount(0)
+
+    await page.locator('#page-1 .ay').nth(3).click()
+    await expect(sheet).toContainText('1:4')
+    await page.keyboard.press('Escape')
+    await expect(sheet).toHaveCount(0)
+  })
+
+  test('opening the sheet for an ayah already in view does not scroll the page', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/305')
+    await settle(page)
+    const first = page.locator('#page-305 .ay').first() // near the top of the screen, clear of the sheet
+    const before = (await first.boundingBox())!.y
+    await first.click()
+    await expect(page.getByTestId('sheet')).toContainText('19:1')
+    await page.waitForTimeout(400)
+    expect((await first.boundingBox())!.y).toBe(before)
+  })
+
   test('over the ayah, as a card, when chosen', async ({ page }) => {
     await useSettings(page, { lang: 'en', pageBox: 'popup' })
     await page.goto('/#/page/1')
     await settle(page)
     await page.locator('#page-1 .ay').nth(2).click()
-    await expect(page.getByTestId('side-box')).toHaveCount(0)
+    await expect(page.getByTestId('sheet')).toHaveCount(0)
     await expect(page.locator('.ayah-popup')).toContainText('1:3')
   })
 
@@ -767,7 +822,7 @@ test.describe('page view on a phone', () => {
     await page.getByTestId('ayah-panel').getByRole('button', { name: 'Play' }).click()
     await expect(page.locator('.player')).toBeVisible()
     await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--player-h'))).not.toBe('0px')
-    const box = (await page.getByTestId('side-box').boundingBox())!
+    const box = (await page.getByTestId('sheet').boundingBox())!
     const bar = (await page.locator('.player').boundingBox())!
     expect(box.y + box.height).toBeLessThanOrEqual(bar.y + 1)
   })
@@ -869,7 +924,7 @@ test.describe('The Study Quran (private content, made-up text here)', () => {
     await page.goto('/#/page/2')
     await settle(page)
     await page.locator('#page-2 .ay').nth(3).click() // 2:4 (the page starts at 2:1 here)
-    const card = page.getByTestId('side-box')
+    const card = page.getByTestId('sheet')
     await expect(card.locator('.study-chip')).toHaveText(/Commentary on 2:1–5/)
     await expect(card.locator('details')).toHaveCount(0)
   })
