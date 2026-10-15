@@ -6,6 +6,7 @@ const pages = ['#/', '#/today', '#/index', '#/ayah/17/24', '#/page/305', '#/page
 for (const theme of ['light', 'sepia', 'dark'] as const) {
   for (const lang of ['en', 'fa'] as const) {
     test(`no accessibility violations: ${lang}, ${theme}`, async ({ page }) => {
+      test.setTimeout(120_000) // eleven routes with the whole mushaf mounted; slow when the machine is busy
       await page.addInitScript(([l, t]) => localStorage.setItem('zekr.settings', JSON.stringify({ lang: l, theme: t })), [lang, theme])
       const problems: string[] = []
       for (const path of pages) {

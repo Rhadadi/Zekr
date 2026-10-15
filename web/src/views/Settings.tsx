@@ -6,7 +6,7 @@ import { QURAN_FONTS, type QuranFont } from '../fonts'
 import { useWide } from '../hooks'
 import { lang, t } from '../i18n'
 import { href } from '../router'
-import { type PageTranslation, settings, updateSettings } from '../store'
+import { type PageColor, type PageTranslation, settings, updateSettings } from '../store'
 
 export function SettingsView({ meta }: { meta: Meta }) {
   const wide = useWide()
@@ -71,6 +71,18 @@ export function SettingsView({ meta }: { meta: Meta }) {
             <option value="popup">{t('pageTranslationPopup')}</option>
           </select>
         </label>
+        {meta.mushaf ? (
+          <label class="field">
+            <span>{t('pageColor')}</span>
+            <select value={s.pageColor} onChange={(e) => updateSettings({ pageColor: e.currentTarget.value as PageColor })}>
+              <option value="blue">{t('colorBlue')}</option>
+              <option value="green">{t('colorGreen')}</option>
+              <option value="purple">{t('colorPurple')}</option>
+              <option value="pink">{t('colorPink')}</option>
+              <option value="dark">{t('colorDark')}</option>
+            </select>
+          </label>
+        ) : null}
         <label class="field">
           <span>{t('script')}</span>
           <select value={s.script} onChange={(e) => updateSettings({ script: e.currentTarget.value as Script })}>

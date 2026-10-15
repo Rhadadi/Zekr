@@ -40,10 +40,10 @@ jobs:
       - uses: actions/configure-pages@v5
       - name: Make sure no private book text is published (Al-Mizan, The Study Quran; see docs/PLAN.md §8)
         run: |
-          for d in almizan tafsir intro; do
+          for d in almizan tafsir intro mushaf; do
             test ! -e "web/dist/data/$d" || { echo "error: web/dist/data/$d is private content"; exit 1; }
           done
-          if grep -q '"studyQuran"\|"tafsir":\[[^]]' web/dist/data/meta.json; then echo "error: meta.json lists private content"; exit 1; fi
+          if grep -q '"studyQuran"\|"mushaf"\|"tafsir":\[[^]]' web/dist/data/meta.json; then echo "error: meta.json lists private content"; exit 1; fi
           if find web/dist -iname '*.pdf' | grep -q .; then echo "error: a PDF is in web/dist"; exit 1; fi
       - uses: actions/upload-pages-artifact@v3
         with:

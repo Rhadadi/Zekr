@@ -17,6 +17,9 @@ export interface DailySettings {
 /** Where the page view shows an ayah's translation: in a box in the left or right margin, or over the page under the ayah (on hover, or on tap). */
 export type PageTranslation = 'bottom' | 'left' | 'right' | 'popup'
 
+/** The printed pages are recoloured with a filter; 'blue' is the edition as printed. */
+export type PageColor = 'blue' | 'green' | 'purple' | 'pink' | 'dark'
+
 export interface Settings {
   lang: 'auto' | 'fa' | 'en'
   theme: 'auto' | 'light' | 'sepia' | 'dark'
@@ -26,6 +29,7 @@ export interface Settings {
   /** 'verse': one ayah at a time with translations. 'page': flowing mushaf page. */
   readMode: 'verse' | 'page'
   pageBox: PageTranslation
+  pageColor: PageColor
   arabicSize: number
   trSize: number
   /** Translation ids shown in the reader, in order. */
@@ -50,6 +54,7 @@ export const defaultSettings: Settings = {
   quranFont: DEFAULT_QURAN_FONT,
   readMode: 'verse',
   pageBox: 'bottom',
+  pageColor: 'blue',
   arabicSize: 30,
   trSize: 17,
   translations: ['fa.safavi'],

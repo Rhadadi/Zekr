@@ -488,3 +488,25 @@ a.player-info { color: var(--ink); text-decoration: none; }
 /* room for the button beside page headers, and on the Today screen */
 .top, .mushaf-bar { padding-left: 56px; }
 .home { padding-top: calc(60px + env(safe-area-inset-top)); }
+
+/* The owner's printed mushaf as pictures (private builds): each page is an image with a tappable area per ayah */
+.mushaf-flow.printed { padding-top: 48px; }
+.mpage.printed { content-visibility: visible; contain-intrinsic-size: none; scroll-margin-top: 44px; padding-inline: 0; margin-inline: 0; margin-bottom: 8px; }
+.pg { position: relative; width: 100%; }
+.pg-img { display: block; width: 100%; height: 100%; -webkit-user-select: none; user-select: none; }
+.mushaf-flow[data-color='green'] .pg-img { filter: hue-rotate(-60deg); }
+.mushaf-flow[data-color='purple'] .pg-img { filter: hue-rotate(70deg); }
+.mushaf-flow[data-color='pink'] .pg-img { filter: hue-rotate(130deg); }
+.mushaf-flow[data-color='dark'] .pg-img { filter: invert(1) hue-rotate(180deg); }
+.printed .ay { position: absolute; inset: 0; padding: 0; border-radius: 0; pointer-events: none; background: none; }
+.printed .ay.sel, .printed .ay.playing { background: none; }
+.printed .seg { position: absolute; display: block; pointer-events: auto; cursor: pointer; border-radius: 5px; }
+.printed .ay.sel .seg, .printed .ay.playing .seg { background: rgb(255 196 40 / 0.38); }
+.printed .ay:focus-visible { outline: none; }
+.printed .ay:focus-visible .seg { outline: 2px solid var(--accent); outline-offset: -2px; }
+@media (hover: hover) {
+  .printed .ay:not(.sel):not(.playing):hover { background: none; }
+  .printed .ay:not(.sel):not(.playing):hover .seg { background: rgb(255 196 40 / 0.16); }
+}
+.pg-no { position: absolute; left: 42%; width: 16%; bottom: 0; height: 6%; border: 0; background: none; cursor: pointer; padding: 0; }
+.jump-pop { position: fixed; top: calc(10px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); z-index: 6; }

@@ -761,3 +761,68 @@ test.describe('The Study Quran (private content, made-up text here)', () => {
     await expect(card.locator('details')).toHaveCount(0)
   })
 })
+
+test.describe('The printed mushaf as pictures (private build, made-up pictures here)', () => {
+  // A 1x1 PNG stands in for the page scans; the real ones are private and never in the tests.
+  const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')
+  test.beforeEach(async ({ page }) => {
+    let pages: number[] = []
+    await page.route('**/data/meta.json*', async (route) => {
+      const response = await route.fetch()
+      const meta = await response.json()
+      pages = meta.pages
+      route.fulfill({ response, json: { ...meta, mushaf: { v: 'test', w: 654, h: 935 } } })
+    })
+    await page.route('**/data/mushaf/map.json*', async (route) => {
+      const list = Array.from({ length: 604 }, (_, i) => {
+        const first = pages[i]!
+        const count = (pages[i + 1] ?? 6237) - first
+        return { n: i + 1, first, w: 654, h: 935, a: Array.from({ length: count }, (_, k) => [[100, 50 + Math.floor((k * 880) / count), 800, Math.floor(800 / count)]]) }
+      })
+      route.fulfill({ json: { v: 'test', pages: list } })
+    })
+    await page.route('**/data/mushaf/*.webp*', (route) => route.fulfill({ contentType: 'image/png', body: PNG }))
+  })
+  test.use({ serviceWorkers: 'block' })
+
+  test('a page is a picture with one tappable area per ayah; tapping one selects it', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/3')
+    await expect(page.locator('#page-3 .pg-img')).toBeVisible()
+    await expect(page.locator('#page-3 .ay')).toHaveCount(11) // 2:6-16
+    await expect(page.locator('.mushaf-bar')).toHaveCount(0) // the printed page shows its own surah, juz and number
+    await expect(page.locator('#page-3 .flow')).toHaveCount(0)
+    await page.waitForTimeout(800)
+    await page.locator('#page-3 .ay').nth(1).locator('.seg').click()
+    await expect(page.getByTestId('ayah-panel')).toContainText('2:7')
+    await expect(page.locator('.ay.sel')).toHaveCount(1)
+    await expect(page.locator('.ay.sel .seg')).toHaveCSS('background-color', /rgba\(255, 196, 40/)
+  })
+
+  test('the page number on the page opens "go to page", and so do the reading options', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/5')
+    await page.waitForTimeout(800)
+    await page.locator('#page-5 .pg-no').click()
+    await page.getByLabel('Go to page').fill('12')
+    await page.keyboard.press('Enter')
+    await expect(page.locator('#page-12')).toBeInViewport()
+    await page.waitForTimeout(800)
+    await page.locator('#page-12 .pg').click({ position: { x: 5, y: 5 } }) // not on an ayah: the reading options
+    await page.getByTestId('page-options').getByRole('button', { name: 'Go to page' }).click()
+    await page.getByLabel('Go to page').fill('20')
+    await page.keyboard.press('Enter')
+    await expect(page.locator('#page-20')).toBeInViewport()
+  })
+
+  test('page colour is a filter on the picture only', async ({ page }) => {
+    await useSettings(page, { lang: 'en', pageColor: 'dark' })
+    await page.goto('/#/page/3')
+    await expect(page.locator('#page-3 .pg-img')).toHaveCSS('filter', /invert/)
+    await expect(page.locator('#page-3 .ay').first().locator('.seg')).not.toHaveCSS('filter', /invert/)
+    await page.goto('/#/settings')
+    await page.getByLabel('Page colour').selectOption({ label: 'Pink' })
+    await page.goto('/#/page/3')
+    await expect(page.locator('#page-3 .pg-img')).toHaveCSS('filter', /hue-rotate/)
+  })
+})

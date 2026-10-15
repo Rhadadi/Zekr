@@ -43,6 +43,17 @@ export interface Meta {
   /** Tafsirs this build includes (private builds only). */
   tafsir?: string[]
   studyQuran?: { id: string; name: string; pdfSha256: string; importVersion: string }
+  /** The owner's printed mushaf as page images (private builds only; tools/mushaf_pages.py). */
+  mushaf?: { v: string; w: number; h: number }
+}
+
+/** One printed page: its image size and, per ayah (from `first`), the line rectangles it covers, in thousandths of the page. */
+export interface MushafPageMap {
+  n: number
+  first: number
+  w: number
+  h: number
+  a: [number, number, number, number][][]
 }
 
 export interface PoolsFile {
@@ -100,6 +111,22 @@ export const loadText = (kind: TextKind, refresh = false) => loadArray(`text/${k
 
 /** A translation, one string per ayah (index = ayah id - 1). May be '' where the translator merged two ayahs. */
 export const loadTranslation = (id: string, refresh = false) => loadArray(`tr/${id}.json`, refresh)
+
+let mushafPromise: Promise<MushafPageMap[]> | null = null
+
+/** Where each ayah is on the printed pages (private builds). */
+export function loadMushafMap(): Promise<MushafPageMap[]> {
+  mushafPromise ??= loadMeta()
+    .then((m) => getJson<{ pages: MushafPageMap[] }>(`mushaf/map.json?v=${m.mushaf?.v ?? m.version}`))
+    .then((f) => f.pages)
+    .catch((e) => {
+      mushafPromise = null
+      throw e
+    })
+  return mushafPromise
+}
+
+export const mushafImage = (meta: Meta, n: number) => `${base}data/mushaf/${String(n).padStart(3, '0')}.webp?v=${meta.mushaf?.v ?? ''}`
 
 let poolsPromise: Promise<PoolsFile> | null = null
 

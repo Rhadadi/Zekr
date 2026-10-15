@@ -47,6 +47,12 @@ export default defineConfig({
         additionalManifestEntries: dataPrecache(),
         navigateFallback: 'index.html',
         runtimeCaching: [
+          // The printed pages (private builds) are big: keep the ones that were read, not all 604 at once.
+          {
+            urlPattern: ({ url }) => url.pathname.includes('/data/mushaf/'),
+            handler: 'CacheFirst',
+            options: { cacheName: 'zekr-mushaf', expiration: { maxEntries: 700 } },
+          },
           // Everything else under data/ is requested with ?v=<data version>, so it never changes.
           {
             urlPattern: ({ url }) => url.pathname.includes('/data/'),

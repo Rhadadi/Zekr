@@ -7,7 +7,7 @@ Zekr is a personal Quran app: an iPhone app (with a Lock Screen widget) and a we
 | Path | What |
 |---|---|
 | `tools/build_data.py` | Downloads the Quran text and translations (Tanzil) and builds the databases and web data. Run it first. Python standard library only. |
-| `tools/almizan.py`, `tools/import_study_quran.py`, `tools/study_quran.py` | Optional **private** content (Al-Mizan, The Study Quran). |
+| `tools/almizan.py`, `tools/import_study_quran.py`, `tools/study_quran.py`, `tools/mushaf_pages.py` | Optional **private** content (Al-Mizan, The Study Quran, the printed mushaf pages as images). |
 | `tools/tests/` | Python tests, including a made-up Study Quran fixture (`study_fixture.py`). |
 | `shared/` | The ayah-of-the-day rotation spec and golden test vectors used by Python, TypeScript and Swift. |
 | `web/` | Vite + Preact + signals + TypeScript PWA. Unit tests: vitest. End to end: Playwright. |
@@ -29,7 +29,7 @@ cd ios/ZekrKit && swift test                # needs Swift 6.1 (Linux or macOS)
 
 ## Hard rules
 
-1. **Private content never goes in git or on the public site.** The Study Quran PDF and extracted text, and the Al-Mizan text, are copyrighted. `.gitignore` already excludes `*.pdf`, `study_quran.sqlite*`, `data/raw/`, and the generated databases. CI and the Pages deploy fail if `data/almizan`, `data/tafsir`, `data/intro`, a `studyQuran` or non-empty `tafsir` entry in `meta.json`, or a PDF is in a public build. If you add a new private data directory, add it to **both** guards (`ci.yml` and `pages.yml`). Tests must not quote the book; use the made-up fixture.
+1. **Private content never goes in git or on the public site.** The Study Quran PDF and extracted text, the Al-Mizan text and the scans of the printed mushaf pages (`data/mushaf`, `tools/mushaf_pages.py`) are copyrighted. `.gitignore` already excludes `*.pdf`, `study_quran.sqlite*`, `data/raw/`, and the generated databases. CI and the Pages deploy fail if `data/almizan`, `data/tafsir`, `data/intro`, `data/mushaf`, a `studyQuran`, `mushaf` or non-empty `tafsir` entry in `meta.json`, or a PDF is in a public build. If you add a new private data directory, add it to **both** guards (`ci.yml` and `pages.yml`). Tests must not quote the book; use the made-up fixture.
 2. **Do not break the public deploy.** `main` deploys to GitHub Pages (https://rhadadi.github.io/Zekr/). Never merge to `main` without the owner asking.
 3. **Be honest in reports.** If something was not run or not verified, say so. Describe what the owner will see, not the mechanism.
 4. **Persian (RTL) is half the audience.** Check every UI change in both languages and in the light, sepia and dark themes.

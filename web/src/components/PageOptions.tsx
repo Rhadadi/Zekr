@@ -10,11 +10,12 @@ interface Props {
   juz: number
   onPlay: () => void
   onVerseView: () => void
+  onJump: () => void
   onClose: () => void
 }
 
 /** What tapping the page (not an ayah) shows in the side box: play from here, where translations show, following the recitation, the Quran font and size, and verse view. */
-export function PageOptions({ wide, pageNo, juz, onPlay, onVerseView, onClose }: Props) {
+export function PageOptions({ wide, pageNo, juz, onPlay, onVerseView, onJump, onClose }: Props) {
   const s = settings.value
   return (
     <div class="page-options" role="region" aria-label={t('pageOptions')} data-testid="page-options" onClick={(e) => e.stopPropagation()}>
@@ -28,6 +29,9 @@ export function PageOptions({ wide, pageNo, juz, onPlay, onVerseView, onClose }:
         <div class="options-row">
           <button class="btn primary" onClick={onPlay}>
             <Icon name="play" size={18} /> {t('playFromPage')}
+          </button>
+          <button class="btn" onClick={onJump}>
+            <Icon name="list" size={18} /> {t('goToPage')}
           </button>
           <button class="btn" onClick={onVerseView}>
             <Icon name="list" size={18} /> {t('openVerseView')}

@@ -5,7 +5,7 @@ import { AyahPanel } from '../components/AyahPanel'
 import { LoadError, Loading } from '../components/Page'
 import { PageOptions } from '../components/PageOptions'
 import { SurahBanner } from '../components/SurahBanner'
-import { type Meta, juzOf, loadText, loadTranslation, locate, pageRange } from '../data'
+import { type Meta, type MushafPageMap, juzOf, loadMushafMap, loadText, loadTranslation, locate, mushafImage, pageRange } from '../data'
 import { useAsync, useWide } from '../hooks'
 import { num, t } from '../i18n'
 import { href } from '../router'
@@ -65,6 +65,49 @@ const MushafPage = memo(function MushafPage({ meta, n, ar, basmala, size, highli
   )
 })
 
+/** Where an ayah is on screen: the line rectangles on a printed page, or the lines of its text. */
+const ayahEl = (id: number) => document.querySelector(`.ay[data-id="${id}"] .seg`) ?? document.querySelector(`.ay[data-id="${id}"]`)
+function ayahRects(id: number): DOMRect[] {
+  const el = document.querySelector(`.ay[data-id="${id}"]`)
+  if (!el) return []
+  const segs = el.querySelectorAll('.seg')
+  return segs.length ? Array.from(segs, (x) => x.getBoundingClientRect()) : Array.from(el.getClientRects())
+}
+
+interface PrintedProps {
+  meta: Meta
+  pg: MushafPageMap
+  ar: string[]
+  highlight?: number
+  kind?: 'sel' | 'playing'
+  onJump: () => void
+}
+
+/** One page of the owner's printed mushaf as a picture, with a tappable area over each ayah. */
+const PrintedPage = memo(function PrintedPage({ meta, pg, ar, highlight, kind, onJump }: PrintedProps) {
+  const n = pg.n
+  return (
+    <section class="mpage printed" id={`page-${n}`} data-page={n} aria-label={t('pageN', { n })}>
+      <div class="pg" style={{ aspectRatio: `${pg.w} / ${pg.h}` }}>
+        <img class="pg-img" src={mushafImage(meta, n)} alt="" loading="lazy" decoding="async" draggable={false} />
+        {pg.a.map((segs, k) => {
+          const id = pg.first + k
+          const at = locate(meta, id)
+          return (
+            <span key={id} class={`ay${highlight === id ? ` ${kind}` : ''}`} data-id={id} role="button" tabIndex={0}>
+              <span class="visually-hidden">{at.surah}:{at.ayah} {ar[id - 1]}</span>
+              {segs.map(([x, y, w, h], i) => (
+                <i key={i} class="seg" style={{ left: `${x / 10}%`, top: `${y / 10}%`, width: `${w / 10}%`, height: `${h / 10}%` }} />
+              ))}
+            </span>
+          )
+        })}
+        {n > 2 ? <button class="pg-no" aria-hidden="true" tabIndex={-1} onClick={(e) => { e.stopPropagation(); onJump() }} /> : null}
+      </div>
+    </section>
+  )
+})
+
 /** The mushaf as one scrolling text, page after page. Tap (or hover, if chosen) an ayah for its translation;
  * tap the page for reading options. While reciting, the ayah being recited is highlighted and kept in view. */
 export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: number; focusId?: number }) {
@@ -75,6 +118,10 @@ export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: numb
     const [ar, ...trs] = await Promise.all([loadText(s.script), ...ids.map((id) => loadTranslation(id))])
     return { ar, trs, ids }
   }, [s.script, trKey])
+
+  const printed = !!meta.mushaf
+  const map = useAsync(() => (printed ? loadMushafMap() : Promise.resolve(null)), [printed])
+  const ready = !!data.value && (!printed || !!map.value)
 
   const [panel, setPanel] = useState<Panel>(focusId ? { kind: 'ayah', id: focusId } : null)
   const [hoverId, setHoverId] = useState<number | undefined>(undefined)
@@ -129,20 +176,20 @@ export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: numb
     wanted.current = pageNo
   }, [pageNo])
   useLayoutEffect(() => {
-    if (!data.value) return
+    if (!ready) return
     if (focusId !== undefined) {
-      scrollTo(() => document.querySelector(`.ay[data-id="${focusId}"]`), 'center')
+      scrollTo(() => ayahEl(focusId), 'center')
       setPanel({ kind: 'ayah', id: focusId })
     } else {
       scrollToPage(wanted.current)
     }
     setCurrent(wanted.current)
     setJumping(false)
-  }, [pageNo, focusId, !!data.value])
+  }, [pageNo, focusId, ready])
 
   // The page in view drives the header and "where you left off": the page at 30% down the screen.
   useEffect(() => {
-    if (!data.value) return
+    if (!ready) return
     let frame = 0
     const look = () => {
       frame = 0
@@ -159,7 +206,7 @@ export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: numb
       window.removeEventListener('resize', onScroll)
       cancelAnimationFrame(frame)
     }
-  }, [!!data.value])
+  }, [ready])
   useEffect(() => {
     const at = locate(meta, pageRange(meta, current).first)
     setLastRead(at.surah, at.ayah)
@@ -171,7 +218,7 @@ export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: numb
     if (playingId === undefined) return
     if (panel?.kind === 'ayah') setPanel({ kind: 'ayah', id: playingId })
     if (settings.peek().autoScroll) {
-      document.querySelector(`.ay[data-id="${playingId}"]`)?.scrollIntoView({ block: boxBottomRef.current ? 'start' : 'center', behavior: 'smooth' })
+      ayahEl(playingId)?.scrollIntoView({ block: boxBottomRef.current ? 'start' : 'center', behavior: 'smooth' })
     }
   }, [playingId])
 
@@ -182,11 +229,10 @@ export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: numb
     if (popupId === undefined) return
     const place = () => {
       const pop = popRef.current
-      const el = document.querySelector(`.ay[data-id="${popupId}"]`)
-      if (!pop || !el) return
-      const lines = el.getClientRects()
-      const firstLine = lines[0] ?? el.getBoundingClientRect()
-      const lastLine = lines[lines.length - 1] ?? firstLine
+      const lines = ayahRects(popupId)
+      if (!pop || !lines.length) return
+      const firstLine = lines[0]!
+      const lastLine = lines[lines.length - 1]!
       const below = lastLine.bottom + 6
       const room = window.innerHeight - 70 // the bottom bar
       pop.style.top = `${below + pop.offsetHeight <= room ? below : Math.max(70, firstLine.top - pop.offsetHeight - 6)}px`
@@ -234,7 +280,7 @@ export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: numb
   // The side box: the ayah's panel (unless translations show over the page), or the reading options.
   const box =
     panel?.kind === 'options' ? (
-      <PageOptions wide={wide} pageNo={current} juz={juzOf(meta, pageRange(meta, current).first)} onPlay={() => { setPanel(null); playFrom(pageRange(meta, current).first) }} onVerseView={toVerse} onClose={() => setPanel(null)} />
+      <PageOptions wide={wide} pageNo={current} juz={juzOf(meta, pageRange(meta, current).first)} onPlay={() => { setPanel(null); playFrom(pageRange(meta, current).first) }} onJump={() => { setPanel(null); setJumping(true) }} onVerseView={toVerse} onClose={() => setPanel(null)} />
     ) : selected !== undefined && !popup ? ayahPanel(selected, 'box') : null
   const side = place === 'popup' ? 'bottom' : place
   boxBottomRef.current = box !== null && side === 'bottom'
@@ -247,7 +293,7 @@ export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: numb
     boxWas.current = boxOpen
     const id = selected ?? playingId
     // a box at the bottom covers the lower part of the screen: put the ayah near the top instead of the middle
-    if (id !== undefined) scrollTo(() => document.querySelector(`.ay[data-id="${id}"]`), side === 'bottom' ? 'start' : 'center')
+    if (id !== undefined) scrollTo(() => ayahEl(id), side === 'bottom' ? 'start' : 'center')
   })
 
   // Room under the page for a box at the bottom, so nothing is hidden behind it.
@@ -270,38 +316,47 @@ export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: numb
   }, [boxOpen, side])
 
   const surahOfPage = meta.surahs[locate(meta, pageRange(meta, current).first).surah - 1]!
+  const jumpForm = (
+    <form
+      class="mb-jump"
+      onSubmit={(e) => {
+        e.preventDefault()
+        const v = Number(new FormData(e.currentTarget).get('page'))
+        setJumping(false)
+        if (Number.isInteger(v) && v >= 1 && v <= PAGES) {
+          history.replaceState(null, '', href.page(v))
+          wanted.current = v
+          scrollToPage(v)
+          setCurrent(v)
+        }
+      }}
+    >
+      <input name="page" type="number" min={1} max={PAGES} defaultValue={current} autofocus aria-label={t('goToPage')} inputMode="numeric" />
+    </form>
+  )
   return (
     <>
-      <header class="mushaf-bar" dir="rtl">
-        <span class="mb-surah" lang="ar">سورة {surahOfPage.ar}</span>
-        {jumping ? (
-          <form
-            class="mb-jump"
-            onSubmit={(e) => {
-              e.preventDefault()
-              const v = Number(new FormData(e.currentTarget).get('page'))
-              setJumping(false)
-              if (Number.isInteger(v) && v >= 1 && v <= PAGES) {
-                history.replaceState(null, '', href.page(v))
-                wanted.current = v
-                scrollToPage(v)
-                setCurrent(v)
-              }
-            }}
-          >
-            <input name="page" type="number" min={1} max={PAGES} defaultValue={current} autofocus aria-label={t('goToPage')} inputMode="numeric" />
-          </form>
-        ) : (
-          <button class="mb-page" onClick={() => setJumping(true)} aria-label={`${t('goToPage')}: ${t('pageN', { n: current })}`}>
-            {num(current)}
-          </button>
-        )}
-        <span class="mb-juz">{t('juzN', { n: juzOf(meta, pageRange(meta, current).first) })}</span>
-      </header>
+      {printed ? (
+        // The printed page shows its own surah, juz and page number; the page number opens "go to page".
+        jumping ? <div class="jump-pop">{jumpForm}</div> : null
+      ) : (
+        <header class="mushaf-bar" dir="rtl">
+          <span class="mb-surah" lang="ar">سورة {surahOfPage.ar}</span>
+          {jumping ? (
+            jumpForm
+          ) : (
+            <button class="mb-page" onClick={() => setJumping(true)} aria-label={`${t('goToPage')}: ${t('pageN', { n: current })}`}>
+              {num(current)}
+            </button>
+          )}
+          <span class="mb-juz">{t('juzN', { n: juzOf(meta, pageRange(meta, current).first) })}</span>
+        </header>
+      )}
       <div class={`mushaf-layout${box ? ` with-box box-${side}` : ''}`}>
         <div
-          class="mushaf-flow"
+          class={`mushaf-flow${printed ? ' printed' : ''}`}
           data-page={current}
+          data-color={printed ? s.pageColor : undefined}
           onClick={(e) => {
             if (touch.current?.long) return
             if ((e.target as Element).closest('.ayah-popup')) return
@@ -352,11 +407,15 @@ export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: numb
             window.setTimeout(() => { if (touch.current === start) touch.current = null }, 0)
           }}
         >
-          {data.error ? <LoadError retry={data.retry} /> : !data.value ? <Loading /> : (
+          {data.error || map.error ? <LoadError retry={data.error ? data.retry : map.retry} /> : !ready ? <Loading /> : (
             Array.from({ length: PAGES }, (_, i) => {
               const n = i + 1
               const { first, last } = pageRange(meta, n)
               const on = highlight !== undefined && highlight >= first && highlight <= last
+              const pg = map.value?.[i]
+              if (pg) {
+                return <PrintedPage key={n} meta={meta} pg={pg} ar={data.value!.ar} highlight={on ? highlight : undefined} kind={on ? highlightKind : undefined} onJump={() => setJumping(true)} />
+              }
               return (
                 <MushafPage key={n} meta={meta} n={n} ar={data.value!.ar} basmala={meta.basmala[s.script]} size={size}
                   highlight={on ? highlight : undefined} kind={on ? highlightKind : undefined} />
