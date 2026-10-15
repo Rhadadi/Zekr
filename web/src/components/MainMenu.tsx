@@ -1,18 +1,18 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { t } from '../i18n'
-import { type RouteName, href } from '../router'
+import { type LayerName, href } from '../router'
 import { Icon, type IconName } from './Icon'
 
-const ITEMS: { name: RouteName; href: string; icon: IconName; label: () => string }[] = [
+const ITEMS: { name: LayerName; href: string; icon: IconName; label: () => string }[] = [
   { name: 'index', href: href.index, icon: 'list', label: () => t('navIndex') },
-  { name: 'home', href: href.today, icon: 'sun', label: () => t('navToday') },
+  { name: 'today', href: href.today, icon: 'sun', label: () => t('navToday') },
   { name: 'search', href: href.search(), icon: 'search', label: () => t('navSearch') },
   { name: 'saved', href: href.saved, icon: 'bookmark', label: () => t('navBookmarks') },
   { name: 'settings', href: href.settings, icon: 'settings', label: () => t('navSettings') },
 ]
 
 /** The one small button at the top left that replaces the bottom bar: Quran, Today, Search, Saved, Settings. */
-export function MainMenu({ active }: { active: RouteName }) {
+export function MainMenu({ active }: { active: LayerName }) {
   const [open, setOpen] = useState(false)
   const wrap = useRef<HTMLDivElement>(null)
   useEffect(() => {

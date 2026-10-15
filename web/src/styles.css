@@ -510,3 +510,17 @@ a.player-info { color: var(--ink); text-decoration: none; }
 }
 .pg-no { position: absolute; left: 42%; width: 16%; bottom: 0; height: 6%; border: 0; background: none; cursor: pointer; padding: 0; }
 .jump-pop { position: fixed; top: calc(10px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); z-index: 6; }
+
+/* Layers: every screen but the mushaf is fixed over it and scrolls on its own */
+.mushaf-host { min-height: 100dvh; }
+.layer {
+  position: fixed; inset: 0; z-index: 7; overflow-y: auto; overscroll-behavior: contain; background: var(--bg);
+  padding-bottom: calc(var(--player-h, 0px) + 24px + env(safe-area-inset-bottom));
+}
+.layer:focus { outline: none; }
+.layer-inner { position: relative; max-width: 720px; margin-inline: auto; padding: 0 16px; min-height: 100%; }
+.layer-bar {
+  position: sticky; top: 0; z-index: 6; display: flex; justify-content: flex-end; align-items: center; direction: ltr;
+  height: calc(52px + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top); background: var(--bg);
+}
+.layer .top { top: calc(52px + env(safe-area-inset-top)); padding-top: 0; }

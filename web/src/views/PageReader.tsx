@@ -9,7 +9,7 @@ import { type Meta, type MushafPageMap, juzOf, loadMushafMap, loadText, loadTran
 import { useAsync, useWide } from '../hooks'
 import { num, t } from '../i18n'
 import { href } from '../router'
-import { type PageTranslation, setLastRead, settings, updateSettings } from '../store'
+import { type PageTranslation, setLastRead, settings } from '../store'
 
 const ARABIC_INDIC = '٠١٢٣٤٥٦٧٨٩'
 /** Ayah numbers inside the text use the traditional Arabic-Indic digits, as printed mushafs do. */
@@ -110,7 +110,7 @@ const PrintedPage = memo(function PrintedPage({ meta, pg, ar, highlight, kind, o
 
 /** The mushaf as one scrolling text, page after page. Tap (or hover, if chosen) an ayah for its translation;
  * tap the page for reading options. While reciting, the ayah being recited is highlighted and kept in view. */
-export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: number; focusId?: number }) {
+export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Meta; pageNo: number; focusId?: number; paused?: boolean }) {
   const s = settings.value
   const trKey = s.translations.join(',')
   const data = useAsync(async () => {
@@ -207,10 +207,12 @@ export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: numb
       cancelAnimationFrame(frame)
     }
   }, [ready])
+  // "Where you left off" is not written while a layer hides the mushaf (and not before it has been looked at).
   useEffect(() => {
+    if (paused) return
     const at = locate(meta, pageRange(meta, current).first)
     setLastRead(at.surah, at.ayah)
-  }, [current])
+  }, [current, paused])
 
   // While reciting: an open ayah panel moves on with the recitation, and (unless turned off in Settings)
   // the ayah being recited is brought into view, even if the reader has scrolled elsewhere.
@@ -248,7 +250,6 @@ export function PageReader({ meta, pageNo, focusId }: { meta: Meta; pageNo: numb
 
   const toVerse = () => {
     const at = locate(meta, selected ?? pageRange(meta, current).first)
-    updateSettings({ readMode: 'verse' })
     location.hash = href.verse(at.surah, at.ayah)
   }
 

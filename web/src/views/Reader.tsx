@@ -35,7 +35,6 @@ export function Reader({ meta, surahId, ayah }: { meta: Meta; surahId: number; a
       const id = setTimeout(() => setFocused(undefined), 2500)
       return () => clearTimeout(id)
     }
-    window.scrollTo(0, 0)
   }, [!!data.value, surahId, ayah])
 
   // Remember where the reader is: the ayah near the top of the screen.
