@@ -22,4 +22,11 @@ describe('settings saved by older versions', () => {
     expect(migrateSettings({ lang: 'auto' }, false).lang).toBe('auto') // chosen again later: kept
     expect(migrateSettings({ lang: 'en' }, true).lang).toBe('en')
   })
+
+  it('puts the translation under the lines once, for those who had the old default, the panel', () => {
+    expect(migrateSettings({ translationPlace: 'panel' }, false, true).translationPlace).toBe('inline')
+    expect(migrateSettings({ translationPlace: 'panel' }, false, false).translationPlace).toBe('panel') // chosen again later: kept
+    expect(migrateSettings({ translationPlace: 'card' }, false, true).translationPlace).toBe('card')
+    expect(migrateSettings({ translationPlace: 'words' }, false, true).translationPlace).toBe('words')
+  })
 })
