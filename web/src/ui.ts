@@ -7,3 +7,6 @@ export const drawerOpen = signal(false)
  * panel at the bottom of the screen; the sheet has play and pause for its ayah meanwhile. */
 export const sheetOpen = signal(false)
 
+/** Counts the times the drawer was asked for the mushaf's reading options (they used to have a button in the bar). */
+export const pageOptionsAsked = signal(0)
+

@@ -1045,14 +1045,16 @@ test.describe('page view on a phone', () => {
     await expect(page.locator('.player')).toBeVisible()
   })
 
-  test('no bottom bar: one small menu button at the top left opens Quran, Today, Search, Saved and Settings', async ({ page }) => {
+  test('no bottom bar: one small menu button at the top right (in English) opens Quran, Today, Search, Saved and Settings', async ({ page }) => {
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/settings')
     await expect(page.locator('.bottom-nav')).toHaveCount(0)
     const btn = menu(page)
     const r = (await btn.boundingBox())!
-    expect(r.x).toBeLessThan(20)
+    expect(r.x + r.width).toBeGreaterThan(page.viewportSize()!.width - 20)
     expect(r.y).toBeLessThan(20)
+    // a layer closes from the other end of its bar
+    expect((await page.getByRole('button', { name: 'Close' }).boundingBox())!.x).toBeLessThan(20)
     expect(r.width).toBeLessThanOrEqual(44)
     await btn.click()
     const nav = page.getByRole('navigation', { name: 'Main' })
@@ -1149,13 +1151,25 @@ test.describe('The Study Quran (private content, made-up text here)', () => {
   })
 
   test('page view: the ayah card lists the notes that cover the ayah, as chips', async ({ page }) => {
-    await useSettings(page, { lang: 'en' })
+    await useSettings(page, { lang: 'en', translationPlace: 'panel' })
     await page.goto('/#/page/2')
     await settle(page)
     await page.locator('#page-2 .ay').nth(3).click() // 2:4 (the page starts at 2:1 here)
     const card = page.getByTestId('sheet')
     await expect(card.locator('.study-chip')).toHaveText(/Commentary on 2:1–5/)
     await expect(card.locator('details')).toHaveCount(0)
+  })
+
+  test('with the translation on the page, the box is one row: the commentary is in its list', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/2')
+    await settle(page)
+    await page.locator('#page-2 .ay').nth(3).click()
+    const box = page.getByTestId('ayah-panel')
+    await expect(box.locator('.study-chip')).toHaveCount(0)
+    await box.getByRole('button', { name: 'More' }).click()
+    await box.getByRole('link', { name: 'Commentary: The Study Quran' }).click()
+    await expect(page).toHaveURL(/#\/commentary\/2\/4$/)
   })
 })
 
@@ -1287,7 +1301,7 @@ test.describe('the drawer', () => {
     await expect(menu(page)).toBeFocused()
 
     await menu(page).click()
-    await page.locator('.drawer-backdrop').click({ position: { x: 380, y: 400 } })
+    await page.locator('.drawer-backdrop').click({ position: { x: 20, y: 400 } })
     await expect(drawer).toHaveCount(0)
 
     await menu(page).click()
@@ -1315,12 +1329,29 @@ test.describe('the drawer', () => {
     await expect(page.locator('#main')).toHaveAttribute('inert', '')
   })
 
-  test('in Persian it comes from the right', async ({ page }) => {
+  test('in Persian the menu is at the top left and opens from the left; the name is at the top right', async ({ page }) => {
     await useSettings(page, { lang: 'fa' })
     await page.goto('/#/page/305')
-    await page.getByRole('button', { name: 'منو' }).last().click()
+    const logo = (await page.getByRole('img', { name: 'ذکر' }).boundingBox())!
+    expect(logo.x + logo.width).toBeGreaterThan(page.viewportSize()!.width - 20)
+    const burger = page.getByRole('button', { name: 'منو' }).last()
+    expect((await burger.boundingBox())!.x).toBeLessThan(20)
+    await burger.click()
     await page.waitForTimeout(400) // the slide
     const box = (await page.getByRole('dialog', { name: 'منو' }).boundingBox())!
-    expect(box.x + box.width).toBeGreaterThan(page.viewportSize()!.width - 2)
+    expect(box.x).toBeLessThan(2)
+  })
+
+  test('on the mushaf the menu has its reading options', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/305')
+    await expect(page.locator('#page-305 .ay').first()).toBeVisible()
+    await menu(page).click()
+    await page.getByRole('dialog', { name: 'Menu' }).getByRole('button', { name: 'Reading options' }).click()
+    await expect(page.getByRole('dialog', { name: 'Menu' })).toHaveCount(0)
+    await expect(page.getByTestId('page-options')).toBeVisible()
+    await page.goto('/#/settings')
+    await menu(page).click()
+    await expect(page.getByRole('dialog', { name: 'Menu' }).getByRole('button', { name: 'Reading options' })).toHaveCount(0)
   })
 })

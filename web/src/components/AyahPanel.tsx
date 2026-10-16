@@ -10,7 +10,7 @@ import { isBookmarked, toggleBookmark } from '../store'
 import { sheetOpen } from '../ui'
 import { tafsirIndex } from '../tafsir'
 import { Icon } from './Icon'
-import { StudyChips } from './StudyQuranPanel'
+import { StudyChips, StudyLink } from './StudyQuranPanel'
 
 interface Props {
   meta: Meta
@@ -97,6 +97,8 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
               <Icon name="book" size={18} /> {t('almizan')}
             </a>
           ) : null}
+          {/* with nothing else in the box, its commentary is listed here rather than taking a row of its own */}
+          {meta.studyQuran && !showTr ? <StudyLink meta={meta} ayahID={id} /> : null}
           <a href={href.verse(surah, ayah)}>
             <Icon name="list" size={18} /> {t('openVerseView')}
           </a>
@@ -125,7 +127,7 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
             </p>
           </div>
         )) : null}
-        {meta.studyQuran ? <StudyChips meta={meta} ayahID={id} all /> : null}
+        {meta.studyQuran && showTr ? <StudyChips meta={meta} ayahID={id} all /> : null}
       </div>
     </div>
   )

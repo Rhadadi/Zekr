@@ -1,7 +1,8 @@
 import { memo } from 'preact/compat'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { player, playFrom } from '../audio'
-import { AppBar } from '../components/AppBar'
+import { pageOptionsAsked } from '../ui'
+import { AppBar, Logo } from '../components/AppBar'
 import { AyahPanel } from '../components/AyahPanel'
 import { Icon } from '../components/Icon'
 import { LoadError, Loading } from '../components/Page'
@@ -271,6 +272,12 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
     setLastRead(at.surah, at.ayah)
   }, [current, paused])
 
+  // the drawer's "Reading options" opens them here
+  const optionsAsked = pageOptionsAsked.value
+  useEffect(() => {
+    if (optionsAsked) setPanel({ kind: 'options' })
+  }, [optionsAsked])
+
   // While reciting: an open ayah panel moves on with the recitation, and (unless turned off in Settings)
   // the ayah being recited is brought into view, even if the reader has scrolled elsewhere.
   useEffect(() => {
@@ -404,6 +411,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   return (
     <>
       <AppBar
+        start={<Logo />}
         centre={
           // Surah, page and juz in the bar, each a button: the surah and the juz open a menu to pick from, the page
           // opens a field for its number. On the printed pages two small buttons turn to the previous and the next page
@@ -433,11 +441,6 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
               </button>
             ) : null}
           </div>
-        }
-        end={
-          <button class="icon-btn" aria-label={t('pageOptions')} aria-expanded={panel?.kind === 'options'} onClick={() => setPanel(panel?.kind === 'options' ? null : { kind: 'options' })}>
-            <Icon name="sliders" size={22} />
-          </button>
         }
       />
       {menu ? (
