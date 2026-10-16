@@ -5,6 +5,7 @@ import { AppBar } from '../components/AppBar'
 import { AyahPanel } from '../components/AyahPanel'
 import { Icon } from '../components/Icon'
 import { LoadError, Loading } from '../components/Page'
+import { InterlinearPage } from '../components/InterlinearPage'
 import { PageOptions } from '../components/PageOptions'
 import { Sheet } from '../components/Sheet'
 import { SurahBanner } from '../components/SurahBanner'
@@ -151,13 +152,21 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   // card over the page under its ayah.
   const wide = useWide()
   // The printed pages are pictures, so there is no text to put translations under.
-  const place: TranslationPlace = printed && s.translationPlace === 'inline' ? 'panel' : s.translationPlace
+  // "In the page": under each ayah on the text pages, under each line on the printed pages.
+  const place: TranslationPlace = s.translationPlace
   const popup = place === 'card'
   const inspector = wide && !popup
   const inlineTr = useMemo(
-    () => (place === 'inline' && data.value ? { info: data.value.ids.map((id) => meta.translations.find((x) => x.id === id)!), texts: data.value.trs, size: Math.round(s.trSize * 0.9) } : undefined),
+    () => (place === 'inline' && !printed && data.value ? { info: data.value.ids.map((id) => meta.translations.find((x) => x.id === id)!), texts: data.value.trs, size: Math.round(s.trSize * 0.9) } : undefined),
     [place, data.value, s.trSize],
   )
+  const lineTr = useMemo(() => {
+    const id = data.value?.ids[0]
+    const info = id ? meta.translations.find((x) => x.id === id) : undefined
+    return place === 'inline' && printed && info && data.value
+      ? { texts: data.value.trs[0]!, dir: info.dir, lang: info.lang, size: Math.round(s.trSize * 0.85) }
+      : undefined
+  }, [place, printed, data.value, s.trSize])
   const selected = panel?.kind === 'ayah' ? panel.id : undefined
   // One highlight at a time: the ayah being shown, otherwise the one being recited.
   const highlight = selected ?? playingId
@@ -264,7 +273,11 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   useEffect(() => {
     if (playingId === undefined) return
     if (panel?.kind === 'ayah') setPanel({ kind: 'ayah', id: playingId })
-    if (printed && settings.peek().autoScroll) turnTo(pageOf(meta, playingId), true)
+    if (printed && settings.peek().autoScroll) {
+      turnTo(pageOf(meta, playingId), true)
+      // a page with the translation under its lines is taller than the screen: keep the line being recited in view
+      if (lineTr) window.setTimeout(() => ayahEl(playingId)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 60)
+    }
     else if (settings.peek().autoScroll) {
       ayahEl(playingId)?.scrollIntoView({ block: boxBottomRef.current ? 'nearest' : 'center', behavior: 'smooth' })
     }
@@ -370,7 +383,15 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
         goPage(Number(new FormData(e.currentTarget).get('page')))
       }}
     >
-      <input name="page" type="number" min={1} max={PAGES} defaultValue={current} autofocus aria-label={t('goToPage')} inputMode="numeric" />
+      {/* The iPhone's number pad has no Go key: a Go button, and leaving the field (Done) goes there too */}
+      <input name="page" type="number" min={1} max={PAGES} defaultValue={current} autofocus aria-label={t('goToPage')} inputMode="numeric" enterKeyHint="go"
+        onBlur={(e) => {
+          const v = Number(e.currentTarget.value)
+          if (e.relatedTarget instanceof HTMLElement && e.relatedTarget.closest('.mb-jump')) return // the Go button
+          if (Number.isInteger(v) && v >= 1 && v <= PAGES && v !== current) goPage(v)
+          else setJumping(false)
+        }} />
+      <button type="submit" class="mb-go">{t('go')}</button>
     </form>
   )
   const turnButtons = printed
@@ -497,6 +518,9 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
               const { first, last } = pageRange(meta, n)
               const on = highlight !== undefined && highlight >= first && highlight <= last
               const pg = map.value?.[i]
+              if (pg && lineTr) {
+                return <InterlinearPage key={n} meta={meta} pg={pg} ar={data.value!.ar} highlight={on ? highlight : undefined} kind={on ? highlightKind : undefined} tr={lineTr} onJump={() => setJumping(true)} />
+              }
               if (pg) {
                 return <PrintedPage key={n} meta={meta} pg={pg} ar={data.value!.ar} highlight={on ? highlight : undefined} kind={on ? highlightKind : undefined} onJump={() => setJumping(true)} />
               }

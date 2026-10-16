@@ -262,6 +262,21 @@ test.describe('mushaf page view', () => {
     await expect(page.locator('.mb-surah')).toContainText('مريم')
   })
 
+  test('the page number field has a Go button, and leaving the field goes there too (the iPhone number pad has no Go key)', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/305')
+    await settle(page)
+    await page.locator('.mb-page').click()
+    await page.getByLabel('Go to page').fill('284')
+    await page.getByRole('button', { name: 'Go', exact: true }).click()
+    await expect(page.locator('.mb-page')).toHaveText('284')
+    await expect(page.locator('#page-284 .ay').first()).toBeInViewport()
+    await page.locator('.mb-page').click()
+    await page.getByLabel('Go to page').fill('300')
+    await page.getByLabel('Go to page').blur() // what Done on the iPhone keyboard does
+    await expect(page.locator('.mb-page')).toHaveText('300')
+  })
+
   test('the surah and the juz in the bar open a menu to pick from', async ({ page }) => {
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/page/305')
@@ -1135,6 +1150,24 @@ test.describe('The printed mushaf as pictures (private build, made-up pictures h
     await expect(next).toBeDisabled()
     await prev.click()
     await expect(page.locator('#page-603')).toBeVisible()
+  })
+
+  test('translation under each line: the page is cut into its lines, each followed by the translation of that line', async ({ page }) => {
+    await useSettings(page, { lang: 'fa', translationPlace: 'inline' })
+    await page.goto('/#/page/3')
+    const pg = page.locator('#page-3')
+    await expect(pg.locator('.il-strip').first()).toBeVisible()
+    // the made-up map puts each of the 11 ayahs on a line of its own: 11 translation lines, each ending with its number
+    await expect(pg.locator('.il-tr')).toHaveCount(11)
+    await expect(pg.locator('.il-tr').nth(1)).toContainText('﴿۷﴾')
+    await expect(pg.locator('.il-mark')).toHaveCount(11)
+    // the translation is part of the ayah: tapping it opens the ayah (its actions; the translation is already on the page)
+    await pg.locator('.il-tr').nth(1).locator('.ay').first().click()
+    await expect(page.getByTestId('ayah-panel')).toContainText('۲:۷')
+    await expect(page.getByTestId('ayah-panel').locator('.tr')).toHaveCount(0)
+    await expect(pg.locator('.il-tr .ay.sel')).toHaveCount(1)
+    await page.goto('/#/settings')
+    await expect(page.getByLabel('ترجمه در صفحه').locator('option:checked')).toHaveText('زیر هر سطر صفحه')
   })
 
   test('page colour is a filter on the picture only', async ({ page }) => {
