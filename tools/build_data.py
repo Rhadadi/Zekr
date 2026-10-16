@@ -454,7 +454,7 @@ def build_sqlite(path: Path, *, surahs, marks, texts, translations, pools, versi
     db.close()
 
 
-def build_web(out: Path, *, surahs, marks, texts, translations, pools, version: str, tafsir: list[str] | None = None):
+def build_web(out: Path, *, surahs, marks, texts, translations, pools, version: str, tafsir: list[str] | None = None, wbw: bool = False):
     if out.exists():
         shutil.rmtree(out)
     order = [(s.id, n) for s in surahs for n in range(1, s.ayahs + 1)]
@@ -483,6 +483,8 @@ def build_web(out: Path, *, surahs, marks, texts, translations, pools, version: 
             ],
             # tafsirs in data/<id>/ (private builds only; the public site has none)
             "tafsir": tafsir or [],
+            # word-by-word Persian meanings in data/wbw/<surah>.json (tools/wbw.py)
+            **({"wbw": "fa"} if wbw else {}),
         },
     )
 
@@ -504,6 +506,7 @@ def main(argv=None) -> int:
         "--almizan-web", action="store_true",
         help="also put Al-Mizan into the web data (private builds only: never deploy it publicly, see docs/PLAN.md §8)",
     )
+    ap.add_argument("--no-wbw", action="store_true", help="leave out the word-by-word Persian meanings (no download)")
     args = ap.parse_args(argv)
 
     report = Report()
@@ -549,6 +552,16 @@ def main(argv=None) -> int:
         if not report.errors:
             check_translation(tid, info["texts"], texts["clean"], report)
 
+    words = None
+    if not args.no_wbw:
+        import wbw
+        try:
+            raw = wbw.fetch(RAW_DIR / "quran_wbw_fa.zip", args.refresh)
+            words = wbw.load(raw, [s.ayahs for s in surahs], normalize_persian)
+            hashes["wbw"] = wbw.SHA256
+        except (ValueError, RuntimeError, OSError, KeyError) as e:
+            report.error(f"word by word: {e}")
+
     if args.study_quran:
         from study_quran import load_translation, checksum, TRANSLATION
         try:
@@ -578,7 +591,10 @@ def main(argv=None) -> int:
     kw = dict(surahs=surahs, marks=marks, texts=texts, translations=translations, pools=pools, version=version)
     build_sqlite(args.ios_db, widget=False, **kw)
     build_sqlite(args.widget_db, widget=True, **kw)
-    build_web(args.web_dir, tafsir=["almizan"] if args.almizan_web else None, **kw)
+    build_web(args.web_dir, tafsir=["almizan"] if args.almizan_web else None, wbw=words is not None, **kw)
+    if words is not None:
+        import wbw
+        wbw.build_web(args.web_dir, words, [s.ayahs for s in surahs])
     if args.study_quran:
         from study_quran import install_sqlite, export_web
         install_sqlite(args.study_quran, args.ios_db)

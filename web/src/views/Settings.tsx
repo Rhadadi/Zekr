@@ -60,9 +60,11 @@ export function SettingsView({ meta }: { meta: Meta }) {
             <option value="panel">{wide ? t('pageTranslationPanel') : t('pageTranslationBottom')}</option>
             <option value="card">{t('pageTranslationPopup')}</option>
             <option value="inline">{meta.mushaf ? t('pageTranslationLines') : t('pageTranslationInline')}</option>
+            {meta.wbw ? <option value="words">{t('pageTranslationWords')}</option> : null}
             <option value="off">{t('pageTranslationOff')}</option>
           </select>
           {s.translationPlace === 'inline' ? <span class="muted small hint">{meta.mushaf ? t('linesHint') : t('inlineHint')}</span> : null}
+          {s.translationPlace === 'words' ? <span class="muted small hint">{t('wordsHint')}</span> : null}
         </label>
         {meta.mushaf ? (
           <label class="field">

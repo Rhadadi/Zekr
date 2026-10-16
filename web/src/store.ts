@@ -16,7 +16,7 @@ export interface DailySettings {
 
 /** Where the mushaf shows an ayah's translation: in the side panel (the sheet on a phone), in a card over the page under
  * the ayah, inline under every ayah in the text, or not on the page at all. */
-export type TranslationPlace = 'panel' | 'card' | 'inline' | 'off'
+export type TranslationPlace = 'panel' | 'card' | 'inline' | 'words' | 'off'
 
 /** The printed pages are recoloured with a filter; 'blue' is the edition as printed. */
 export type PageColor = 'blue' | 'green' | 'purple' | 'pink' | 'dark'

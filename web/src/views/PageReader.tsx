@@ -7,6 +7,7 @@ import { Icon } from '../components/Icon'
 import { LoadError, Loading } from '../components/Page'
 import { InterlinearPage } from '../components/InterlinearPage'
 import { PageOptions } from '../components/PageOptions'
+import { WordsPage } from '../components/WordsPage'
 import { Sheet } from '../components/Sheet'
 import { SurahBanner } from '../components/SurahBanner'
 import { type Meta, type MushafPageMap, type TranslationInfo, juzOf, loadMushafMap, loadText, loadTranslation, locate, mushafImage, pageOf, pageRange } from '../data'
@@ -151,9 +152,11 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   // The translation shows in the inspector beside the text (wide screens), in a box at the bottom (phones), or in a
   // card over the page under its ayah.
   const wide = useWide()
-  // The printed pages are pictures, so there is no text to put translations under.
   // "In the page": under each ayah on the text pages, under each line on the printed pages.
-  const place: TranslationPlace = s.translationPlace
+  const place: TranslationPlace = s.translationPlace === 'words' && !meta.wbw ? 'panel' : s.translationPlace
+  const words = place === 'words'
+  // one page at a time: the printed pages, and word by word (too much text to lay out all 604 pages at once)
+  const single = printed || words
   const popup = place === 'card'
   const inspector = wide && !popup
   const inlineTr = useMemo(
@@ -208,8 +211,8 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   }, [pageNo])
   useLayoutEffect(() => {
     if (!ready) return
-    if (printed) {
-      // one printed page at a time: show the page of the requested ayah, or the requested page
+    if (single) {
+      // one page at a time: show the page of the requested ayah, or the requested page
       setCurrent(focusId !== undefined ? pageOf(meta, focusId) : wanted.current)
       if (focusId !== undefined) setPanel({ kind: 'ayah', id: focusId })
       window.scrollTo(0, 0)
@@ -243,7 +246,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
 
   // The page in view drives the header and "where you left off": the page at 30% down the screen.
   useEffect(() => {
-    if (!ready || printed) return
+    if (!ready || single) return
     let frame = 0
     const look = () => {
       frame = 0
@@ -273,10 +276,10 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   useEffect(() => {
     if (playingId === undefined) return
     if (panel?.kind === 'ayah') setPanel({ kind: 'ayah', id: playingId })
-    if (printed && settings.peek().autoScroll) {
+    if (single && settings.peek().autoScroll) {
       turnTo(pageOf(meta, playingId), true)
-      // a page with the translation under its lines is taller than the screen: keep the line being recited in view
-      if (lineTr) window.setTimeout(() => ayahEl(playingId)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 60)
+      // a page with translations in it is taller than the screen: keep the ayah being recited in view
+      if (lineTr || words) window.setTimeout(() => ayahEl(playingId)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 60)
     }
     else if (settings.peek().autoScroll) {
       ayahEl(playingId)?.scrollIntoView({ block: boxBottomRef.current ? 'nearest' : 'center', behavior: 'smooth' })
@@ -329,7 +332,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
         ar={data.value.ar[id - 1] as string}
         translations={data.value.ids.map((trId, k) => ({ info: meta.translations.find((x) => x.id === trId)!, text: data.value!.trs[k]![id - 1] as string }))}
         variant={variant}
-        showTranslations={place === 'panel' || place === 'card'}
+        showTranslations={place === 'panel' || place === 'card' || place === 'words'}
         panelRef={variant === 'popup' ? popRef : undefined}
         onClose={() => {
           setPanel(null)
@@ -367,7 +370,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
     setMenu(null)
     setJumping(false)
     if (!Number.isInteger(n) || n < 1 || n > PAGES) return
-    if (printed) turnTo(n)
+    if (single) turnTo(n)
     else {
       wanted.current = n
       history.replaceState(history.state, '', href.page(n))
@@ -394,7 +397,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
       <button type="submit" class="mb-go">{t('go')}</button>
     </form>
   )
-  const turnButtons = printed
+  const turnButtons = single
   return (
     <>
       <AppBar
@@ -513,11 +516,15 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
           }}
         >
           {data.error || map.error ? <LoadError retry={data.error ? data.retry : map.retry} /> : !ready ? <Loading /> : (
-            (printed ? [current - 1] : Array.from({ length: PAGES }, (_, i) => i)).map((i) => {
+            (single ? [current - 1] : Array.from({ length: PAGES }, (_, i) => i)).map((i) => {
               const n = i + 1
               const { first, last } = pageRange(meta, n)
               const on = highlight !== undefined && highlight >= first && highlight <= last
               const pg = map.value?.[i]
+              if (words) {
+                return <WordsPage key={n} meta={meta} n={n} basmala={meta.basmala.uthmani} size={size} trSize={Math.round(s.trSize * 0.75)}
+                  highlight={on ? highlight : undefined} kind={on ? highlightKind : undefined} />
+              }
               if (pg && lineTr) {
                 return <InterlinearPage key={n} meta={meta} pg={pg} ar={data.value!.ar} highlight={on ? highlight : undefined} kind={on ? highlightKind : undefined} tr={lineTr} onJump={() => setJumping(true)} />
               }

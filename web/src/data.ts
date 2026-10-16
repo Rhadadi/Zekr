@@ -45,6 +45,8 @@ export interface Meta {
   studyQuran?: { id: string; name: string; pdfSha256: string; importVersion: string }
   /** The owner's printed mushaf as page images (private builds only; tools/mushaf_pages.py). */
   mushaf?: { v: string; w: number; h: number }
+  /** Word-by-word meanings in data/wbw/<surah>.json (tools/wbw.py). */
+  wbw?: 'fa'
 }
 
 /** One printed page: its image size and, per ayah (from `first`), the line rectangles it covers, in thousandths of the page. */
@@ -111,6 +113,19 @@ export const loadText = (kind: TextKind, refresh = false) => loadArray(`text/${k
 
 /** A translation, one string per ayah (index = ayah id - 1). May be '' where the translator merged two ayahs. */
 export const loadTranslation = (id: string, refresh = false) => loadArray(`tr/${id}.json`, refresh)
+
+const wbwCache = new Map<number, Promise<[string, string][][]>>()
+
+/** A surah's words with their Persian meanings: for each ayah, [arabic, persian] per word. */
+export function loadWbw(surah: number): Promise<[string, string][][]> {
+  let p = wbwCache.get(surah)
+  if (!p) {
+    p = loadMeta().then((m) => getJson<[string, string][][]>(`wbw/${surah}.json?v=${m.version}`))
+    p.catch(() => wbwCache.delete(surah))
+    wbwCache.set(surah, p)
+  }
+  return p
+}
 
 let mushafPromise: Promise<MushafPageMap[]> | null = null
 
