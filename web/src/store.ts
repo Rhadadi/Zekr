@@ -47,7 +47,7 @@ export interface Settings {
 }
 
 export const defaultSettings: Settings = {
-  lang: 'auto',
+  lang: 'fa',
   theme: 'auto',
   script: 'uthmani',
   quranFont: DEFAULT_QURAN_FONT,
@@ -85,14 +85,18 @@ function write(key: string, value: unknown) {
 
 /** Settings as saved by older versions: the box-position choice became "where translations show", and the reading
  * view is gone (the mushaf is the only reading screen). The old keys are not kept. */
-export function migrateSettings(saved: Record<string, unknown>): Partial<Settings> {
+export function migrateSettings(saved: Record<string, unknown>, persianDefault = false): Partial<Settings> {
   const { pageBox, readMode: _readMode, ...rest } = saved as Record<string, unknown> & { pageBox?: string; readMode?: string }
+  // Persian is the default language: a saved "follow the device" from before becomes Persian, once
+  if (persianDefault && rest.lang === 'auto') rest.lang = 'fa'
   if (rest.translationPlace === undefined && pageBox !== undefined) rest.translationPlace = pageBox === 'popup' ? 'card' : 'panel'
   return rest as Partial<Settings>
 }
 
 function loadSettings(): Settings {
-  const saved = migrateSettings(read<Record<string, unknown>>('zekr.settings') ?? {})
+  const firstFa = read<boolean>('zekr.persianDefault') === undefined
+  const saved = migrateSettings(read<Record<string, unknown>>('zekr.settings') ?? {}, firstFa)
+  if (firstFa) write('zekr.persianDefault', true)
   return { ...defaultSettings, ...saved, daily: { ...defaultSettings.daily, ...saved.daily } }
 }
 
