@@ -59,10 +59,10 @@ export function SettingsView({ meta }: { meta: Meta }) {
           <select value={s.translationPlace} onChange={(e) => updateSettings({ translationPlace: e.currentTarget.value as TranslationPlace })}>
             <option value="panel">{wide ? t('pageTranslationPanel') : t('pageTranslationBottom')}</option>
             <option value="card">{t('pageTranslationPopup')}</option>
-            {meta.mushaf ? null : <option value="inline">{t('pageTranslationInline')}</option>}
+            <option value="inline">{meta.mushaf ? t('pageTranslationLines') : t('pageTranslationInline')}</option>
             <option value="off">{t('pageTranslationOff')}</option>
           </select>
-          {s.translationPlace === 'inline' ? <span class="muted small hint">{t('inlineHint')}</span> : null}
+          {s.translationPlace === 'inline' ? <span class="muted small hint">{meta.mushaf ? t('linesHint') : t('inlineHint')}</span> : null}
         </label>
         {meta.mushaf ? (
           <label class="field">
