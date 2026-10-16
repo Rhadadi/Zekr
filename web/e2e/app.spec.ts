@@ -572,7 +572,9 @@ test.describe('translation audio after each ayah', () => {
     await page.locator('article#a-1').getByRole('button', { name: 'Play' }).click()
     await finishRecording(page)
     await expect.poll(async () => (await played()).at(-1)).toBe('https://everyayah.com/data/English/Sahih_Intnl_Ibrahim_Walk_192kbps/112001.mp3')
-    const barSwitch = page.locator('.player').getByRole('button', { name: 'Translation audio' })
+    // in the recitation bar it is behind More, with the reciter and speed
+    await page.locator('.player').getByRole('button', { name: 'Recitation' }).click()
+    const barSwitch = page.getByRole('dialog').getByRole('button', { name: /Translation audio/ })
     await expect(barSwitch).toHaveAttribute('aria-pressed', 'true')
     await barSwitch.click()
     await expect(barSwitch).toHaveAttribute('aria-pressed', 'false')
@@ -580,7 +582,7 @@ test.describe('translation audio after each ayah', () => {
     await expect.poll(async () => (await played()).at(-1)).toBe('https://everyayah.com/data/Minshawy_Murattal_128kbps/112002.mp3')
     // switching it back on brings back the same recording
     await barSwitch.click()
-    await expect(page.locator('.chip')).toContainText('Saheeh')
+    await expect(barSwitch).toContainText('Saheeh')
   })
 
   test('the player bar fits on a phone screen', async ({ page }) => {
@@ -723,9 +725,10 @@ test.describe('page view: recitation, tapping and pressing', () => {
     await settle(page)
     await page.locator('#page-305 .ay').first().click()
     const panel = page.getByTestId('ayah-panel')
-    const repeat = panel.getByRole('button', { name: 'Repeat this ayah' })
-    await expect(repeat).toHaveAttribute('aria-pressed', 'false')
-    await repeat.click()
+    // not playing yet: Repeat this ayah is behind More in the panel; once playing, it is a toggle in the recitation bar
+    await panel.getByRole('button', { name: 'More' }).click()
+    await panel.getByRole('button', { name: 'Repeat this ayah' }).click()
+    const repeat = page.locator('.player').getByRole('button', { name: 'Repeat this ayah' })
     await expect(repeat).toHaveAttribute('aria-pressed', 'true')
     await expect.poll(async () => (await played()).length).toBe(1)
     for (let i = 2; i <= 4; i++) {
@@ -739,6 +742,24 @@ test.describe('page view: recitation, tapping and pressing', () => {
     expect((await played()).length).toBe(4) // and did not restart the recording mid-word
     await finishRecording(page)
     await expect(panel).toContainText('19:2')
+  })
+
+  test('nothing is said twice: while an ayah is in the recitation bar, its panel drops the reference, play and repeat', async ({ page }) => {
+    await trackAudio(page)
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/1')
+    await settle(page)
+    await page.locator('#page-1 .ay').nth(2).click()
+    const panel = page.getByTestId('ayah-panel')
+    await expect(panel.locator('.ayah-ref')).toHaveText('1:3') // nothing playing: the panel says which ayah
+    await panel.getByRole('button', { name: 'Play from here' }).click()
+    await expect(page.locator('.player')).toContainText('1:3')
+    await expect(panel.locator('.ayah-ref')).toHaveCount(0)
+    await expect(panel.getByRole('button', { name: /Play|Pause/ })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Close' })).toHaveCount(1) // one close, the panel's; the bar's stop is behind More
+    await panel.getByRole('button', { name: 'More' }).click()
+    await expect(panel.getByRole('button', { name: 'Repeat this ayah' })).toHaveCount(0)
+    await expect(page.locator('.player').getByRole('button', { name: 'Repeat this ayah' })).toBeVisible()
   })
 
   test('the ayah being recited is highlighted and brought back into view, even after scrolling away', async ({ page }) => {

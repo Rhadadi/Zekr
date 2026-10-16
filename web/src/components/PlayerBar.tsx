@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks'
-import { next, player, previous, stop, toggle } from '../audio'
+import { loopAyah, looping, next, player, previous, stop, toggle } from '../audio'
 import { type Meta, locate } from '../data'
-import { ayahRef, t } from '../i18n'
+import { ayahRef, num, surahName, t } from '../i18n'
 import { href } from '../router'
 import { Icon } from './Icon'
 import { PlaybackOptions } from './PlaybackOptions'
@@ -39,8 +39,10 @@ export function PlayerBar({ meta }: { meta: Meta }) {
     <>
       <div class="player" ref={bar} role="region" aria-label={t('recitation')} data-status={p.status}>
         <a class="player-info" href={href.ayah(surah, ayah)} aria-label={`${t('nowReciting')}: ${ayahRef(meta.surahs[surah - 1]!, ayah)}`}>
-          <strong>{ayahRef(meta.surahs[surah - 1]!, ayah)}</strong>
-          <span class="muted small">{p.status === 'error' ? t('audioError') : p.phase === 'translation' ? t('audioTranslation') : p.phase === 'basmala' ? 'بسم الله' : ''}</span>
+          <strong>{surahName(meta.surahs[surah - 1]!)} {num(surah)}:{num(ayah)}</strong>
+          {p.status === 'error' || p.phase !== 'ayah' ? (
+            <span class="muted small">{p.status === 'error' ? t('audioError') : p.phase === 'translation' ? t('audioTranslation') : 'بسم الله'}</span>
+          ) : null}
         </a>
         <div class="player-controls" dir="ltr">
           <button class="icon-btn" onClick={previous} aria-label={t('previous')}><Icon name="prev" size={20} /></button>
@@ -48,9 +50,9 @@ export function PlayerBar({ meta }: { meta: Meta }) {
             <Icon name={playing ? 'pause' : 'play'} size={24} />
           </button>
           <button class="icon-btn" onClick={next} aria-label={t('next')}><Icon name="next" size={20} /></button>
-          <TranslationAudioToggle iconOnly />
-          <button class="icon-btn" onClick={() => setOpen(true)} aria-label={t('recitation')}><Icon name="sliders" size={20} /></button>
-          <button class="icon-btn" onClick={stop} aria-label={t('stop')}><Icon name="close" size={20} /></button>
+          <button class="icon-btn" onClick={() => loopAyah(p.ayahId, !looping.value)} aria-pressed={looping.value} aria-label={t('repeatAyah')}><Icon name="repeat" size={20} /></button>
+          {/* the less frequent ones (translation audio, reciter, speed, stopping) are in one place */}
+          <button class="icon-btn" onClick={() => setOpen(true)} aria-label={t('recitation')} aria-haspopup="dialog"><Icon name="more" size={20} /></button>
         </div>
       </div>
       {open ? (
@@ -59,6 +61,10 @@ export function PlayerBar({ meta }: { meta: Meta }) {
             <div class="sheet-head">
               <h2>{t('recitation')}</h2>
               <button class="icon-btn" onClick={() => setOpen(false)} aria-label={t('close')}><Icon name="close" /></button>
+            </div>
+            <div class="player-sheet-row">
+              <TranslationAudioToggle />
+              <button class="btn" onClick={() => { setOpen(false); stop() }}><Icon name="close" size={18} /> {t('stopRecitation')}</button>
             </div>
             <PlaybackOptions />
           </div>

@@ -539,3 +539,13 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .turn .icon-btn:disabled { opacity: 0.35; cursor: default; }
 .mushaf-flow.printed { display: grid; justify-items: center; }
 .mushaf-flow.printed .mpage { width: 100%; max-width: calc((100dvh - var(--bar-h) - 20px) * 654 / 935); }
+
+/* The ayah panel's one row: the reference (unless the recitation bar already shows it), the actions, close at the end.
+   In the phone sheet the grab handle sits in the middle of this row, so there is no separate row for it. */
+.ayah-head { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 2px; min-height: 44px; background: var(--surface); }
+.ayah-head .ayah-ref { font-size: 0.95rem; margin-inline-end: 4px; }
+.ayah-head .ayah-close { margin-inline-start: auto; width: 44px; height: 44px; color: var(--ink); background: radial-gradient(circle, var(--line) 15px, transparent 15.5px); } /* a small round close, with a 44px target */
+.asheet { padding-top: 0; }
+.asheet-grab { position: absolute; top: 0; inset-inline: 0; margin-inline: auto; width: 96px; height: 44px; z-index: 2; }
+.asheet-body { padding-top: 6px; }
+.player-sheet-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 12px; }
