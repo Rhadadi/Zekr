@@ -278,8 +278,21 @@ input[type='checkbox'] { width: 20px; height: 20px; accent-color: var(--accent);
 }
 
 /* Mushaf page view */
-.mb-surah { text-align: start; }
-.mb-juz { text-align: end; color: var(--muted); font-family: var(--font-ui); font-size: 0.9rem; }
+.mb-surah, .mb-juz {
+  min-height: 44px; min-width: 0; padding: 0 6px; border: 0; background: none; color: var(--ink); cursor: pointer; border-radius: 8px;
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-family: var(--font-quran); font-size: 1rem;
+}
+.mb-juz { color: var(--muted); font-family: var(--font-ui); font-size: 0.85rem; }
+.mb-surah[aria-expanded='true'], .mb-juz[aria-expanded='true'] { background: var(--hl); }
+.mb-menu-backdrop { position: fixed; inset: 0; z-index: 5; border: 0; background: transparent; cursor: default; }
+.mb-menu {
+  position: fixed; z-index: 6; top: calc(var(--bar-h) + 4px); inset-inline: 8px; margin-inline: auto; max-width: 420px; max-height: min(65dvh, 520px);
+  overflow-y: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 8px 24px rgb(0 0 0 / 0.18); padding: 6px;
+}
+.mb-menu button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: none; color: var(--ink); text-align: start; cursor: pointer; }
+.mb-menu button.on { background: var(--hl); font-weight: 700; }
+.mb-menu .mb-n { min-width: 2.2em; color: var(--muted); font-size: 0.85rem; }
+.mb-menu .mb-ar { margin-inline-start: auto; font-family: var(--font-quran); font-size: 1.05rem; }
 .mb-page {
   min-width: 56px; min-height: 40px; padding: 0 12px; border: 1.5px solid var(--gold); border-radius: 999px;
   background: none; color: var(--gold); font-family: var(--font-ui); font-weight: 700; cursor: pointer;
@@ -482,7 +495,7 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .appbar-title { text-align: center; min-width: 0; }
 .appbar-title h1 { font-size: 1.05rem; font-weight: 700; line-height: 1.35; }
 .appbar-title p { font-size: 0.78rem; color: var(--muted); line-height: 1.3; }
-.mushaf-id { display: flex; align-items: center; justify-content: center; gap: 14px; font-family: var(--font-quran); font-size: 1.05rem; }
+.mushaf-id { display: flex; align-items: center; justify-content: center; gap: 4px; min-width: 0; max-width: 100%; font-family: var(--font-quran); font-size: 1.05rem; }
 
 /* Layers: every screen but the mushaf is fixed over it and scrolls on its own */
 .mushaf-host { min-height: 100dvh; }
@@ -516,8 +529,7 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .tr-inline .tr { margin: 2px 0; color: var(--ink); opacity: 0.88; line-height: 1.7; }
 
 /* Printed pages are shown one at a time; the bar turns them. The book is right to left, so previous is on the right. */
-.turn { display: flex; gap: 6px; direction: rtl; }
-.turn .icon-btn { width: 44px; height: 44px; }
+.mushaf-id .icon-btn { width: 36px; height: 44px; flex: none; }
 .turn-next svg { transform: scaleX(-1); }
 .turn-prev svg { transform: none; }
 .turn .icon-btn:disabled { opacity: 0.35; cursor: default; }
