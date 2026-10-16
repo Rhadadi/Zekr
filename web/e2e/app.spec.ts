@@ -831,6 +831,30 @@ test.describe('page view: recitation, tapping and pressing', () => {
     await page.locator('#page-305 .ay').nth(2).dispatchEvent('contextmenu')
     await expect(page.getByTestId('ayah-panel')).toContainText('19:3')
   })
+
+  test('a long press on an ayah lists what can be done with it: its whole translation, word by word, and the rest', async ({ page }) => {
+    await useSettings(page, { lang: 'en', translations: ['en.sahih'] })
+    await page.goto('/#/page/305')
+    await settle(page)
+    await page.locator('#page-305 .ay').nth(2).dispatchEvent('contextmenu')
+    const box = page.getByTestId('ayah-panel')
+    await expect(box.getByRole('button', { name: 'More' })).toHaveAttribute('aria-expanded', 'true')
+    for (const name of ['Translation', 'Word by word', 'Repeat this ayah', 'Copy', 'Share']) {
+      await expect(box.getByRole('button', { name, exact: true })).toBeVisible()
+    }
+    // the translation is under each ayah on the page; the box can show it whole too
+    await expect(box.locator('.tr')).toHaveCount(0)
+    await box.getByRole('button', { name: 'Translation', exact: true }).click()
+    await expect(box.locator('.tr')).toHaveCount(1)
+    await box.getByRole('button', { name: 'More' }).click()
+    await box.getByRole('button', { name: 'Word by word', exact: true }).click()
+    await expect(box.locator('.panel-wbw .pw').first()).toBeVisible()
+    await expect(box.locator('.panel-wbw .pw-fa').first()).not.toBeEmpty()
+    // a tap opens the box without the list
+    await page.locator('#page-305 .ay').nth(3).click()
+    await expect(box.getByRole('button', { name: 'More' })).toHaveAttribute('aria-expanded', 'false')
+    await expect(box.locator('.panel-wbw')).toHaveCount(0)
+  })
 })
 
 test.describe('word by word', () => {

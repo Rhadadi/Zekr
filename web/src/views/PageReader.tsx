@@ -21,7 +21,7 @@ const ARABIC_INDIC = '٠١٢٣٤٥٦٧٨٩'
 const marker = (n: number) => String(n).replace(/\d/g, (d) => ARABIC_INDIC[Number(d)] as string)
 const PAGES = 604
 
-type Panel = { kind: 'ayah'; id: number } | { kind: 'options' } | null
+type Panel = { kind: 'ayah'; id: number; menu?: boolean } | { kind: 'options' } | null
 
 interface PageProps {
   meta: Meta
@@ -320,7 +320,8 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   const pressAt = (target: EventTarget | null, toggle: boolean) => {
     const el = target instanceof Element ? target.closest<HTMLElement>('.ay') : null
     const id = el ? Number(el.dataset.id) : undefined
-    if (id) setPanel(toggle && selected === id ? null : { kind: 'ayah', id })
+    // a long press (no toggle) opens the ayah with its list of actions
+    if (id) setPanel(toggle && selected === id ? null : { kind: 'ayah', id, menu: !toggle })
     else setPanel(toggle && panel ? null : { kind: 'options' })
   }
 
@@ -333,6 +334,8 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
         translations={data.value.ids.map((trId, k) => ({ info: meta.translations.find((x) => x.id === trId)!, text: data.value!.trs[k]![id - 1] as string }))}
         variant={variant}
         showTranslations={place === 'panel' || place === 'card' || place === 'words'}
+        menu={panel?.kind === 'ayah' && panel.id === id && !!panel.menu}
+        offerWords={!words}
         panelRef={variant === 'popup' ? popRef : undefined}
         onClose={() => {
           setPanel(null)
