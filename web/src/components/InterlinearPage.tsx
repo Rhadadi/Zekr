@@ -4,7 +4,7 @@ import { useLayoutEffect, useMemo, useRef } from 'preact/hooks'
 import { type Meta, type MushafPageMap, locate, mushafImage } from '../data'
 import { useAsync } from '../hooks'
 import { num, t } from '../i18n'
-import { type Piece, lineTranslations, pageLook, pageStrips } from '../interlinear'
+import { type Piece, lineTranslations, pageInk, pageStrips } from '../interlinear'
 
 interface Props {
   meta: Meta
@@ -56,14 +56,14 @@ function fit(root: HTMLElement, base: number) {
 }
 
 /** A printed page with the translation under each of its lines. The picture is cut into its lines (and the banners and
- * basmala between them); under each line is a box on the page's paper, inside its frame, where each ayah's share of the
+ * basmala between them); under each line is a box inside its frame, where each ayah's share of the
  * translation sits under its Arabic, and where an ayah ends its number comes under the Arabic one. Tap the Arabic or the
  * translation of an ayah to open it. */
 export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, highlight, kind, tr, onJump }: Props) {
   const n = pg.n
   const src = mushafImage(meta, n)
-  const look = useAsync(() => pageLook(src), [src]).value
-  const strips = useMemo(() => pageStrips(pg, look?.ink), [pg, look])
+  const ink = useAsync(() => pageInk(src), [src]).value
+  const strips = useMemo(() => pageStrips(pg, ink), [pg, ink])
   const pieces = useMemo(() => lineTranslations(pg, strips, tr.texts), [pg, strips, tr.texts])
   const root = useRef<HTMLElement>(null)
   const ratio = pg.h / pg.w
@@ -96,7 +96,7 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
   )
   const seen = new Set<number>()
   return (
-    <section ref={root} class="mpage printed il" id={`page-${n}`} data-page={n} aria-label={t('pageN', { n })} style={look ? { '--il-paper': look.paper } : undefined}>
+    <section ref={root} class="mpage printed il" id={`page-${n}`} data-page={n} aria-label={t('pageN', { n })}>
       {strips.map((s) => {
         const h = s.bottom - s.top
         const row = pieces.get(s)

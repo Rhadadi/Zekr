@@ -9,7 +9,7 @@ export interface Seg { id: number; x: number; y: number; w: number; h: number }
 export interface Strip { top: number; bottom: number; line?: Seg[] }
 
 /** Cut a page into strips: one per line of text (with its ayah pieces, right to left), and the parts in between. With
- * the ink of the picture's rows (`pageLook`), a line followed by a surah banner ends just above the banner's border,
+ * the ink of the picture's rows (`pageInk`), a line followed by a surah banner ends just above the banner's border,
  * which on the map can reach a little way up into the line. */
 export function pageStrips(pg: MushafPageMap, ink?: Float32Array): Strip[] {
   const border = (from: number, to: number) => {
@@ -108,17 +108,16 @@ export function lineTranslations(pg: MushafPageMap, strips: Strip[], texts: stri
   return out
 }
 
-const looks = new Map<string, Promise<PageLook | undefined>>()
+const inks = new Map<string, Promise<Float32Array | undefined>>()
 
-/** What the picture of a page shows that the map does not: the colour of its paper (for the space the translation takes
- * inside the frame) and, for each row of pixels, how much of it inside the frame is ink (a surah banner's border is a row
- * of ink from side to side; a line of text is never more than about 60% ink). Most of what is inside the frame is paper and the ink is darker, so the colour a quarter of
- * the way down from the lightest is paper. Once a picture. */
-export interface PageLook { paper: string; ink: Float32Array }
-export function pageLook(src: string): Promise<PageLook | undefined> {
-  let look = looks.get(src)
-  if (!look) {
-    look = new Promise((resolve) => {
+/** For each row of pixels of a page's picture, how much of it inside the frame is ink: a surah banner's border is a row
+ * of ink from side to side, and a line of text is never more than about 60% ink. Ink is what differs from the paper;
+ * most of what is inside the frame is paper and the ink is darker, so the colour a quarter of the way down from the
+ * lightest is paper. Once a picture. */
+export function pageInk(src: string): Promise<Float32Array | undefined> {
+  let ink = inks.get(src)
+  if (!ink) {
+    ink = new Promise((resolve) => {
       const img = new Image()
       img.onload = () => {
         const w = img.naturalWidth
@@ -137,22 +136,22 @@ export function pageLook(src: string): Promise<PageLook | undefined> {
         sample.sort((a, b) => lum(b) - lum(a))
         const at = sample[Math.floor(sample.length / 4)]
         if (at === undefined) return resolve(undefined)
-        const paper = [d[at]!, d[at + 1]!, d[at + 2]!]
-        const ink = new Float32Array(h)
+        const [r, gr, b] = [d[at]!, d[at + 1]!, d[at + 2]!]
+        const rows = new Float32Array(h)
         for (let y = 0; y < h; y++) {
           let n = 0
           for (let x = x0; x < x1; x++) {
             const i = (y * w + x) * 4
-            if (Math.abs(d[i]! - paper[0]!) + Math.abs(d[i + 1]! - paper[1]!) + Math.abs(d[i + 2]! - paper[2]!) > 60) n++
+            if (Math.abs(d[i]! - r) + Math.abs(d[i + 1]! - gr) + Math.abs(d[i + 2]! - b) > 60) n++
           }
-          ink[y] = n / (x1 - x0)
+          rows[y] = n / (x1 - x0)
         }
-        resolve({ paper: `rgb(${paper.join(' ')})`, ink })
+        resolve(rows)
       }
       img.onerror = () => resolve(undefined)
       img.src = src
     })
-    looks.set(src, look)
+    inks.set(src, ink)
   }
-  return look
+  return ink
 }
