@@ -1076,7 +1076,7 @@ test.describe('The printed mushaf as pictures (private build, made-up pictures h
     await page.locator('#page-3 .ay').nth(1).locator('.seg').click()
     await expect(page.getByTestId('ayah-panel')).toContainText('2:7')
     await expect(page.locator('.ay.sel')).toHaveCount(1)
-    await expect(page.locator('.ay.sel .seg')).toHaveCSS('background-color', /rgba\(255, 196, 40/)
+    await expect(page.locator('.ay.sel .seg')).toHaveCSS('background-color', /rgba\(255, 225, 140/)
   })
 
   test('the page number on the page opens "go to page", and so do the reading options', async ({ page }) => {

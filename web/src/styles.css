@@ -479,12 +479,13 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .printed .ay { position: absolute; inset: 0; padding: 0; border-radius: 0; pointer-events: none; background: none; }
 .printed .ay.sel, .printed .ay.playing { background: none; }
 .printed .seg { position: absolute; display: block; pointer-events: auto; cursor: pointer; border-radius: 5px; }
-.printed .ay.sel .seg, .printed .ay.playing .seg { background: rgb(255 196 40 / 0.38); }
+/* a light tint blended in (multiply keeps the text as dark as printed) and an underline, so the text stays easy to read */
+.printed .ay.sel .seg, .printed .ay.playing .seg { background: rgb(255 225 140 / 0.3); mix-blend-mode: multiply; box-shadow: inset 0 -2px 0 rgb(190 130 10 / 0.75); }
 .printed .ay:focus-visible { outline: none; }
 .printed .ay:focus-visible .seg { outline: 2px solid var(--accent); outline-offset: -2px; }
 @media (hover: hover) {
   .printed .ay:not(.sel):not(.playing):hover { background: none; }
-  .printed .ay:not(.sel):not(.playing):hover .seg { background: rgb(255 196 40 / 0.16); }
+  .printed .ay:not(.sel):not(.playing):hover .seg { background: rgb(255 225 140 / 0.15); }
 }
 .pg-no { position: absolute; left: 42%; width: 16%; bottom: 0; height: 6%; border: 0; background: none; cursor: pointer; padding: 0; }
 
