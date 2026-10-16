@@ -23,7 +23,7 @@ After several rounds of feedback the owner is still unhappy with the page layout
 | D4 | **Phone: tapping an ayah opens a bottom sheet**, draggable to two heights and dismissable, with the same contents. |
 | D5 | **Verse by verse stays, as a "Study view" layer** with a clear Close, not as a destination. |
 | D6 | **Translation placement is a setting**: panel (the default: left panel on desktop, bottom sheet on phone), card over the ayah, inline under each ayah, or off. |
-| D7 | The Study Quran and Al-Mizan text are private. They must never reach the public repository or the public website (see `AGENTS.md`). |
+| D7 | The Study Quran and Al-Mizan text are private. They must never reach the public repository or the public website (see `AGENTS.md`). *Later: the owner confirmed permission to publish Al-Mizan and the printed pages (October 15, 2026) and The Study Quran's text (October 16, 2026); they are on the website.* |
 
 ## 3. The model
 

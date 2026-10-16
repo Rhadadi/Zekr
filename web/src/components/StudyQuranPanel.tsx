@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks'
 import { Icon } from './Icon'
-import { t } from '../i18n'
+import { num, t } from '../i18n'
 import { type Meta, locate } from '../data'
 import { useAsync } from '../hooks'
 import { href } from '../router'
@@ -12,7 +12,7 @@ export function Paragraphs({ text }: { text: string }) {
 }
 export function Note({ entry }: { entry: StudyEntry }) {
   const range = entry.first_ayah === entry.last_ayah ? String(entry.first_ayah) : `${entry.first_ayah}–${entry.last_ayah}`
-  return <section class="study-note" data-entry={entry.id}>
+  return <section class="study-note" data-entry={entry.id} lang="en" dir="ltr">
     <h4>{entry.coverage_kind === 'quoted_header' ? 'Source passage' : 'Commentary'} · {entry.surah_id}:{range}</h4>
     <Paragraphs text={entry.text} />
     <p class="muted small">The Study Quran · PDF {entry.pages.length === 1 ? 'page' : 'pages'} {entry.pages.join(', ')}</p>
@@ -35,7 +35,7 @@ export function StudyChips({ meta, ayahID, all = false }: { meta: Meta; ayahID: 
       {entries.map((e) => (
         <a key={e.id} class="study-chip" href={href.commentary(surah, e.first_ayah)} data-entry={e.id}>
           <Icon name="speech" size={16} />
-          {t('commentaryOn')} {surah}:{rangeLabel(e)}
+          {t('commentaryOn')} {num(`${surah}:${rangeLabel(e)}`)}
         </a>
       ))}
     </div>
