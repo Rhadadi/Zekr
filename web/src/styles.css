@@ -185,6 +185,12 @@ mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 1
 .ayah-more { display: grid; margin: 2px 0 6px; border-top: 1px solid var(--line); }
 .ayah-more a, .ayah-more button { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--ink); font-size: 0.95rem; text-align: start; cursor: pointer; }
 .ayah-more a:hover, .ayah-more button:hover { color: var(--accent); }
+.ayah-more button[aria-pressed='true'] { color: var(--accent); font-weight: 700; }
+/* the ayah's words, each over its meaning, in the ayah's panel */
+.panel-wbw { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 4px 0 8px; }
+.panel-wbw .pw { display: inline-flex; flex-direction: column; align-items: center; }
+.pw-ar { font-family: var(--font-quran); font-size: 1.5rem; line-height: 1.7; }
+.pw-fa { font-family: var(--font-ui); font-size: 0.85rem; color: var(--muted); }
 .btn[aria-pressed='true'] { background: var(--hl); border-color: var(--gold); font-weight: 700; }
 .ayah-actions .icon-btn { width: 40px; height: 40px; }
 .num {

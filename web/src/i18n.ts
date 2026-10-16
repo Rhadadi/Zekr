@@ -187,6 +187,8 @@ const strings = {
     playFromPage: 'Play from this page',
     playFromHere: 'Play from here',
     repeatAyah: 'Repeat this ayah',
+    ayahTranslation: 'Translation',
+    wordByWord: 'Word by word',
     allSettings: 'All settings',
   },
   fa: {
@@ -364,6 +366,8 @@ const strings = {
     playFromPage: 'پخش از این صفحه',
     playFromHere: 'پخش از اینجا',
     repeatAyah: 'تکرار این آیه',
+    ayahTranslation: 'ترجمه',
+    wordByWord: 'کلمه به کلمه',
     allSettings: 'همهٔ تنظیمات',
   },
 } as const
