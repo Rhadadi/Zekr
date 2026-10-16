@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks'
+import { TR_MAX, TR_MIN } from '../components/PageOptions'
 import { PlaybackOptions } from '../components/PlaybackOptions'
 import { type Meta, type Script, downloadAll } from '../data'
 import { QURAN_FONTS, type QuranFont } from '../fonts'
@@ -97,7 +98,7 @@ export function SettingsView({ meta }: { meta: Meta }) {
         </label>
         <label class="field">
           <span>{t('trSize')}</span>
-          <input type="range" min={14} max={28} step={1} value={s.trSize} onInput={(e) => updateSettings({ trSize: Number(e.currentTarget.value) })} />
+          <input type="range" min={TR_MIN} max={TR_MAX} step={1} value={s.trSize} onInput={(e) => updateSettings({ trSize: Number(e.currentTarget.value) })} />
         </label>
       </div>
       <div class="sample card">

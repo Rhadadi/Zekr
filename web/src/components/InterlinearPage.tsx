@@ -87,7 +87,7 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
     <p class="il-p">
       <span class="il-t">
         {row.map((p, i) => (
-          <span key={`${p.id}-${i}`} class={`ay${cls(p.id)}`} data-id={p.id} aria-hidden="true">
+          <span key={`${p.id}-${i}`} class="ay" data-id={p.id} aria-hidden="true">
             {p.text}{p.ends ? <span class="il-mark"> {marker(locate(meta, p.id).ayah)}</span> : null}{' '}
           </span>
         ))}

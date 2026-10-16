@@ -167,7 +167,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
     const id = data.value?.ids[0]
     const info = id ? meta.translations.find((x) => x.id === id) : undefined
     return place === 'inline' && printed && info && data.value
-      ? { texts: data.value.trs[0]!, dir: info.dir, lang: info.lang, size: Math.round(s.trSize * 0.85) }
+      ? { texts: data.value.trs[0]!, dir: info.dir, lang: info.lang, size: Math.round(s.trSize * 0.7) }
       : undefined
   }, [place, printed, data.value, s.trSize])
   const selected = panel?.kind === 'ayah' ? panel.id : undefined

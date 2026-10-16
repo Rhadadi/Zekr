@@ -168,7 +168,7 @@ export type TranslationPlace = 'panel' | 'card' | 'inline' | 'off'   // default 
 - Remove `readMode` (the mushaf is the only reading screen) and `pageBox`.
 - **Migrate** in `store.ts#loadSettings`: `pageBox: 'popup'` → `'card'`; any other `pageBox` → `'panel'`; ignore a stored `readMode`; do not write the old keys back. Mirror the same migration in `ReaderSettings.init(from:)` on iPhone.
 - Reorder `Settings.tsx` to match the `Settings` interface: Language, Theme → Reading (translation placement, script, Quran font, Arabic size, translation size) → Translations → Recitation (including repeat and "follow the recitation") → Offline → About.
-- `PageOptions` loses its four duplicated controls (Quran font, translation placement, follow recitation, Arabic size). Settings is one tap away through the drawer. It keeps: Play from this page, Open in Study view, All settings.
+- `PageOptions` loses its four duplicated controls (Quran font, translation placement, follow recitation, Arabic size). Settings is one tap away through the drawer. It keeps: Play from this page, Open in Study view, All settings. *Later (October 16, 2026): the owner wanted the translation size at hand, so it has − and + buttons here too.*
 
 ## 9. What to delete
 
