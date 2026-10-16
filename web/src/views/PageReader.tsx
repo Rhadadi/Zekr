@@ -315,7 +315,6 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
         id={id}
         ar={data.value.ar[id - 1] as string}
         translations={data.value.ids.map((trId, k) => ({ info: meta.translations.find((x) => x.id === trId)!, text: data.value!.trs[k]![id - 1] as string }))}
-        playing={playingId === id && (player.value?.status === 'playing' || player.value?.status === 'loading')}
         variant={variant}
         showTranslations={place === 'panel' || place === 'card'}
         panelRef={variant === 'popup' ? popRef : undefined}

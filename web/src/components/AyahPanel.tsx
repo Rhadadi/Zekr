@@ -1,6 +1,6 @@
 import type { JSX } from 'preact'
 import { useState } from 'preact/hooks'
-import { loopAyah, looping, toggleAyah } from '../audio'
+import { loopAyah, player, toggleAyah } from '../audio'
 import { type Meta, type TranslationInfo, locate } from '../data'
 import { ayahRef, num, t } from '../i18n'
 import { href } from '../router'
@@ -15,7 +15,6 @@ interface Props {
   id: number
   ar: string
   translations: { info: TranslationInfo; text: string }[]
-  playing: boolean
   /** 'box': in the side box; 'popup': over the page, under the ayah. */
   variant: 'box' | 'popup'
   /** False when translations show elsewhere (inline) or not at all: the panel is then only the actions. */
@@ -26,37 +25,43 @@ interface Props {
 }
 
 /** Translation and actions for an ayah on a mushaf page. */
-export function AyahPanel({ meta, id, ar, translations, playing, variant, showTranslations = true, style, panelRef, onClose }: Props) {
+export function AyahPanel({ meta, id, ar, translations, variant, showTranslations = true, style, panelRef, onClose }: Props) {
   const { surah, ayah } = locate(meta, id)
   const saved = isBookmarked(id)
   const texts = translations.map((x) => x.text || t('mergedTranslation'))
   const text = () => ayahText(meta, id, ar, texts)
-  const repeating = looping.value && playing
+  // While this ayah is the one in the recitation bar, the bar already says which ayah it is and holds play, pause
+  // and repeat: the panel does not repeat them.
+  const inPlayer = player.value?.ayahId === id
   const [more, setMore] = useState(false)
   return (
     <div ref={panelRef} class={`ayah-panel ayah-${variant}`} style={style} role="region" aria-label={ayahRef(meta.surahs[surah - 1]!, ayah)} data-testid="ayah-panel">
-      <div class="sheet-head">
-        <strong>{num(surah)}:{num(ayah)}</strong>
+      <div class="sheet-head ayah-head">
+        <strong class={inPlayer ? 'visually-hidden' : 'ayah-ref'}>{num(surah)}:{num(ayah)}</strong>
         <div class="ayah-actions">
-          <button class="icon-btn" onClick={() => toggleAyah(id)} aria-label={playing ? t('pause') : t('playFromHere')}>
-            <Icon name={playing ? 'pause' : 'play'} size={20} />
-          </button>
-          <button class="icon-btn" onClick={() => loopAyah(id, !repeating)} aria-pressed={repeating} aria-label={t('repeatAyah')}>
-            <Icon name="repeat" size={20} />
-          </button>
+          {inPlayer ? null : (
+            <button class="icon-btn" onClick={() => toggleAyah(id)} aria-label={t('playFromHere')}>
+              <Icon name="play" size={20} />
+            </button>
+          )}
           <button class="icon-btn" onClick={() => toggleBookmark(id)} aria-label={saved ? t('unbookmark') : t('bookmark')} aria-pressed={saved}>
             <Icon name={saved ? 'bookmarkFilled' : 'bookmark'} size={20} />
           </button>
           <button class="icon-btn" onClick={() => setMore(!more)} aria-label={t('more')} aria-expanded={more}>
             <Icon name="more" size={20} />
           </button>
-          <button class="icon-btn" onClick={onClose} aria-label={t('close')}>
-            <Icon name="close" size={20} />
-          </button>
         </div>
+        <button class="icon-btn ayah-close" onClick={onClose} aria-label={t('close')}>
+          <Icon name="close" size={18} />
+        </button>
       </div>
       {more ? (
         <div class="ayah-more">
+          {inPlayer ? null : (
+            <button onClick={() => { loopAyah(id, true); setMore(false) }}>
+              <Icon name="repeat" size={18} /> {t('repeatAyah')}
+            </button>
+          )}
           {tafsirIndex.value ? (
             <a href={href.tafsir(surah, ayah)} aria-label={`${t('tafsir')}: ${t('almizan')}`}>
               <Icon name="book" size={18} /> {t('almizan')}
