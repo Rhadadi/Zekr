@@ -47,7 +47,7 @@ jobs:
         run: python3 tools/build_data.py
       - name: The public data build has no private book text
         run: |
-          for d in almizan tafsir intro mushaf; do
+          for d in almizan tafsir intro mushaf commentary-audio; do
             test ! -e "web/public/data/$d" || { echo "error: web/public/data/$d"; exit 1; }
           done
           if grep -q '"studyQuran"\|"mushaf"\|"tafsir":\[[^]]' web/public/data/meta.json; then echo "error: meta.json lists private content"; exit 1; fi
@@ -94,8 +94,12 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - name: Build the data (downloads from Tanzil)
-        run: python3 tools/build_data.py
+      - name: Build the iPhone data with published Study Quran narration
+        run: |
+          gunzip -c assets/study-quran/study_quran.sqlite.gz > "$RUNNER_TEMP/study_quran.sqlite"
+          python3 tools/build_data.py --study-quran "$RUNNER_TEMP/study_quran.sqlite" \
+            --study-quran-audio assets/study-quran-audio/yasin \
+            --study-quran-audio assets/study-quran-audio/yusuf
       - name: ZekrKit tests on macOS (uses Apple's SQLite3)
         run: swift test
         working-directory: ios/ZekrKit
@@ -129,6 +133,7 @@ jobs:
           done
           test -f "$app/LICENSES.txt" || { echo "error: the font licenses are not in the app"; exit 1; }
           test -f "$app/quran.sqlite" || { echo "error: quran.sqlite is not in the app"; exit 1; }
+          test "$(find "$app" -maxdepth 1 -name '*.mp3' | wc -l | tr -d ' ')" = "163" || { echo "error: commentary recordings are missing from the app"; exit 1; }
           test -f "$appex/widget.sqlite" || { echo "error: widget.sqlite is not in the widget"; exit 1; }
           test -d "$appex/Metadata.appintents" || { echo "error: the widget has no App Intents metadata, so its settings would not appear"; exit 1; }
       - uses: actions/upload-artifact@v4

@@ -10,7 +10,7 @@ struct AyahRowView: View {
     @Environment(AppModel.self) private var model
     @State private var showingTafsir = false
 
-    private var playing: Bool { model.player.playingAyahID == row.id }
+    private var playing: Bool { model.player.commentary == nil && model.player.playingAyahID == row.id }
 
     private var shareText: String {
         var parts = [row.arabic]

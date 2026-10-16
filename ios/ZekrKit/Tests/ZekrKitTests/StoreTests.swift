@@ -68,6 +68,28 @@ final class StoreTests: XCTestCase {
 }
 
 final class StudyQuranQueriesTests: XCTestCase {
+    func testOptionalNarrationLinksAndSharedPassages() throws {
+        let store = try QuranStore(databaseURL: try Repo.database(Repo.fullDB))
+        let notes = try (1...114).flatMap { try store.narratedStudyQuranEntries(surahID: $0) }
+        if !store.hasStudyQuranAudio {
+            XCTAssertTrue(notes.isEmpty)
+        } else {
+            XCTAssertFalse(notes.isEmpty)
+            for note in notes {
+                let audio = try XCTUnwrap(note.audio)
+                XCTAssertTrue(audio.file.hasSuffix(".mp3"))
+                XCTAssertGreaterThan(audio.duration, 0)
+                let first = try store.studyQuranEntries(ayahID: store.ayahID(surah: note.surah, ayah: note.firstAyah))
+                let last = try store.studyQuranEntries(ayahID: store.ayahID(surah: note.surah, ayah: note.lastAyah))
+                XCTAssertEqual(first.first { $0.id == note.id }?.audio, audio)
+                XCTAssertEqual(last.first { $0.id == note.id }?.audio, audio)
+            }
+        }
+        let widget = try QuranStore(databaseURL: try Repo.database(Repo.widgetDB))
+        XCTAssertFalse(widget.hasStudyQuranAudio)
+        XCTAssertTrue(try widget.narratedStudyQuranEntries(surahID: 12).isEmpty)
+    }
+
     /// Runs on the private package or on the made-up one from tools/tests/study_fixture.py.
     private func privateStore() throws -> QuranStore {
         let store = try QuranStore(databaseURL: try Repo.database(Repo.fullDB))

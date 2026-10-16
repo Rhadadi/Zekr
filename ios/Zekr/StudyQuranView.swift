@@ -28,6 +28,20 @@ struct StudyQuranView: View {
                                     dismiss()
                                 }
                                 .font(.headline)
+                                if let audio = entry.audio {
+                                    let active = model.player.commentary?.id == entry.id
+                                    Button {
+                                        if active { model.player.togglePause() }
+                                        else { model.player.playCommentary(entry) }
+                                    } label: {
+                                        Label(model.text(active && model.player.isPlaying ? .pause : .listenCommentary),
+                                              systemImage: active && model.player.isPlaying ? "pause.fill" : "play.fill")
+                                            .frame(minHeight: 44)
+                                    }
+                                    .buttonStyle(.bordered)
+                                    Text("\(model.text(.commentaryAudio)) · \(audio.voice) · \(model.text(.aiVoice))")
+                                        .font(.caption).foregroundStyle(.secondary)
+                                }
                                 Text(entry.text).textSelection(.enabled)
                                 Text("The Study Quran · PDF pages " + entry.pages.map(String.init).joined(separator: ", "))
                                     .font(.caption).foregroundStyle(.secondary)
@@ -57,6 +71,9 @@ struct StudyQuranView: View {
             .onChange(of: query) { _, value in if value.isEmpty { load() } }
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
             .task { load() }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if model.player.commentary != nil { PlayerBar() }
+            }
         }
     }
 

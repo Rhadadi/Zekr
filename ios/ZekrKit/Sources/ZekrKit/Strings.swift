@@ -91,6 +91,13 @@ public enum Str: CaseIterable {
     case tafsirParts
     case sources
     case almizanCredit
+    case listenCommentary
+    case commentaryAudio
+    case playbackPosition
+    case previousAudio
+    case nextAudio
+    case stopAudio
+    case aiVoice
 
     public func text(language: String) -> String {
         language == "fa" ? fa : en
@@ -106,6 +113,13 @@ public enum Str: CaseIterable {
         case .couldNotLoad: return "Could not load the Quran data."
         case .play: return "Play"
         case .pause: return "Pause"
+        case .listenCommentary: return "Listen from here"
+        case .commentaryAudio: return "English commentary"
+        case .playbackPosition: return "Playback position"
+        case .previousAudio: return "Previous recording"
+        case .nextAudio: return "Next recording"
+        case .stopAudio: return "Stop audio"
+        case .aiVoice: return "AI voice"
         case .translation: return "Translation"
         case .addWidgetTitle: return "Add the Lock Screen widget"
         case .addWidgetSteps:
@@ -201,6 +215,13 @@ public enum Str: CaseIterable {
         case .couldNotLoad: return "بارگذاری داده‌های قرآن ممکن نشد."
         case .play: return "پخش"
         case .pause: return "توقف"
+        case .listenCommentary: return "پخش تفسیر از اینجا"
+        case .commentaryAudio: return "تفسیر انگلیسی"
+        case .playbackPosition: return "موقعیت پخش"
+        case .previousAudio: return "صدای قبلی"
+        case .nextAudio: return "صدای بعدی"
+        case .stopAudio: return "توقف پخش"
+        case .aiVoice: return "صدای هوش مصنوعی"
         case .translation: return "ترجمه"
         case .addWidgetTitle: return "افزودن ویجت صفحهٔ قفل"
         case .addWidgetSteps:

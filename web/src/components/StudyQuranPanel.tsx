@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks'
+import { playCommentary, player, toggle } from '../audio'
 import { Icon } from './Icon'
-import { num, t } from '../i18n'
+import { lang, num, t } from '../i18n'
 import { type Meta, locate } from '../data'
 import { useAsync } from '../hooks'
 import { href } from '../router'
@@ -10,10 +11,19 @@ import { entriesForAyah, loadAllStudyEntries, loadStudyTafsir, searchStudyEntrie
 export function Paragraphs({ text }: { text: string }) {
   return <>{text.split(/\n\n+/).map((p, i) => <p key={i}>{p}</p>)}</>
 }
-export function Note({ entry }: { entry: StudyEntry }) {
+export function Note({ entry, queue }: { entry: StudyEntry; queue?: StudyEntry[] }) {
   const range = entry.first_ayah === entry.last_ayah ? String(entry.first_ayah) : `${entry.first_ayah}–${entry.last_ayah}`
+  const active = player.value?.commentary?.id === entry.id
+  const playing = active && (player.value?.status === 'playing' || player.value?.status === 'loading')
   return <section class="study-note" data-entry={entry.id} lang="en" dir="ltr">
     <h4>{entry.coverage_kind === 'quoted_header' ? 'Source passage' : 'Commentary'} · {entry.surah_id}:{range}</h4>
+    {entry.audio ? <div class="study-audio" lang={lang.value} dir={lang.value === 'fa' ? 'rtl' : 'ltr'}>
+      <button class="btn" onClick={() => active ? toggle() : playCommentary(entry, queue)}
+        aria-label={`${playing ? t('pause') : t('listenCommentary')} · ${entry.surah_id}:${range}`}>
+        <Icon name={playing ? 'pause' : 'play'} size={18} /> {playing ? t('pause') : t('listenCommentary')}
+      </button>
+      <span class="muted small">{t('commentaryAudio')} · {entry.audio.voice} · {t('aiVoice')}</span>
+    </div> : null}
     <Paragraphs text={entry.text} />
     <p class="muted small">The Study Quran · PDF {entry.pages.length === 1 ? 'page' : 'pages'} {entry.pages.join(', ')}</p>
     {entry.references.length ? <nav class="study-refs" aria-label="Quran cross-references">
@@ -68,7 +78,7 @@ export function StudySearchPanel({ meta, query }: { meta: Meta; query: string })
     {open ? !hasQuery ? <p>Enter search words above.</p> : data.error ? <p role="alert">Could not load commentary. <button onClick={data.retry}>Retry</button></p>
       : data.loading ? <p role="status">Loading commentary for search…</p> : found ? <>
         <p role="status">{found.total} commentary entries found{found.total > found.entries.length ? `; showing ${found.entries.length}` : ''}.</p>
-        {found.entries.map((entry) => <div key={entry.id}><a href={href.verse(entry.surah_id,entry.first_ayah)}>Open {entry.surah_id}:{entry.first_ayah}</a><Note entry={entry} /></div>)}
+        {found.entries.map((entry) => <div key={entry.id}><a href={href.verse(entry.surah_id,entry.first_ayah)}>Open {entry.surah_id}:{entry.first_ayah}</a><Note entry={entry} queue={data.value!} /></div>)}
       </> : null : null}
   </details>
 }

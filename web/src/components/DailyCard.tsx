@@ -28,7 +28,7 @@ export function DailyCard({ meta, showSettingsLink = false }: { meta: Meta; show
   const translations = [d.fa, d.en].filter((x): x is string => x !== undefined)
   const text = () => ayahText(meta, d.id, d.ar, translations.map((x) => x || t('mergedTranslation')))
   const p = player.value
-  const playing = p?.ayahId === d.id && (p.status === 'playing' || p.status === 'loading')
+  const playing = !p?.commentary && p?.ayahId === d.id && (p.status === 'playing' || p.status === 'loading')
   return (
     <section class="feature" data-testid="daily-card" data-ayah-id={d.id}>
       <div class="feature-head">
