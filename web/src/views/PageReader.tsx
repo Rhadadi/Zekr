@@ -10,7 +10,7 @@ import { Sheet } from '../components/Sheet'
 import { SurahBanner } from '../components/SurahBanner'
 import { type Meta, type MushafPageMap, type TranslationInfo, juzOf, loadMushafMap, loadText, loadTranslation, locate, mushafImage, pageOf, pageRange } from '../data'
 import { useAsync, useWide } from '../hooks'
-import { num, t } from '../i18n'
+import { num, surahName, t } from '../i18n'
 import { href } from '../router'
 import { type TranslationPlace, setLastRead, settings } from '../store'
 
@@ -142,6 +142,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   const [hoverId, setHoverId] = useState<number | undefined>(undefined)
   const [current, setCurrent] = useState(pageNo)
   const [jumping, setJumping] = useState(false)
+  const [menu, setMenu] = useState<'surah' | 'juz' | null>(null)
   const popRef = useRef<HTMLDivElement>(null)
   const touch = useRef<{ x: number; y: number; timer?: number; long?: boolean } | null>(null)
   const playingId = player.value?.ayahId
@@ -341,57 +342,71 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   }, [bottomBox, selected])
 
   const surahOfPage = meta.surahs[locate(meta, pageRange(meta, current).first).surah - 1]!
+  // a layout effect, so Escape works as soon as the menu is on screen
+  useLayoutEffect(() => {
+    if (!menu) return
+    const key = (e: KeyboardEvent) => e.key === 'Escape' && setMenu(null)
+    document.addEventListener('keydown', key)
+    return () => document.removeEventListener('keydown', key)
+  }, [menu])
+  const juzOfPage = juzOf(meta, pageRange(meta, current).first)
+  /** The surah and juz menus, and "go to page", all end here. */
+  const goPage = (n: number) => {
+    setMenu(null)
+    setJumping(false)
+    if (!Number.isInteger(n) || n < 1 || n > PAGES) return
+    if (printed) turnTo(n)
+    else {
+      wanted.current = n
+      history.replaceState(history.state, '', href.page(n))
+      scrollToPage(n)
+      setCurrent(n)
+    }
+  }
   const jumpForm = (
     <form
       class="mb-jump"
       onSubmit={(e) => {
         e.preventDefault()
-        const v = Number(new FormData(e.currentTarget).get('page'))
-        setJumping(false)
-        if (Number.isInteger(v) && v >= 1 && v <= PAGES) {
-          history.replaceState(null, '', href.page(v))
-          if (printed) turnTo(v)
-          else {
-            wanted.current = v
-            scrollToPage(v)
-            setCurrent(v)
-          }
-        }
+        goPage(Number(new FormData(e.currentTarget).get('page')))
       }}
     >
       <input name="page" type="number" min={1} max={PAGES} defaultValue={current} autofocus aria-label={t('goToPage')} inputMode="numeric" />
     </form>
   )
+  const turnButtons = printed
   return (
     <>
       <AppBar
         centre={
-          printed ? (
-            // The printed page shows its own surah, juz and page number; the bar only turns the page. The turning
-            // buttons follow the book: in a right-to-left book the next page is to the left.
-            jumping ? jumpForm : (
-              <div class="turn">
-                <button class="icon-btn small turn-prev" onClick={() => turnTo(current - 1)} disabled={current <= 1} aria-label={t('prevPage')}>
-                  <Icon name="chevron" size={20} />
-                </button>
-                <button class="icon-btn small turn-next" onClick={() => turnTo(current + 1)} disabled={current >= PAGES} aria-label={t('nextPage')}>
-                  <Icon name="chevron" size={20} />
-                </button>
-              </div>
-            )
-          ) : (
-            <div class="mushaf-id" dir="rtl">
-              <span class="mb-surah" lang="ar">سورة {surahOfPage.ar}</span>
-              {jumping ? (
-                jumpForm
-              ) : (
-                <button class="mb-page" onClick={() => setJumping(true)} aria-label={`${t('goToPage')}: ${t('pageN', { n: current })}`}>
-                  {num(current)}
-                </button>
-              )}
-              <span class="mb-juz">{t('juzN', { n: juzOf(meta, pageRange(meta, current).first) })}</span>
-            </div>
-          )
+          // Surah, page and juz in the bar, each a button: the surah and the juz open a menu to pick from, the page
+          // opens a field for its number. On the printed pages two small buttons turn to the previous and the next page
+          // (the book is right to left: the next page is to the left).
+          <div class="mushaf-id" dir="rtl">
+            {turnButtons ? (
+              <button class="icon-btn small turn-prev" onClick={() => turnTo(current - 1)} disabled={current <= 1} aria-label={t('prevPage')}>
+                <Icon name="chevron" size={20} />
+              </button>
+            ) : null}
+            <button class="mb-surah" lang="ar" aria-haspopup="listbox" aria-expanded={menu === 'surah'} aria-label={`${t('surahs')}: ${surahName(surahOfPage)}`} onClick={() => setMenu(menu === 'surah' ? null : 'surah')}>
+              <span>سورة {surahOfPage.ar}</span>
+            </button>
+            {jumping ? (
+              jumpForm
+            ) : (
+              <button class="mb-page" onClick={() => { setMenu(null); setJumping(true) }} aria-label={`${t('goToPage')}: ${t('pageN', { n: current })}`}>
+                {num(current)}
+              </button>
+            )}
+            <button class="mb-juz" aria-haspopup="listbox" aria-expanded={menu === 'juz'} onClick={() => setMenu(menu === 'juz' ? null : 'juz')}>
+              {t('juzN', { n: juzOfPage })}
+            </button>
+            {turnButtons ? (
+              <button class="icon-btn small turn-next" onClick={() => turnTo(current + 1)} disabled={current >= PAGES} aria-label={t('nextPage')}>
+                <Icon name="chevron" size={20} />
+              </button>
+            ) : null}
+          </div>
         }
         end={
           <button class="icon-btn" aria-label={t('pageOptions')} aria-expanded={panel?.kind === 'options'} onClick={() => setPanel(panel?.kind === 'options' ? null : { kind: 'options' })}>
@@ -399,6 +414,24 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
           </button>
         }
       />
+      {menu ? (
+        <>
+          <button class="mb-menu-backdrop" aria-label={t('close')} tabIndex={-1} onClick={() => setMenu(null)} />
+          <div class="mb-menu" role="listbox" aria-label={menu === 'surah' ? t('surahs') : t('juz')}>
+            {menu === 'surah'
+              ? meta.surahs.map((x) => (
+                  <button key={x.id} role="option" aria-selected={x.id === surahOfPage.id} class={x.id === surahOfPage.id ? 'on' : ''} ref={x.id === surahOfPage.id ? (el) => el?.scrollIntoView({ block: 'center' }) : undefined} onClick={() => goPage(pageOf(meta, x.first))}>
+                    <span class="mb-n">{num(x.id)}</span> {surahName(x)} <span class="mb-ar" lang="ar">{x.ar}</span>
+                  </button>
+                ))
+              : meta.juz.map((j) => (
+                  <button key={j.n} role="option" aria-selected={j.n === juzOfPage} class={j.n === juzOfPage ? 'on' : ''} ref={j.n === juzOfPage ? (el) => el?.scrollIntoView({ block: 'center' }) : undefined} onClick={() => goPage(pageOf(meta, j.id))}>
+                    <span class="mb-n">{num(j.n)}</span> {t('juzN', { n: j.n })} <span class="muted small">{t('pageN', { n: pageOf(meta, j.id) })}</span>
+                  </button>
+                ))}
+          </div>
+        </>
+      ) : null}
       <div class={`mushaf-layout${inspector ? ' has-inspector' : ''}`}>
         {inspector ? (
           <section class="inspector" aria-label={t('inspectorLabel')} data-testid="inspector">

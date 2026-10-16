@@ -43,6 +43,11 @@ export function AyahPanel({ meta, id, ar, translations, playing, variant, showTr
         <button class="btn" onClick={() => loopAyah(id, !repeating)} aria-pressed={repeating}>
           <Icon name="repeat" size={18} /> {t('repeatAyah')}
         </button>
+        {tafsirIndex.value ? (
+          <a class="btn" href={href.tafsir(surah, ayah)} aria-label={`${t('tafsir')}: ${t('almizan')}`}>
+            <Icon name="book" size={18} /> {t('almizan')}
+          </a>
+        ) : null}
       </div>
       <div class="ayah-actions">
         <button class="icon-btn" onClick={() => toggleBookmark(id)} aria-label={saved ? t('unbookmark') : t('bookmark')} aria-pressed={saved}>
@@ -54,11 +59,6 @@ export function AyahPanel({ meta, id, ar, translations, playing, variant, showTr
         <button class="icon-btn" onClick={() => shareText(text(), ayahLink(meta, id))} aria-label={t('share')}>
           <Icon name="share" size={20} />
         </button>
-        {tafsirIndex.value ? (
-          <a class="icon-btn" href={href.tafsir(surah, ayah)} aria-label={`${t('tafsir')}: ${t('almizan')}`}>
-            <Icon name="book" size={20} />
-          </a>
-        ) : null}
         <a class="icon-btn" href={href.verse(surah, ayah)} aria-label={t('openVerseView')}>
           <Icon name="list" size={20} />
         </a>
