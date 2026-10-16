@@ -390,6 +390,9 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .options-body { display: grid; gap: 12px; padding-top: 6px; }
 .options-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .options-row .btn { display: inline-flex; align-items: center; gap: 6px; }
+.size-row { display: flex; align-items: center; gap: 8px; }
+.size-row > span { flex: 1; }
+.size-row .btn { min-width: 44px; justify-content: center; font-size: 1.1rem; }
 
 /* Page view: the whole mushaf scrolls; pages render only near the screen */
 /* content-visibility clips to the box, which cut the end of each line; the padding gives the glyphs room */
@@ -558,20 +561,18 @@ a.player-info { color: var(--ink); text-decoration: none; }
 /* Translation under each line of the printed page: the picture cut into its lines, each followed by its translation */
 .mushaf-flow.printed .mpage.il { max-width: 720px; display: block; background: #fff; }
 .il-strip { position: relative; overflow: hidden; height: 0; }
-.il-strip .pg-img { position: absolute; top: 0; left: 0; width: 100%; height: auto; }
+.il .il-pic { position: absolute; inset: 0; width: auto; height: auto; background-repeat: no-repeat; }
 .il .seg { position: absolute; display: block; cursor: pointer; border-radius: 5px; padding: 0; scroll-margin: calc(var(--bar-h) + 40px) 0 calc(var(--sheet-h, 0px) + 40px); }
 .il .seg.ay:not(.sel):not(.playing) { background: none; }
 /* The box under a line: the frame stretched down its sides, a plain light box inside it */
 .il-tr { position: relative; overflow: hidden; padding: 1px 11.5% 3px; color: #262624; font-family: var(--font-ui); }
-.il-tr .il-frame { position: absolute; left: 0; width: 100%; }
 .il-paper { position: absolute; inset: 0 10.4%; background: #fbfaf5; border-block: 1px solid #ece8da; }
 .il-under { padding: 10px 6% 12px; background: #fbfaf5; }
 .il-under .il-p { font-size: inherit; }
-.il-p { position: relative; margin: 0; font-size: 14px; line-height: 1.6; text-align: justify; overflow-wrap: anywhere; }
+.il-p { position: relative; margin: 0; font-size: 14px; font-weight: 600; line-height: 1.6; text-align: justify; overflow-wrap: anywhere; }
 .il-p.fills { text-align-last: justify; } /* sized to fill its lines: the last one ends at the margin too */
 .il-p.measuring .il-t { white-space: nowrap; }
-.il-p .ay { padding: 1px 0; border-radius: 4px; cursor: pointer; background: none; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
-.il-p .ay.sel, .il-p .ay.playing { background: rgb(255 225 140 / 0.5); }
+.il-p .ay { cursor: pointer; background: none; } /* the Arabic above shows which ayah is chosen or recited */
 .il-mark { color: #8a6d1d; font-size: 0.85em; white-space: nowrap; }
 .mushaf-flow[data-color='dark'] .mpage.il { background: #111; }
 .mushaf-flow[data-color='dark'] .il-tr { color: #e8e6df; }

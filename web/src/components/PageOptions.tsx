@@ -1,6 +1,11 @@
-import { t } from '../i18n'
+import { num, t } from '../i18n'
 import { href } from '../router'
+import { settings, updateSettings } from '../store'
 import { Icon } from './Icon'
+
+// the same range as the slider in Settings
+export const TR_MIN = 14
+export const TR_MAX = 28
 
 interface Props {
   pageNo: number
@@ -11,8 +16,10 @@ interface Props {
   onClose: () => void
 }
 
-/** What the page's options button shows: play from this page, go to a page, the Study view, and a way to all settings. */
+/** What the page's options button shows: play from this page, go to a page, the Study view, the size of the
+ * translation, and a way to all settings. */
 export function PageOptions({ pageNo, juz, onPlay, onVerseView, onJump, onClose }: Props) {
+  const tr = settings.value.trSize
   return (
     <div class="page-options" role="region" aria-label={t('pageOptions')} data-testid="page-options" onClick={(e) => e.stopPropagation()}>
       <div class="sheet-head">
@@ -32,6 +39,11 @@ export function PageOptions({ pageNo, juz, onPlay, onVerseView, onJump, onClose 
           <button class="btn" onClick={onVerseView}>
             <Icon name="list" size={18} /> {t('openVerseView')}
           </button>
+        </div>
+        <div class="size-row">
+          <span>{t('trSize')} <span class="muted">{num(tr)}</span></span>
+          <button class="btn" onClick={() => updateSettings({ trSize: tr - 1 })} disabled={tr <= TR_MIN} aria-label={t('trSmaller')}>−</button>
+          <button class="btn" onClick={() => updateSettings({ trSize: tr + 1 })} disabled={tr >= TR_MAX} aria-label={t('trLarger')}>+</button>
         </div>
         <a class="link-row small" href={href.settings}>{t('allSettings')}</a>
       </div>

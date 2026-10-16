@@ -87,13 +87,20 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
     <p class="il-p">
       <span class="il-t">
         {row.map((p, i) => (
-          <span key={`${p.id}-${i}`} class={`ay${cls(p.id)}`} data-id={p.id} aria-hidden="true">
+          <span key={`${p.id}-${i}`} class="ay" data-id={p.id} aria-hidden="true">
             {p.text}{p.ends ? <span class="il-mark"> {marker(locate(meta, p.id).ayah)}</span> : null}{' '}
           </span>
         ))}
       </span>
     </p>
   )
+  // a slice of the picture (thousandths of its height, from `top`, `h` high) filling its box: as a background, drawn
+  // the same in every browser (Safari on the iPhone put shifted copies of the whole picture in the wrong place)
+  const slice = (top: number, h: number) => ({
+    backgroundImage: `url("${src}")`,
+    backgroundSize: `100% ${(1000 / h) * 100}%`,
+    backgroundPosition: `0 ${h < 1000 ? (top / (1000 - h)) * 100 : 0}%`,
+  })
   const seen = new Set<number>()
   return (
     <section ref={root} class="mpage printed il" id={`page-${n}`} data-page={n} aria-label={t('pageN', { n })}>
@@ -103,7 +110,7 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
         return (
           <Fragment key={s.top}>
             <div class="il-strip" style={{ paddingTop: `${(h / 1000) * ratio * 100}%` }}>
-              <img class="pg-img" src={src} alt="" decoding="async" draggable={false} style={{ transform: `translateY(-${s.top / 10}%)` }} />
+              <i class="pg-img il-pic" style={slice(s.top, h)} />
               {(s.line ?? []).map((seg) => {
                 const first = !seen.has(seg.id)
                 seen.add(seg.id)
@@ -125,7 +132,7 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
               // ends, so it is in the same line of the page as the Arabic number
               <div class="il-tr" dir={tr.dir} lang={tr.lang}>
                 {/* the frame goes on down the sides: the line's own strip of the picture, stretched to the box's height */}
-                <img class="pg-img il-frame" src={src} alt="" decoding="async" draggable={false} style={{ top: `${(-s.top / h) * 100}%`, height: `${(1000 / h) * 100}%` }} />
+                <i class="pg-img il-pic il-frame" style={slice(s.top, h)} />
                 <span class="il-paper" />
                 {words(row)}
               </div>
