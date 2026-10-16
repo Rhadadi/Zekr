@@ -1188,6 +1188,10 @@ test.describe('The printed mushaf as pictures (private build, made-up pictures h
     await expect(pg.locator('.il-tr')).toHaveCount(11)
     await expect(pg.locator('.il-tr').nth(1)).toContainText('﴿۷﴾')
     await expect(pg.locator('.il-mark')).toHaveCount(11)
+    // it stays one framed page: each box sits right under its line, the frame running on down its sides
+    await expect(pg.locator('.il-tr .il-frame')).toHaveCount(11)
+    const edges = await pg.locator('.il-strip, .il-tr').evaluateAll((els) => els.map((e) => [e.getBoundingClientRect().top, e.getBoundingClientRect().bottom]))
+    for (let i = 1; i < edges.length; i++) expect(Math.abs(edges[i]![0]! - edges[i - 1]![1]!)).toBeLessThan(1)
     // the translation is part of the ayah: tapping it opens the ayah (its actions; the translation is already on the page)
     await pg.locator('.il-tr').nth(1).locator('.ay').first().click()
     await expect(page.getByTestId('ayah-panel')).toContainText('۲:۷')
@@ -1195,6 +1199,10 @@ test.describe('The printed mushaf as pictures (private build, made-up pictures h
     await expect(pg.locator('.il-tr .ay.sel')).toHaveCount(1)
     await page.goto('/#/settings')
     await expect(page.getByLabel('ترجمه در صفحه').locator('option:checked')).toHaveText('زیر هر سطر صفحه')
+    // the opening pages are illumination all round: the picture stays whole, its translation under it
+    await page.goto('/#/page/2')
+    await expect(page.locator('#page-2 .il-tr')).toHaveCount(1)
+    await expect(page.locator('#page-2 .il-under .il-mark')).toHaveCount(5)
   })
 
   test('page colour is a filter on the picture only', async ({ page }) => {

@@ -476,10 +476,10 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .mpage.printed { content-visibility: visible; contain-intrinsic-size: none; scroll-margin-top: calc(var(--bar-h) + 4px); padding-inline: 0; margin-inline: 0; margin-bottom: 8px; }
 .pg { position: relative; width: 100%; }
 .pg-img { display: block; width: 100%; height: 100%; -webkit-user-select: none; user-select: none; }
-.mushaf-flow[data-color='green'] .pg-img { filter: hue-rotate(-60deg); }
-.mushaf-flow[data-color='purple'] .pg-img { filter: hue-rotate(70deg); }
-.mushaf-flow[data-color='pink'] .pg-img { filter: hue-rotate(130deg); }
-.mushaf-flow[data-color='dark'] .pg-img { filter: invert(1) hue-rotate(180deg); }
+.mushaf-flow[data-color='green'] :is(.pg-img, .il-paper) { filter: hue-rotate(-60deg); }
+.mushaf-flow[data-color='purple'] :is(.pg-img, .il-paper) { filter: hue-rotate(70deg); }
+.mushaf-flow[data-color='pink'] :is(.pg-img, .il-paper) { filter: hue-rotate(130deg); }
+.mushaf-flow[data-color='dark'] :is(.pg-img, .il-paper) { filter: invert(1) hue-rotate(180deg); }
 .pg .ay { position: absolute; inset: 0; padding: 0; border-radius: 0; pointer-events: none; background: none; }
 .pg .ay.sel, .pg .ay.playing { background: none; }
 .printed .seg { position: absolute; display: block; pointer-events: auto; cursor: pointer; border-radius: 5px; }
@@ -560,15 +560,20 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .il-strip .pg-img { position: absolute; top: 0; left: 0; width: 100%; height: auto; }
 .il .seg { position: absolute; display: block; cursor: pointer; border-radius: 5px; padding: 0; scroll-margin: calc(var(--bar-h) + 40px) 0 calc(var(--sheet-h, 0px) + 40px); }
 .il .seg.ay:not(.sel):not(.playing) { background: none; }
-.il-tr { padding: 4px 9.5% 8px; background: #fbfaf5; border-block: 1px solid #ece8da; color: #262624; font-family: var(--font-ui); }
-.il-p { margin: 0; font-size: 14px; line-height: 1.7; text-align: justify; overflow-wrap: anywhere; }
+/* The box under a line: the frame stretched down its sides, the paper (its colour taken from the picture) inside it */
+.il-tr { position: relative; overflow: hidden; padding: 1px 11.5% 3px; color: #262624; font-family: var(--font-ui); }
+.il-tr .il-frame { position: absolute; left: 0; width: 100%; }
+.il-paper { position: absolute; inset: 0 10.4%; background: var(--il-paper, #fbfaf5); }
+.il-under { padding: 10px 6% 12px; }
+.il-under .il-p { font-size: inherit; }
+.il-p { position: relative; margin: 0; font-size: 14px; line-height: 1.6; text-align: justify; overflow-wrap: anywhere; }
 .il-p.fills { text-align-last: justify; } /* sized to fill its lines: the last one ends at the margin too */
 .il-p.measuring .il-t { white-space: nowrap; }
 .il-p .ay { padding: 1px 0; border-radius: 4px; cursor: pointer; background: none; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
 .il-p .ay.sel, .il-p .ay.playing { background: rgb(255 225 140 / 0.5); }
 .il-mark { color: #8a6d1d; font-size: 0.85em; white-space: nowrap; }
 .mushaf-flow[data-color='dark'] .mpage.il { background: #111; }
-.mushaf-flow[data-color='dark'] .il-tr { background: #1b1b19; border-color: #2a2a26; color: #e8e6df; }
+.mushaf-flow[data-color='dark'] .il-tr { color: #e8e6df; }
 
 /* Word by word: each Arabic word over its Persian meaning, both in the same colour; lines justified like the page */
 .mushaf-flow.printed .mpage.wbw { max-width: 720px; }
