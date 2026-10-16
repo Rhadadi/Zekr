@@ -496,7 +496,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--check", action="store_true", help="download and validate only")
     ap.add_argument("--refresh", action="store_true", help="re-download everything")
-    ap.add_argument("--study-quran", type=Path, help="Complete private Study Quran content database; local builds only")
+    ap.add_argument("--study-quran", type=Path, help="complete Study Quran content database (the Pages deploy unpacks assets/study-quran into one)")
     ap.add_argument("--web-dir", type=Path, default=ROOT / "web" / "public" / "data")
     ap.add_argument("--ios-db", type=Path, default=ROOT / "ios" / "Zekr" / "Resources" / "quran.sqlite")
     ap.add_argument("--widget-db", type=Path, default=ROOT / "ios" / "ZekrWidgets" / "Resources" / "widget.sqlite")

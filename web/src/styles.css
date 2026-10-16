@@ -229,7 +229,7 @@ select {
   background: var(--surface);
 }
 input[type='range'] { width: 100%; accent-color: var(--accent); }
-input[type='checkbox'] { width: 20px; height: 20px; accent-color: var(--accent); }
+input[type='checkbox'] { width: 20px; height: 20px; flex-shrink: 0; accent-color: var(--accent); }
 .checks { border: 1px solid var(--line); border-radius: 12px; margin: 10px 0; padding: 6px 12px; }
 .checks legend { padding: 0 6px; font-weight: 700; font-size: 0.9rem; }
 .section { font-size: 1.05rem; margin: 22px 0 6px; display: flex; align-items: center; gap: 6px; }
@@ -446,10 +446,11 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .study-intro-link > span:nth-child(2) { flex: 1; display: flex; flex-direction: column; }
 .study-intro-link svg { color: var(--accent); }
 .commentary { line-height: 1.85; padding-bottom: 24px; }
+.commentary p { margin: 0 0 0.8em; }
 .commentary .study-note { margin-top: 14px; }
 .comm-strip { padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; display: grid; gap: 8px; }
 .comm-nums { display: flex; flex-wrap: wrap; gap: 6px; }
-.comm-nums a { display: grid; place-items: center; min-width: 40px; height: 32px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink); font-size: 0.85rem; text-decoration: none; }
+.comm-nums a { display: grid; place-items: center; min-width: 44px; height: 44px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink); font-size: 0.85rem; text-decoration: none; }
 .comm-nums a.on { background: var(--hl); border-color: var(--gold); font-weight: 700; }
 .comm-pager { display: flex; justify-content: space-between; gap: 8px; margin-top: 18px; font-size: 0.9rem; }
 .comm-pager a { display: inline-flex; align-items: center; min-height: 44px; }

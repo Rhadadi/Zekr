@@ -23,6 +23,7 @@ web/playwright-report/
 # Private Study Quran source/import artifacts (code and schema may be committed).
 *.pdf
 study_quran.sqlite*
+!assets/study-quran/study_quran.sqlite.gz
 page-lines.jsonl
 output/
 
