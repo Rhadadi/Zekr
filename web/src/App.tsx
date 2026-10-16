@@ -81,8 +81,8 @@ function LayerFrame({ title, sub, children }: { title: string; sub?: string; chi
     <div class="layer" ref={root} tabIndex={-1}>
       <AppBar
         sticky
+        start={<button class="icon-btn layer-close" onClick={closeLayer} aria-label={t('close')}><Icon name="close" size={22} /></button>}
         centre={<div class="appbar-title"><h1>{title}</h1>{sub ? <p>{sub}</p> : null}</div>}
-        end={<button class="icon-btn layer-close" onClick={closeLayer} aria-label={t('close')}><Icon name="close" size={22} /></button>}
       />
       <div class="layer-inner">{children}</div>
     </div>
@@ -127,7 +127,7 @@ export function App() {
     <div class="app">
       <main id="main" {...(drawerOpen.value ? { inert: true } : {})}>{content}</main>
       {meta.value ? <PlayerBar meta={meta.value} /> : null}
-      <Drawer active={active} />
+      <Drawer active={active} onMushaf={!layer} />
       {toast.value ? <div class="toast" role="status">{toast.value}</div> : null}
     </div>
   )

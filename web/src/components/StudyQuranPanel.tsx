@@ -42,6 +42,18 @@ export function StudyChips({ meta, ayahID, all = false }: { meta: Meta; ayahID: 
   )
 }
 
+/** In an ayah's list of actions: the Study Quran's commentary on it, when the book has a note on it. */
+export function StudyLink({ meta, ayahID }: { meta: Meta; ayahID: number }) {
+  const { surah, ayah } = locate(meta, ayahID)
+  const data = useAsync(async () => (meta.studyQuran ? loadStudyTafsir(meta, surah) : null), [surah, meta.version])
+  if (!meta.studyQuran || !data.value || !entriesForAyah(data.value, ayahID).length) return null
+  return (
+    <a href={href.commentary(surah, ayah)}>
+      <Icon name="speech" size={18} /> {t('commentary')}: {t('studyQuranName')}
+    </a>
+  )
+}
+
 /** The row at the top of a surah that opens the introduction. */
 export function StudyIntroLink({ meta, surah }: { meta: Meta; surah: number }) {
   if (!meta.studyQuran) return null

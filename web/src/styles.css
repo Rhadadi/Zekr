@@ -509,7 +509,12 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .appbar.sticky { position: sticky; }
 .appbar-in { max-width: 720px; height: 52px; margin-inline: auto; padding-inline: 4px; display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 4px; }
 .appbar-centre { min-width: 0; display: flex; justify-content: center; align-items: center; }
-.appbar-end { display: flex; justify-content: flex-end; }
+.appbar-start { display: flex; justify-content: flex-start; }
+/* the name in nastaliq (src/assets/zekr-logo.png, from the owner), as a mask so it takes the theme's accent colour */
+.logo {
+  display: block; width: 44px; height: 38px; background: var(--accent);
+  -webkit-mask: url('./assets/zekr-logo.png') center / contain no-repeat; mask: url('./assets/zekr-logo.png') center / contain no-repeat;
+}
 .appbar-title { text-align: center; min-width: 0; }
 .appbar-title h1 { font-size: 1.05rem; font-weight: 700; line-height: 1.35; }
 .appbar-title p { font-size: 0.78rem; color: var(--muted); line-height: 1.3; }
@@ -528,17 +533,18 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .drawer-wrap { position: fixed; inset: 0; z-index: 20; }
 .drawer-backdrop { position: absolute; inset: 0; background: rgb(0 0 0 / 0.4); animation: fade-in 0.15s ease-out; }
 .drawer {
-  position: absolute; inset-block: 0; inset-inline-start: 0; width: min(320px, 86vw); padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  position: absolute; inset-block: 0; inset-inline-end: 0; width: min(320px, 86vw); padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
   background: var(--surface); box-shadow: 0 0 30px rgb(0 0 0 / 0.25); display: flex; flex-direction: column; animation: drawer-in 0.18s ease-out;
 }
 .drawer-head { display: flex; align-items: center; justify-content: space-between; height: 52px; padding: 0 12px 0 20px; border-bottom: 1px solid var(--line); }
 :root[dir='rtl'] .drawer-head { padding: 0 20px 0 12px; }
 .drawer nav { display: grid; gap: 2px; padding: 10px; }
-.drawer nav a { display: flex; align-items: center; gap: 14px; min-height: 48px; padding: 0 14px; border-radius: 12px; color: var(--ink); font-weight: 500; }
+.drawer nav a, .drawer-item { display: flex; align-items: center; gap: 14px; min-height: 48px; padding: 0 14px; border-radius: 12px; color: var(--ink); font-weight: 500; }
+.drawer-item { width: 100%; border: 0; border-top: 1px solid var(--line); border-radius: 0 0 12px 12px; margin-top: 6px; background: none; font: inherit; font-weight: 500; text-align: start; cursor: pointer; }
 .drawer nav a.on { background: var(--hl); color: var(--accent); font-weight: 700; }
-@keyframes drawer-in { from { transform: translateX(-100%); } to { transform: none; } }
+@keyframes drawer-in { from { transform: translateX(100%); } to { transform: none; } }
 :root[dir='rtl'] .drawer { animation-name: drawer-in-rtl; }
-@keyframes drawer-in-rtl { from { transform: translateX(100%); } to { transform: none; } }
+@keyframes drawer-in-rtl { from { transform: translateX(-100%); } to { transform: none; } }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .drawer, .drawer-backdrop { animation: none; } }
 

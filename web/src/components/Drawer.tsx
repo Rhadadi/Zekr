@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'preact/hooks'
 import { t } from '../i18n'
 import { type LayerName, href } from '../router'
-import { drawerOpen } from '../ui'
+import { drawerOpen, pageOptionsAsked } from '../ui'
 import { Icon, type IconName } from './Icon'
 
 const ITEMS: { name: LayerName; href: string; icon: IconName; label: () => string }[] = [
@@ -12,9 +12,10 @@ const ITEMS: { name: LayerName; href: string; icon: IconName; label: () => strin
   { name: 'settings', href: href.settings, icon: 'settings', label: () => t('navSettings') },
 ]
 
-/** The navigation drawer: Quran, Today, Search, Saved, Settings. It opens from the start side (the right in Persian),
- * traps focus, and closes on Escape, on the backdrop, on a choice and on Back. */
-export function Drawer({ active }: { active: LayerName }) {
+/** The navigation drawer: Quran, Today, Search, Saved, Settings, and on the mushaf its reading options. It opens from
+ * the end side, where its button is (the left in Persian), traps focus, and closes on Escape, on the backdrop, on a
+ * choice and on Back. */
+export function Drawer({ active, onMushaf = false }: { active: LayerName; onMushaf?: boolean }) {
   const open = drawerOpen.value
   const panel = useRef<HTMLElement>(null)
   // Back closes the drawer: opening it adds one history entry for the same address.
@@ -97,6 +98,12 @@ export function Drawer({ active }: { active: LayerName }) {
               <span>{n.label()}</span>
             </a>
           ))}
+          {onMushaf ? (
+            <button class="drawer-item" onClick={() => { close(); pageOptionsAsked.value++ }}>
+              <Icon name="sliders" size={22} />
+              <span>{t('pageOptions')}</span>
+            </button>
+          ) : null}
         </nav>
       </aside>
     </div>
