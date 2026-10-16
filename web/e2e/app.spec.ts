@@ -1084,6 +1084,17 @@ test.describe('The Study Quran (private content, made-up text here)', () => {
     await expect(page.locator('article.commentary .study-note')).toHaveCount(2) // 11–15 and the overlapping 11–12
   })
 
+  test('in Persian the commentary screen reads right to left, Persian digits, while the English note stays left to right', async ({ page }) => {
+    await useSettings(page, { lang: 'fa' })
+    await page.goto('/#/commentary/2/6')
+    const c = page.locator('article.commentary')
+    await expect(c.locator('.comm-nums a')).toHaveText(['۶', '۷', '۸', '۹', '۱۰'])
+    await expect(c.locator('.study-note')).toHaveAttribute('dir', 'ltr')
+    const prev = await c.getByRole('link', { name: /شرح قبلی · ۲:۱–۵/ }).boundingBox()
+    const next = await c.getByRole('link', { name: /شرح بعدی · ۲:۱۱–۱۵/ }).boundingBox()
+    expect(prev!.x).toBeGreaterThan(next!.x) // the previous note is on the right, where a Persian reader starts
+  })
+
   test('the introduction has its own row and screen', async ({ page }) => {
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/verse/2')

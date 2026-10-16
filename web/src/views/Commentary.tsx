@@ -2,7 +2,7 @@ import { Note, Paragraphs, rangeLabel } from '../components/StudyQuranPanel'
 import { LoadError, Loading } from '../components/Page'
 import { type Meta, ayahIdOf } from '../data'
 import { useAsync } from '../hooks'
-import { ayahRef, surahName, t } from '../i18n'
+import { ayahRef, num, surahName, t } from '../i18n'
 import { href } from '../router'
 import { entriesForAyah, loadStudyIntroduction, loadStudyTafsir } from '../studyQuran'
 
@@ -22,19 +22,19 @@ export function CommentaryView({ meta, surah, ayah }: { meta: Meta; surah: numbe
   return (
     <>
       {data.error ? <LoadError retry={data.retry} /> : !data.value ? <Loading /> : (
-        <article class="commentary" lang="en" dir="ltr">
+        <article class="commentary">
           <section class="comm-strip" aria-label={t('showAyahs')}>
-            <strong>{surahName(s)} {first === last ? first : `${first}–${last}`}</strong>
+            <strong>{surahName(s)} {num(first === last ? first : `${first}–${last}`)}</strong>
             <div class="comm-nums">
               {strip.map((n) => (
-                <a key={n} href={href.verse(surah, n)} class={n === ayah ? 'on' : ''} aria-current={n === ayah ? 'true' : undefined} aria-label={ayahRef(s, n)}>{n}</a>
+                <a key={n} href={href.verse(surah, n)} class={n === ayah ? 'on' : ''} aria-current={n === ayah ? 'true' : undefined} aria-label={ayahRef(s, n)}>{num(n)}</a>
               ))}
             </div>
           </section>
           {entries.length ? entries.map((e) => <Note key={e.id} entry={e} />) : <p class="muted">{t('noCommentary')}</p>}
           <nav class="comm-pager" aria-label={t('commentary')}>
-            {prev ? <a href={href.commentary(surah, prev.first_ayah)}>‹ {t('prevNote')} · {surah}:{rangeLabel(prev)}</a> : <span />}
-            {next ? <a href={href.commentary(surah, next.first_ayah)}>{t('nextNote')} · {surah}:{rangeLabel(next)} ›</a> : <span />}
+            {prev ? <a href={href.commentary(surah, prev.first_ayah)}>‹ {t('prevNote')} · {num(`${surah}:${rangeLabel(prev)}`)}</a> : <span />}
+            {next ? <a href={href.commentary(surah, next.first_ayah)}>{t('nextNote')} · {num(`${surah}:${rangeLabel(next)}`)} ›</a> : <span />}
           </nav>
         </article>
       )}
@@ -48,10 +48,12 @@ export function IntroView({ meta, surah }: { meta: Meta; surah: number }) {
   return (
     <>
       {data.error ? <LoadError retry={data.retry} /> : !data.value ? <Loading /> : (
-        <article class="commentary" lang="en" dir="ltr">
-          <Paragraphs text={data.value.text} />
-          <p class="muted small">PDF {data.value.pages.length === 1 ? 'page' : 'pages'} {data.value.pages.join(', ')}</p>
-          <a class="btn primary comm-start" href={href.verse(surah, 1)}>{t('startReadingAt')} {surah}:1</a>
+        <article class="commentary">
+          <div lang="en" dir="ltr">
+            <Paragraphs text={data.value.text} />
+            <p class="muted small">PDF {data.value.pages.length === 1 ? 'page' : 'pages'} {data.value.pages.join(', ')}</p>
+          </div>
+          <a class="btn primary comm-start" href={href.verse(surah, 1)}>{t('startReadingAt')} {num(`${surah}:1`)}</a>
         </article>
       )}
     </>
