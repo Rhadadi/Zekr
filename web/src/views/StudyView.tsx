@@ -102,7 +102,7 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
             }))
             return (
               <AyahCard key={id} meta={meta} id={id} ar={data.value!.ar[id - 1] as string} translations={translations}
-                playing={playingId === id} focused={focused === n} />
+                playing={!player.value?.commentary && playingId === id} focused={focused === n} />
             )
           })}
         </div>

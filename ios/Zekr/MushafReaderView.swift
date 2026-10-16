@@ -446,7 +446,7 @@ private struct AyahBox: View {
             guard let info = available.first(where: { $0.id == id }), let text = try? store?.translation(ayahID: ayahID, translationID: id) else { return nil }
             return (info, text)
         }
-        let playing = model.player.playingAyahID == ayahID && model.player.isPlaying
+        let playing = model.player.commentary == nil && model.player.playingAyahID == ayahID && model.player.isPlaying
         let repeating = model.player.isLooping && model.player.playingAyahID == ayahID
         let saved = model.bookmarks.contains(ayahID)
         VStack(alignment: .leading, spacing: 10) {

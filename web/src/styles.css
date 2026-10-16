@@ -440,6 +440,12 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .study-note h4 { margin: 16px 0 8px; }
 .study-panel p { margin: .75em 0; }
 .study-note p { white-space: pre-wrap; }
+.study-audio { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin-block: 12px; }
+.study-audio .btn { min-height: 44px; }
+.player.has-commentary { flex-wrap: wrap; }
+.player.has-commentary .icon-btn { min-width: 44px; min-height: 44px; }
+.commentary-seek { display: flex; align-items: center; gap: 10px; flex-basis: 100%; font-size: 0.75rem; font-variant-numeric: tabular-nums; }
+.commentary-seek input { flex: 1; min-width: 0; min-height: 44px; accent-color: var(--accent); }
 .study-refs { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-bottom: 16px; }
 
 /* Study Quran: chips, introduction row and the commentary screen */

@@ -31,7 +31,7 @@ export function CommentaryView({ meta, surah, ayah }: { meta: Meta; surah: numbe
               ))}
             </div>
           </section>
-          {entries.length ? entries.map((e) => <Note key={e.id} entry={e} />) : <p class="muted">{t('noCommentary')}</p>}
+          {entries.length ? entries.map((e) => <Note key={e.id} entry={e} queue={all} />) : <p class="muted">{t('noCommentary')}</p>}
           <nav class="comm-pager" aria-label={t('commentary')}>
             {prev ? <a href={href.commentary(surah, prev.first_ayah)}>‹ {t('prevNote')} · {num(`${surah}:${rangeLabel(prev)}`)}</a> : <span />}
             {next ? <a href={href.commentary(surah, next.first_ayah)}>{t('nextNote')} · {num(`${surah}:${rangeLabel(next)}`)} ›</a> : <span />}

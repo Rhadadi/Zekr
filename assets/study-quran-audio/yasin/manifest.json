@@ -1,0 +1,984 @@
+{
+  "surah": 36,
+  "voice": {
+    "name": "George",
+    "model": "eleven_v4_turbo"
+  },
+  "summary": {
+    "all_audio_complete": true,
+    "entries": 74
+  },
+  "entries": [
+    {
+      "id": "study_quran:36:1:1",
+      "ayahs": [
+        1
+      ],
+      "text_sha256": "5e391b91e8518ae9e7419512a8f8efb033ba3ce2a6383f5f3791199f69a8c8da",
+      "audio": {
+        "path": "audio/036-001-001.mp3",
+        "input_sha256": "5e391b91e8518ae9e7419512a8f8efb033ba3ce2a6383f5f3791199f69a8c8da",
+        "file_sha256": "9980501463f409089e5361639f041b1eb130f6cf94ba5cef5790d6e7680f5489",
+        "duration_seconds": 113.92
+      }
+    },
+    {
+      "id": "study_quran:36:2:2",
+      "ayahs": [
+        2
+      ],
+      "text_sha256": "ef0958abcee5ec1706395ac00e8c6abebf2e0d376c19f8f9fb2d3aab69d450b2",
+      "audio": {
+        "path": "audio/036-002-002.mp3",
+        "input_sha256": "ef0958abcee5ec1706395ac00e8c6abebf2e0d376c19f8f9fb2d3aab69d450b2",
+        "file_sha256": "2d7dfaa791d0c52d67193aa4eadcc0e87014c8137e75888a62285ba328ef732a",
+        "duration_seconds": 46.8
+      }
+    },
+    {
+      "id": "study_quran:36:3–4:3",
+      "ayahs": [
+        3,
+        4
+      ],
+      "text_sha256": "d62df5655024363393c6cca76565935c633ac0e0b47e3de8afda6387edd5194b",
+      "audio": {
+        "path": "audio/036-003-004.mp3",
+        "input_sha256": "d62df5655024363393c6cca76565935c633ac0e0b47e3de8afda6387edd5194b",
+        "file_sha256": "7cbb2c08d12129599c96af4732156ad2e0fadac8b96c3e731eb27b50b439f76e",
+        "duration_seconds": 12.4
+      }
+    },
+    {
+      "id": "study_quran:36:5:4",
+      "ayahs": [
+        5
+      ],
+      "text_sha256": "2240fbb4e825e4cf87dce288acdcd5f5429fc033dd6811d632a7a91d83aaa406",
+      "audio": {
+        "path": "audio/036-005-005.mp3",
+        "input_sha256": "2240fbb4e825e4cf87dce288acdcd5f5429fc033dd6811d632a7a91d83aaa406",
+        "file_sha256": "f89c6a8213e18e7e4d61c0b90d4e642bd6c825ccae800c5c873f354221c920b0",
+        "duration_seconds": 60.88
+      }
+    },
+    {
+      "id": "study_quran:36:6:5",
+      "ayahs": [
+        6
+      ],
+      "text_sha256": "56b1bd83358776831c9385fb717cd1ec0a1d6dded6ff028bf3d55997c324b260",
+      "audio": {
+        "path": "audio/036-006-006.mp3",
+        "input_sha256": "56b1bd83358776831c9385fb717cd1ec0a1d6dded6ff028bf3d55997c324b260",
+        "file_sha256": "67de465b694a702645c708066076b68f63b0635c248165f6f6f4251de97eaad0",
+        "duration_seconds": 77.76
+      }
+    },
+    {
+      "id": "study_quran:36:7:6",
+      "ayahs": [
+        7
+      ],
+      "text_sha256": "3acacaa88ef8f926b73c55cdc7394390fba1e06da76fd71fcf8cd20215116fe9",
+      "audio": {
+        "path": "audio/036-007-007.mp3",
+        "input_sha256": "3acacaa88ef8f926b73c55cdc7394390fba1e06da76fd71fcf8cd20215116fe9",
+        "file_sha256": "08524e3fd3e9dc6faed13cf9590d3968706e80614f071139f60ba7514cfc32ba",
+        "duration_seconds": 80.8
+      }
+    },
+    {
+      "id": "study_quran:36:8:7",
+      "ayahs": [
+        8
+      ],
+      "text_sha256": "ccc893af11f5c0963897527ec7b68e7f61373871b0d5b54da2f4120d20ba62a5",
+      "audio": {
+        "path": "audio/036-008-008.mp3",
+        "input_sha256": "ccc893af11f5c0963897527ec7b68e7f61373871b0d5b54da2f4120d20ba62a5",
+        "file_sha256": "7d219b905fae204ec5fdf57f68db6ed9545195b97849d0f3fcde32c205a87201",
+        "duration_seconds": 70.88
+      }
+    },
+    {
+      "id": "study_quran:36:9:8",
+      "ayahs": [
+        9
+      ],
+      "text_sha256": "a7307dc38ad55623352917fdf53bf8d92372a156a11364fc1a91bcd826aecb87",
+      "audio": {
+        "path": "audio/036-009-009.mp3",
+        "input_sha256": "a7307dc38ad55623352917fdf53bf8d92372a156a11364fc1a91bcd826aecb87",
+        "file_sha256": "087e00338200a178c9e0e89cfa9d2de9f804d0f6a53773df1b56eb0667b6ce38",
+        "duration_seconds": 98.24
+      }
+    },
+    {
+      "id": "study_quran:36:10–11:9",
+      "ayahs": [
+        10,
+        11
+      ],
+      "text_sha256": "186724eadcb1b78f025c85a63b2592111edffb3125d961aeed0562f2dacc3e32",
+      "audio": {
+        "path": "audio/036-010-011.mp3",
+        "input_sha256": "186724eadcb1b78f025c85a63b2592111edffb3125d961aeed0562f2dacc3e32",
+        "file_sha256": "5dc5c21b40606a1c211908fc94aed74c32662341803bff7394e31c1d6cfeb8c9",
+        "duration_seconds": 74.16
+      }
+    },
+    {
+      "id": "study_quran:36:12:10",
+      "ayahs": [
+        12
+      ],
+      "text_sha256": "859f9add2080465348fe5480a169c70ed559dae5bb17ae17ba24c5526b3468b8",
+      "audio": {
+        "path": "audio/036-012-012.mp3",
+        "input_sha256": "859f9add2080465348fe5480a169c70ed559dae5bb17ae17ba24c5526b3468b8",
+        "file_sha256": "8f0dcbae936a85fd751bde49d3908158c5b480be6678498e7c36e043492a3d25",
+        "duration_seconds": 193.52
+      }
+    },
+    {
+      "id": "study_quran:36:13–14:11",
+      "ayahs": [
+        13,
+        14
+      ],
+      "text_sha256": "45900704bf4b4824081b1fff2f8d089b064ccfe93842d5caa495a6663cc2f7bf",
+      "audio": {
+        "path": "audio/036-013-014.mp3",
+        "input_sha256": "45900704bf4b4824081b1fff2f8d089b064ccfe93842d5caa495a6663cc2f7bf",
+        "file_sha256": "aacee1a41883bb609bdab007cf8af0c5f3be0d5e49f027f419ca67606a4bb05c",
+        "duration_seconds": 93.2
+      }
+    },
+    {
+      "id": "study_quran:36:15:12",
+      "ayahs": [
+        15
+      ],
+      "text_sha256": "8813104ff7a316bd1c90071dbd5ae2aabe9aba4bf4c2d9d3e38772330aa9f04b",
+      "audio": {
+        "path": "audio/036-015-015.mp3",
+        "input_sha256": "8813104ff7a316bd1c90071dbd5ae2aabe9aba4bf4c2d9d3e38772330aa9f04b",
+        "file_sha256": "048565a8ebd2626eb076c56bdb425b23bd64c7193c0bddf02b3a4446c77f680d",
+        "duration_seconds": 51.84
+      }
+    },
+    {
+      "id": "study_quran:36:16:13",
+      "ayahs": [
+        16
+      ],
+      "text_sha256": "e00fe9a59d29a236c178b53747a9df729515b4702a576a0018258c2a7800ab3e",
+      "audio": {
+        "path": "audio/036-016-016.mp3",
+        "input_sha256": "e00fe9a59d29a236c178b53747a9df729515b4702a576a0018258c2a7800ab3e",
+        "file_sha256": "c3e2b462caa2ee8b878c34fac7d6e0e44edcb5be49a64c042c75120350801d6f",
+        "duration_seconds": 10.32
+      }
+    },
+    {
+      "id": "study_quran:36:17:14",
+      "ayahs": [
+        17
+      ],
+      "text_sha256": "ba8bf767f10ad70a93bdee9631d7b15a8bfda9235585f4ec7c6e39d1c4517ecb",
+      "audio": {
+        "path": "audio/036-017-017.mp3",
+        "input_sha256": "ba8bf767f10ad70a93bdee9631d7b15a8bfda9235585f4ec7c6e39d1c4517ecb",
+        "file_sha256": "f70644e7c6f24a2486122d01c92dd6286aac7ea49078a3be005d838aaf44bb12",
+        "duration_seconds": 34.24
+      }
+    },
+    {
+      "id": "study_quran:36:18:15",
+      "ayahs": [
+        18
+      ],
+      "text_sha256": "2b7040e604c9ed5764b966a9c3ceb93522078b0ddff1c44c381c1a5818fb4a8c",
+      "audio": {
+        "path": "audio/036-018-018.mp3",
+        "input_sha256": "2b7040e604c9ed5764b966a9c3ceb93522078b0ddff1c44c381c1a5818fb4a8c",
+        "file_sha256": "e6f165f22d2334b908bf716ebfd1820fe638a3242539313b8f1f97e3cc46fc57",
+        "duration_seconds": 9.04
+      }
+    },
+    {
+      "id": "study_quran:36:19:16",
+      "ayahs": [
+        19
+      ],
+      "text_sha256": "9acaef87840bcfaa56a6cc5d266145d2621575b188fc42bf3276eb6a00547c57",
+      "audio": {
+        "path": "audio/036-019-019.mp3",
+        "input_sha256": "9acaef87840bcfaa56a6cc5d266145d2621575b188fc42bf3276eb6a00547c57",
+        "file_sha256": "d885191b44df79bc58b10f9316f4b0f642b6ef299d02a101ef449c5e371c73a3",
+        "duration_seconds": 128.48
+      }
+    },
+    {
+      "id": "study_quran:36:20:17",
+      "ayahs": [
+        20
+      ],
+      "text_sha256": "646a8b14c06d33d0694ee71741a46b48bb4320f6508f3269bfe1541a6500779a",
+      "audio": {
+        "path": "audio/036-020-020.mp3",
+        "input_sha256": "646a8b14c06d33d0694ee71741a46b48bb4320f6508f3269bfe1541a6500779a",
+        "file_sha256": "ec0982b4e0f4b245ea36c1ecf08410950f5b69f8c2273bcd619c3094bed91134",
+        "duration_seconds": 44.88
+      }
+    },
+    {
+      "id": "study_quran:36:21:18",
+      "ayahs": [
+        21
+      ],
+      "text_sha256": "e9425a941fe0627146d61b953d48b53d5ee1b1198397e026d1d4088c6e6c4cdc",
+      "audio": {
+        "path": "audio/036-021-021.mp3",
+        "input_sha256": "e9425a941fe0627146d61b953d48b53d5ee1b1198397e026d1d4088c6e6c4cdc",
+        "file_sha256": "28555996f3e072a6adc9eaf1ee0dfa8fca1c162f9e89108bb38bf062ce4c0254",
+        "duration_seconds": 40.16
+      }
+    },
+    {
+      "id": "study_quran:36:22:19",
+      "ayahs": [
+        22
+      ],
+      "text_sha256": "f81391fab38208b16fd687fd6bd8d8e7b1d22b32112c1f624c5628d07db35264",
+      "audio": {
+        "path": "audio/036-022-022.mp3",
+        "input_sha256": "f81391fab38208b16fd687fd6bd8d8e7b1d22b32112c1f624c5628d07db35264",
+        "file_sha256": "a12cc7c1631331cd8100d5ea8dd56873bbb1354dad8c4e55fc33abd3ef51b918",
+        "duration_seconds": 41.68
+      }
+    },
+    {
+      "id": "study_quran:36:23:20",
+      "ayahs": [
+        23
+      ],
+      "text_sha256": "0c80e843305c34ad9856d0e09cea8bf0ddf3f68873781ba32094f70712659307",
+      "audio": {
+        "path": "audio/036-023-023.mp3",
+        "input_sha256": "0c80e843305c34ad9856d0e09cea8bf0ddf3f68873781ba32094f70712659307",
+        "file_sha256": "00c022a063ce86c83afeef03509e0c1843d315af92e96ec17a9860ef0d5b8547",
+        "duration_seconds": 43.6
+      }
+    },
+    {
+      "id": "study_quran:36:24:21",
+      "ayahs": [
+        24
+      ],
+      "text_sha256": "50297293099e1e8f4070ef20bbd2569b4d4c6e9df0f426d45b393110d692614b",
+      "audio": {
+        "path": "audio/036-024-024.mp3",
+        "input_sha256": "50297293099e1e8f4070ef20bbd2569b4d4c6e9df0f426d45b393110d692614b",
+        "file_sha256": "f34f2c5eb420d18ef34b5670d0d089af89d6e9fe34ebf8dedfdbe11a0fcf9192",
+        "duration_seconds": 25.44
+      }
+    },
+    {
+      "id": "study_quran:36:25:22",
+      "ayahs": [
+        25
+      ],
+      "text_sha256": "9abf9e9fd602cd8fa475c7a93f2a50106965be41a20c86fe3dc687ae62837c99",
+      "audio": {
+        "path": "audio/036-025-025.mp3",
+        "input_sha256": "9abf9e9fd602cd8fa475c7a93f2a50106965be41a20c86fe3dc687ae62837c99",
+        "file_sha256": "bbecba2005a9ac17e12c4fe65f4c6cfef91544eda7e5028e046ca987ba7b3429",
+        "duration_seconds": 14.4
+      }
+    },
+    {
+      "id": "study_quran:36:26:23",
+      "ayahs": [
+        26
+      ],
+      "text_sha256": "7926223c1d09979d2554890f9e8a4960ed5b93430c032e01a066fa0b73289458",
+      "audio": {
+        "path": "audio/036-026-026.mp3",
+        "input_sha256": "7926223c1d09979d2554890f9e8a4960ed5b93430c032e01a066fa0b73289458",
+        "file_sha256": "5c6a09bc71f836cd310488d4a5519650174928a1bdb6825d2c4f49aaca1834e0",
+        "duration_seconds": 20.24
+      }
+    },
+    {
+      "id": "study_quran:36:27:24",
+      "ayahs": [
+        27
+      ],
+      "text_sha256": "8c84e79db29d61685bbb0863ffa9207c1e5da3f3a0933bf793c544ee710da146",
+      "audio": {
+        "path": "audio/036-027-027.mp3",
+        "input_sha256": "8c84e79db29d61685bbb0863ffa9207c1e5da3f3a0933bf793c544ee710da146",
+        "file_sha256": "e02a136e4f66a7bcae515f6333919d2907b98044a6c2a28144e23d0cea9c384e",
+        "duration_seconds": 36.0
+      }
+    },
+    {
+      "id": "study_quran:36:28:25",
+      "ayahs": [
+        28
+      ],
+      "text_sha256": "bdfed72f485c68edb7040c0138142abc113e6fe174c5c2144fb9cc3c6f642a7d",
+      "audio": {
+        "path": "audio/036-028-028.mp3",
+        "input_sha256": "bdfed72f485c68edb7040c0138142abc113e6fe174c5c2144fb9cc3c6f642a7d",
+        "file_sha256": "1d6b8885d81b3db4d5d18991017df5a2471c22b2e8377d0fe5f2b07a2761c159",
+        "duration_seconds": 53.68
+      }
+    },
+    {
+      "id": "study_quran:36:29:26",
+      "ayahs": [
+        29
+      ],
+      "text_sha256": "166e8f988ce8c924f21e1d6665c0f1ed796af17d0990a00b567184ead1e754c6",
+      "audio": {
+        "path": "audio/036-029-029.mp3",
+        "input_sha256": "166e8f988ce8c924f21e1d6665c0f1ed796af17d0990a00b567184ead1e754c6",
+        "file_sha256": "c7ace53e54927d5f28cdad58894871854182ed61f3e76a7a17266403f3fde7fa",
+        "duration_seconds": 4.64
+      }
+    },
+    {
+      "id": "study_quran:36:30:27",
+      "ayahs": [
+        30
+      ],
+      "text_sha256": "b7fce767ef7a3534f5c412efd777a1f4b564133da96b06bfbc4e38114833530f",
+      "audio": {
+        "path": "audio/036-030-030.mp3",
+        "input_sha256": "b7fce767ef7a3534f5c412efd777a1f4b564133da96b06bfbc4e38114833530f",
+        "file_sha256": "08c3d6a24763240d6dca0c375980f6c50808b87612e9df9227f301eee86477e1",
+        "duration_seconds": 27.52
+      }
+    },
+    {
+      "id": "study_quran:36:31:28",
+      "ayahs": [
+        31
+      ],
+      "text_sha256": "7a052e7dea83831ee3fc283f51c8abc82dc16b200b3c1606ab33acb2f3ec648e",
+      "audio": {
+        "path": "audio/036-031-031.mp3",
+        "input_sha256": "7a052e7dea83831ee3fc283f51c8abc82dc16b200b3c1606ab33acb2f3ec648e",
+        "file_sha256": "d6bd1760d2d1f9b6728c464eb995ccf3f4793646cd798ea97868886792c4820f",
+        "duration_seconds": 10.8
+      }
+    },
+    {
+      "id": "study_quran:36:32:29",
+      "ayahs": [
+        32
+      ],
+      "text_sha256": "39bd8aeae6b26dfd6a17f261fc682339a23cf6ffda893e0711c1760cc0857c5a",
+      "audio": {
+        "path": "audio/036-032-032.mp3",
+        "input_sha256": "39bd8aeae6b26dfd6a17f261fc682339a23cf6ffda893e0711c1760cc0857c5a",
+        "file_sha256": "62dc65abe357274c6bed60f89924851ea2b23b5fd6805c7ea90ff725315e3f41",
+        "duration_seconds": 35.76
+      }
+    },
+    {
+      "id": "study_quran:36:33–34:30",
+      "ayahs": [
+        33,
+        34
+      ],
+      "text_sha256": "8e39685802465f246f87a293c94875bfce4014c6dc1102daed64f6da97d1c28a",
+      "audio": {
+        "path": "audio/036-033-034.mp3",
+        "input_sha256": "8e39685802465f246f87a293c94875bfce4014c6dc1102daed64f6da97d1c28a",
+        "file_sha256": "fab2ce27401fc47ac7e41f9adb7b1ab607524f8238b947f2bf4c14dab256a06b",
+        "duration_seconds": 90.4
+      }
+    },
+    {
+      "id": "study_quran:36:35:31",
+      "ayahs": [
+        35
+      ],
+      "text_sha256": "65b10d0f85863ebbdf623845f0ad87d0d49bd6b6fc0572d1a87bc6c5445a375d",
+      "audio": {
+        "path": "audio/036-035-035.mp3",
+        "input_sha256": "65b10d0f85863ebbdf623845f0ad87d0d49bd6b6fc0572d1a87bc6c5445a375d",
+        "file_sha256": "24f7b1cd8a9631236376b22d2d3fab3b79ec69df05d64a39b62a0a1ec5d07a01",
+        "duration_seconds": 65.68
+      }
+    },
+    {
+      "id": "study_quran:36:36:32",
+      "ayahs": [
+        36
+      ],
+      "text_sha256": "11a983b1d2d870206b63c8a615717f81641895a18627e142af745c5f9a91268f",
+      "audio": {
+        "path": "audio/036-036-036.mp3",
+        "input_sha256": "11a983b1d2d870206b63c8a615717f81641895a18627e142af745c5f9a91268f",
+        "file_sha256": "9def8c43ccf2f2eda616d299ec163b4ffe1e0a04d00866864a8237a03f2f0401",
+        "duration_seconds": 71.12
+      }
+    },
+    {
+      "id": "study_quran:36:37:33",
+      "ayahs": [
+        37
+      ],
+      "text_sha256": "8d7a66ceb16f1d7699da2a702a0a33f8a517006d888c217e00f2e6e112de3665",
+      "audio": {
+        "path": "audio/036-037-037.mp3",
+        "input_sha256": "8d7a66ceb16f1d7699da2a702a0a33f8a517006d888c217e00f2e6e112de3665",
+        "file_sha256": "1d0c3277b78fb3cd2101c81c572606ac9d838aebb9b968e9da9b8b5c8f24613f",
+        "duration_seconds": 34.88
+      }
+    },
+    {
+      "id": "study_quran:36:38:34",
+      "ayahs": [
+        38
+      ],
+      "text_sha256": "3054925f85bb0f18a5044d9815418340efe1badbf2ed8c29cdbb7094bd372c69",
+      "audio": {
+        "path": "audio/036-038-038.mp3",
+        "input_sha256": "3054925f85bb0f18a5044d9815418340efe1badbf2ed8c29cdbb7094bd372c69",
+        "file_sha256": "a058c61f2cfec8209632253024b714c3890b7361aab536544565d9a44fdfd5fa",
+        "duration_seconds": 88.32
+      }
+    },
+    {
+      "id": "study_quran:36:39:35",
+      "ayahs": [
+        39
+      ],
+      "text_sha256": "2b82d2e0f828ff5f7185a3fa3259c597804b0b8b8ccf6d037069a8b596201d7d",
+      "audio": {
+        "path": "audio/036-039-039.mp3",
+        "input_sha256": "2b82d2e0f828ff5f7185a3fa3259c597804b0b8b8ccf6d037069a8b596201d7d",
+        "file_sha256": "d62f8c9ca8381837ad45a1ed37ce809f46e666e7cf71963d6eb741208b2164d1",
+        "duration_seconds": 23.76
+      }
+    },
+    {
+      "id": "study_quran:36:40:36",
+      "ayahs": [
+        40
+      ],
+      "text_sha256": "8ef34aead3930fc096b22c03335e1a7160af88c5544752ededc971d22843256b",
+      "audio": {
+        "path": "audio/036-040-040.mp3",
+        "input_sha256": "8ef34aead3930fc096b22c03335e1a7160af88c5544752ededc971d22843256b",
+        "file_sha256": "2af4a2c759ecba61c57557e7f4e6b1c93b141d71ed4c789d8137576772a4d676",
+        "duration_seconds": 67.68
+      }
+    },
+    {
+      "id": "study_quran:36:41:37",
+      "ayahs": [
+        41
+      ],
+      "text_sha256": "f151fb4394d6a505e41f11d90444ef28339aa7eb50add696a73decdf7dccbec2",
+      "audio": {
+        "path": "audio/036-041-041.mp3",
+        "input_sha256": "f151fb4394d6a505e41f11d90444ef28339aa7eb50add696a73decdf7dccbec2",
+        "file_sha256": "6b0589832cbc83f236f7602d380074499f72a11a516c5fb735f9cd52f2e68c0e",
+        "duration_seconds": 23.92
+      }
+    },
+    {
+      "id": "study_quran:36:42:38",
+      "ayahs": [
+        42
+      ],
+      "text_sha256": "2f037d52fa461aed3da7d6d705e60dd0f07c24dead78f119ead8697fe57c19fe",
+      "audio": {
+        "path": "audio/036-042-042.mp3",
+        "input_sha256": "2f037d52fa461aed3da7d6d705e60dd0f07c24dead78f119ead8697fe57c19fe",
+        "file_sha256": "ee8458a135aa1bccff67c292f04f7a531762cc425a418a8be9b085d5b7723917",
+        "duration_seconds": 24.72
+      }
+    },
+    {
+      "id": "study_quran:36:43:39",
+      "ayahs": [
+        43
+      ],
+      "text_sha256": "a8c4542aacde48e098821b30e2d608e24c8f0209436f4dcbe8d231821d6c5555",
+      "audio": {
+        "path": "audio/036-043-043.mp3",
+        "input_sha256": "a8c4542aacde48e098821b30e2d608e24c8f0209436f4dcbe8d231821d6c5555",
+        "file_sha256": "8dcd0e5131099ce0a308eaefef9b2c81f42af05a141114b0b80c9fbe8fbd07ca",
+        "duration_seconds": 50.88
+      }
+    },
+    {
+      "id": "study_quran:36:44:40",
+      "ayahs": [
+        44
+      ],
+      "text_sha256": "d54757bc6abf7833dea320e60978e9c07d8c9bb667f7b59bb91556777fe85ddb",
+      "audio": {
+        "path": "audio/036-044-044.mp3",
+        "input_sha256": "d54757bc6abf7833dea320e60978e9c07d8c9bb667f7b59bb91556777fe85ddb",
+        "file_sha256": "ae6bde27119197ea36e0dc5937ec1d44054b2a8e857e44401a9acbc46b22726d",
+        "duration_seconds": 60.24
+      }
+    },
+    {
+      "id": "study_quran:36:45:41",
+      "ayahs": [
+        45
+      ],
+      "text_sha256": "1aac705e8c1d76748d22a0227a84f394183dd69e4880ea633d4bf21e0735b582",
+      "audio": {
+        "path": "audio/036-045-045.mp3",
+        "input_sha256": "1aac705e8c1d76748d22a0227a84f394183dd69e4880ea633d4bf21e0735b582",
+        "file_sha256": "70f5888edda52e8c00c9ffc6a327ed3f97f2f715f83f9493d8440b04db2604c5",
+        "duration_seconds": 70.24
+      }
+    },
+    {
+      "id": "study_quran:36:46:42",
+      "ayahs": [
+        46
+      ],
+      "text_sha256": "266609004639366f035a97bb741f32aa7e434f6a62408d8f094c1d7178386e98",
+      "audio": {
+        "path": "audio/036-046-046.mp3",
+        "input_sha256": "266609004639366f035a97bb741f32aa7e434f6a62408d8f094c1d7178386e98",
+        "file_sha256": "2c0a3f42e5d0ba58aaf725d8925dd095b0e5d201cd917c75ae45c93d974c0594",
+        "duration_seconds": 66.08
+      }
+    },
+    {
+      "id": "study_quran:36:47:43",
+      "ayahs": [
+        47
+      ],
+      "text_sha256": "a08a147ad9cb9577a304776ca844f0a3f677ed2a6ddab4758cea7eda54349d59",
+      "audio": {
+        "path": "audio/036-047-047.mp3",
+        "input_sha256": "a08a147ad9cb9577a304776ca844f0a3f677ed2a6ddab4758cea7eda54349d59",
+        "file_sha256": "b762fa0426a40972d1cfb2d5f3e9842a30ea8eae8ee5a5b0b0879c3a7c6db13f",
+        "duration_seconds": 58.08
+      }
+    },
+    {
+      "id": "study_quran:36:48:44",
+      "ayahs": [
+        48
+      ],
+      "text_sha256": "de70f24416922bc524860193e5feff76084432188f3876b38983598c91d91700",
+      "audio": {
+        "path": "audio/036-048-048.mp3",
+        "input_sha256": "de70f24416922bc524860193e5feff76084432188f3876b38983598c91d91700",
+        "file_sha256": "92f6b64d0082d115d5221fcfdd875fe34f25e9b858d110470035a4c06c36d6ae",
+        "duration_seconds": 71.68
+      }
+    },
+    {
+      "id": "study_quran:36:49:45",
+      "ayahs": [
+        49
+      ],
+      "text_sha256": "a244f22e2f19dc4bc878214d8bbd0314c40b4588eb9dd0dcb13c81d12ff95f90",
+      "audio": {
+        "path": "audio/036-049-049.mp3",
+        "input_sha256": "a244f22e2f19dc4bc878214d8bbd0314c40b4588eb9dd0dcb13c81d12ff95f90",
+        "file_sha256": "62fbc5df12e6688a943628c5228d534a3034239f9290b75c11267a632b06d443",
+        "duration_seconds": 17.92
+      }
+    },
+    {
+      "id": "study_quran:36:50:46",
+      "ayahs": [
+        50
+      ],
+      "text_sha256": "6e1666b7ad9d6fbf679a6e9e04e9390bb47f1560b69bb19893ab50162f2fdd46",
+      "audio": {
+        "path": "audio/036-050-050.mp3",
+        "input_sha256": "6e1666b7ad9d6fbf679a6e9e04e9390bb47f1560b69bb19893ab50162f2fdd46",
+        "file_sha256": "8b6db06f443977a93434d1ae9384f29c1a8d907af5157c2517f8dd523f112ed7",
+        "duration_seconds": 28.08
+      }
+    },
+    {
+      "id": "study_quran:36:51:47",
+      "ayahs": [
+        51
+      ],
+      "text_sha256": "afb89695de2ae822b74055bd6edf1d1b1a3e4175edcfbffd5d2574e29ef9a0eb",
+      "audio": {
+        "path": "audio/036-051-051.mp3",
+        "input_sha256": "afb89695de2ae822b74055bd6edf1d1b1a3e4175edcfbffd5d2574e29ef9a0eb",
+        "file_sha256": "ba3c58216e9172c18a0ab37a97528c966b93142fb7e0bf312afb4518aaf2b52b",
+        "duration_seconds": 20.24
+      }
+    },
+    {
+      "id": "study_quran:36:52:48",
+      "ayahs": [
+        52
+      ],
+      "text_sha256": "b120cc11ce42ce007c3b338cca192731803279552ddf4bf0277cbad403edae73",
+      "audio": {
+        "path": "audio/036-052-052.mp3",
+        "input_sha256": "b120cc11ce42ce007c3b338cca192731803279552ddf4bf0277cbad403edae73",
+        "file_sha256": "8b9063a6c5f59eb75eaed37ae4454231cfe152852d4d7acaeda37ce467258949",
+        "duration_seconds": 42.8
+      }
+    },
+    {
+      "id": "study_quran:36:53:49",
+      "ayahs": [
+        53
+      ],
+      "text_sha256": "dc50b85a94e76f5679ffd8a0b6cb9d094cfa796d78ed4308f0717bffe615d5d6",
+      "audio": {
+        "path": "audio/036-053-053.mp3",
+        "input_sha256": "dc50b85a94e76f5679ffd8a0b6cb9d094cfa796d78ed4308f0717bffe615d5d6",
+        "file_sha256": "b1304c35a065c4eadd759d9ca0ad73f9e1c8dbbd7fa3166bd1f3bb43e9942457",
+        "duration_seconds": 17.84
+      }
+    },
+    {
+      "id": "study_quran:36:54:50",
+      "ayahs": [
+        54
+      ],
+      "text_sha256": "ababca8d84c44cfe5682e80493980d70661bbcefab722864ee0c4f8d9c6ee899",
+      "audio": {
+        "path": "audio/036-054-054.mp3",
+        "input_sha256": "ababca8d84c44cfe5682e80493980d70661bbcefab722864ee0c4f8d9c6ee899",
+        "file_sha256": "430bcd92344fcf0bb1cafb8925de3b0b52390e9139215009371a83b474a58b0c",
+        "duration_seconds": 50.56
+      }
+    },
+    {
+      "id": "study_quran:36:55:51",
+      "ayahs": [
+        55
+      ],
+      "text_sha256": "26528cfb1481843598defcba7a15b59d6bbcf02e212f802a23264f45a6af9ea3",
+      "audio": {
+        "path": "audio/036-055-055.mp3",
+        "input_sha256": "26528cfb1481843598defcba7a15b59d6bbcf02e212f802a23264f45a6af9ea3",
+        "file_sha256": "e57b8e7eac36fe20f7e1dfaf1f73e2e5ee06b1863f0525f00b6266497a754409",
+        "duration_seconds": 23.52
+      }
+    },
+    {
+      "id": "study_quran:36:56:52",
+      "ayahs": [
+        56
+      ],
+      "text_sha256": "ba93b039c012e503971d12a177ef317e3a2c53e68a877dd13cd7d8dfa67c0fec",
+      "audio": {
+        "path": "audio/036-056-056.mp3",
+        "input_sha256": "ba93b039c012e503971d12a177ef317e3a2c53e68a877dd13cd7d8dfa67c0fec",
+        "file_sha256": "12c0d7f54606ad87977a22080070c4e3a2bb7667fd2a807f9b9d4524dd38555a",
+        "duration_seconds": 41.92
+      }
+    },
+    {
+      "id": "study_quran:36:57:53",
+      "ayahs": [
+        57
+      ],
+      "text_sha256": "01a9e6240c18adbcf9cac422c9257a5a06b7467e2642a46fba4b42de9cb33392",
+      "audio": {
+        "path": "audio/036-057-057.mp3",
+        "input_sha256": "01a9e6240c18adbcf9cac422c9257a5a06b7467e2642a46fba4b42de9cb33392",
+        "file_sha256": "4fdf6ee0aa128876e25884d38ad6622c023d14afd8cf83c379cffa69d1788567",
+        "duration_seconds": 61.12
+      }
+    },
+    {
+      "id": "study_quran:36:58:54",
+      "ayahs": [
+        58
+      ],
+      "text_sha256": "b0f904b03539b1b95184f0ec83ad471b7050592b455ea16b9bce4291240a3388",
+      "audio": {
+        "path": "audio/036-058-058.mp3",
+        "input_sha256": "b0f904b03539b1b95184f0ec83ad471b7050592b455ea16b9bce4291240a3388",
+        "file_sha256": "9e61ace3f015221ea4f10ab2e698c2db302d349988e2d056681cf541e90e9162",
+        "duration_seconds": 57.28
+      }
+    },
+    {
+      "id": "study_quran:36:59:55",
+      "ayahs": [
+        59
+      ],
+      "text_sha256": "8a2c4a8667c1b1b0c13711b749b43e6a42b01141c3c42358c63e6f2cc70d8023",
+      "audio": {
+        "path": "audio/036-059-059.mp3",
+        "input_sha256": "8a2c4a8667c1b1b0c13711b749b43e6a42b01141c3c42358c63e6f2cc70d8023",
+        "file_sha256": "1827ea3f75ecb1c6a93169d8c30b119447dfe2598389a091db26967c6d8a6f72",
+        "duration_seconds": 23.44
+      }
+    },
+    {
+      "id": "study_quran:36:60–61:56",
+      "ayahs": [
+        60,
+        61
+      ],
+      "text_sha256": "09d046e58d370032af6ae39b7cbebdb22be56ca98cbf146ab20ab8cbe3e4e8c7",
+      "audio": {
+        "path": "audio/036-060-061.mp3",
+        "input_sha256": "09d046e58d370032af6ae39b7cbebdb22be56ca98cbf146ab20ab8cbe3e4e8c7",
+        "file_sha256": "b6822f3c95033295191695109f26842d67afc9df0e04a452d47ee4309838ede5",
+        "duration_seconds": 52.64
+      }
+    },
+    {
+      "id": "study_quran:36:62:57",
+      "ayahs": [
+        62
+      ],
+      "text_sha256": "7d8aa1820402927bbd7b6de36cff846442f90999b5caf70ecb66663a6c00c98b",
+      "audio": {
+        "path": "audio/036-062-062.mp3",
+        "input_sha256": "7d8aa1820402927bbd7b6de36cff846442f90999b5caf70ecb66663a6c00c98b",
+        "file_sha256": "be4cb7ce84cab98c71237e1679b335c5b09caeb6710070825dcd9cd90f363af8",
+        "duration_seconds": 8.56
+      }
+    },
+    {
+      "id": "study_quran:36:63–64:58",
+      "ayahs": [
+        63,
+        64
+      ],
+      "text_sha256": "1590f10c412d1fb4f6abc3c2b36db577d6a586586dab33cbbeb9e538c646de7b",
+      "audio": {
+        "path": "audio/036-063-064.mp3",
+        "input_sha256": "1590f10c412d1fb4f6abc3c2b36db577d6a586586dab33cbbeb9e538c646de7b",
+        "file_sha256": "c7e1dace913e1094a488a4c8bb45b92947004437245eee70af4f14523920b013",
+        "duration_seconds": 13.68
+      }
+    },
+    {
+      "id": "study_quran:36:65:59",
+      "ayahs": [
+        65
+      ],
+      "text_sha256": "f3b91af39f5aae525f3137b78363ad812192c08b435c58c7cecd6bb7b032bfe4",
+      "audio": {
+        "path": "audio/036-065-065.mp3",
+        "input_sha256": "f3b91af39f5aae525f3137b78363ad812192c08b435c58c7cecd6bb7b032bfe4",
+        "file_sha256": "ecb958ca0a83fc3fff499551c9a223f9aafd7057df297edca099623c6f22039b",
+        "duration_seconds": 103.36
+      }
+    },
+    {
+      "id": "study_quran:36:66:60",
+      "ayahs": [
+        66
+      ],
+      "text_sha256": "e0078c354fb70075f7b55472a51b7546a338271940abdd740cab9d186db828dd",
+      "audio": {
+        "path": "audio/036-066-066.mp3",
+        "input_sha256": "e0078c354fb70075f7b55472a51b7546a338271940abdd740cab9d186db828dd",
+        "file_sha256": "5ab02ca85a5217173e8e8a6348029f27972195a2bb96bcbcc939453064f1c6db",
+        "duration_seconds": 10.16
+      }
+    },
+    {
+      "id": "study_quran:36:67:61",
+      "ayahs": [
+        67
+      ],
+      "text_sha256": "312cab887b4e207d0644258d2e81c76ed8a8f7db8412ee6ff8d9d85e89781232",
+      "audio": {
+        "path": "audio/036-067-067.mp3",
+        "input_sha256": "312cab887b4e207d0644258d2e81c76ed8a8f7db8412ee6ff8d9d85e89781232",
+        "file_sha256": "cc1d5fbf2682492d3d1440645758d7761103e79ea2850bcc8001c6cc50fc7073",
+        "duration_seconds": 24.0
+      }
+    },
+    {
+      "id": "study_quran:36:68:62",
+      "ayahs": [
+        68
+      ],
+      "text_sha256": "bbb2188901081ddcfff8d00daa80d27d78568dfe2baefc8b50fe73cd6171dc96",
+      "audio": {
+        "path": "audio/036-068-068.mp3",
+        "input_sha256": "bbb2188901081ddcfff8d00daa80d27d78568dfe2baefc8b50fe73cd6171dc96",
+        "file_sha256": "9326300b56642ba4f309972d09526b9862f80a83482a92e0afd46c454a142390",
+        "duration_seconds": 35.84
+      }
+    },
+    {
+      "id": "study_quran:36:69:63",
+      "ayahs": [
+        69
+      ],
+      "text_sha256": "237b503deae929325a20de9f017e2849763d1b503271c1c9e940a7ca6c542ccd",
+      "audio": {
+        "path": "audio/036-069-069.mp3",
+        "input_sha256": "237b503deae929325a20de9f017e2849763d1b503271c1c9e940a7ca6c542ccd",
+        "file_sha256": "6c4b8dba1ece541731d74a24415f6c7f6a7234a998fca08ff9df2e3c645b0922",
+        "duration_seconds": 94.24
+      }
+    },
+    {
+      "id": "study_quran:36:70:64",
+      "ayahs": [
+        70
+      ],
+      "text_sha256": "e676770c583e7a82a7e8adaf44cfeb1afcadd15766a915b2d9de2f1ef302780d",
+      "audio": {
+        "path": "audio/036-070-070.mp3",
+        "input_sha256": "e676770c583e7a82a7e8adaf44cfeb1afcadd15766a915b2d9de2f1ef302780d",
+        "file_sha256": "7003edef9f07a49cc1a8ec10fb0604a15941dc753e68ba8c5c5bfe84c59b97b7",
+        "duration_seconds": 32.0
+      }
+    },
+    {
+      "id": "study_quran:36:71–73:65",
+      "ayahs": [
+        71,
+        72,
+        73
+      ],
+      "text_sha256": "7742792ebca2628193c73b15384309af23130c48e97642996ccca1c30ced7037",
+      "audio": {
+        "path": "audio/036-071-073.mp3",
+        "input_sha256": "7742792ebca2628193c73b15384309af23130c48e97642996ccca1c30ced7037",
+        "file_sha256": "15bf8ea28c190ab01097458808ba41fc8b9fe3fe9d6128505accc4f925df3fab",
+        "duration_seconds": 78.24
+      }
+    },
+    {
+      "id": "study_quran:36:74:66",
+      "ayahs": [
+        74
+      ],
+      "text_sha256": "945e6f5729e6b5f8e0b6ab031bf91864a47bbd71df30c48621b0ade9b217a449",
+      "audio": {
+        "path": "audio/036-074-074.mp3",
+        "input_sha256": "945e6f5729e6b5f8e0b6ab031bf91864a47bbd71df30c48621b0ade9b217a449",
+        "file_sha256": "14b6724667731a96174282bee1ff9f2a5da4b277083fe8ef0d834ba0cb7b60d8",
+        "duration_seconds": 38.64
+      }
+    },
+    {
+      "id": "study_quran:36:75:67",
+      "ayahs": [
+        75
+      ],
+      "text_sha256": "5ffff52b5f9a8dd0690909ca1185d50c900347431cdd045c385c38a5605af7a1",
+      "audio": {
+        "path": "audio/036-075-075.mp3",
+        "input_sha256": "5ffff52b5f9a8dd0690909ca1185d50c900347431cdd045c385c38a5605af7a1",
+        "file_sha256": "053da0b35bccb13b65c7af8873fd36e5a926a42c02dfba6705babdc5eb30bf19",
+        "duration_seconds": 40.64
+      }
+    },
+    {
+      "id": "study_quran:36:76:68",
+      "ayahs": [
+        76
+      ],
+      "text_sha256": "85e7363e1df9c11603166e60eba24d173a74ebf88f4034543103bed734896d47",
+      "audio": {
+        "path": "audio/036-076-076.mp3",
+        "input_sha256": "85e7363e1df9c11603166e60eba24d173a74ebf88f4034543103bed734896d47",
+        "file_sha256": "9eb993f8423af71f66380a02ce6c5746c6d6ef145ea63775bfa9427dd64443a4",
+        "duration_seconds": 59.04
+      }
+    },
+    {
+      "id": "study_quran:36:77:69",
+      "ayahs": [
+        77
+      ],
+      "text_sha256": "62e385477ae0ac6cbd7d2b6852ecebf8dfe7a6d6595a1701e8ed2a3249305285",
+      "audio": {
+        "path": "audio/036-077-077.mp3",
+        "input_sha256": "62e385477ae0ac6cbd7d2b6852ecebf8dfe7a6d6595a1701e8ed2a3249305285",
+        "file_sha256": "c23d946f714ae5980d38b05a48c5557c724a2b0acb164c189e2135c09f9703ba",
+        "duration_seconds": 53.2
+      }
+    },
+    {
+      "id": "study_quran:36:78–79:70",
+      "ayahs": [
+        78,
+        79
+      ],
+      "text_sha256": "117e9a0e2d07a465e8a3500b6c5a1afed764faec1cf5f69bb10489acbde5bd44",
+      "audio": {
+        "path": "audio/036-078-079.mp3",
+        "input_sha256": "117e9a0e2d07a465e8a3500b6c5a1afed764faec1cf5f69bb10489acbde5bd44",
+        "file_sha256": "5369b59abd1791a744c13aa2bd8b01979664375099f4abc1e82afb66683538b8",
+        "duration_seconds": 64.88
+      }
+    },
+    {
+      "id": "study_quran:36:80:71",
+      "ayahs": [
+        80
+      ],
+      "text_sha256": "5baf64892a318af120b501347e62215d309fc41990b9061005428eb4df557af7",
+      "audio": {
+        "path": "audio/036-080-080.mp3",
+        "input_sha256": "5baf64892a318af120b501347e62215d309fc41990b9061005428eb4df557af7",
+        "file_sha256": "163c6c9289b3ceb01afcc222c20038b55c3b255a591f5cc425d2d1cc7d320101",
+        "duration_seconds": 26.4
+      }
+    },
+    {
+      "id": "study_quran:36:81:72",
+      "ayahs": [
+        81
+      ],
+      "text_sha256": "ffb2df8cd4fcea8a6b3468008ebbacdae2cdd50f1d7d7a7253c020abf8120ef7",
+      "audio": {
+        "path": "audio/036-081-081.mp3",
+        "input_sha256": "ffb2df8cd4fcea8a6b3468008ebbacdae2cdd50f1d7d7a7253c020abf8120ef7",
+        "file_sha256": "f46fdb0fcfe751aaab2c5f334611af9aa36ba84f7180dcdcb52c89de505a4a35",
+        "duration_seconds": 29.28
+      }
+    },
+    {
+      "id": "study_quran:36:82:73",
+      "ayahs": [
+        82
+      ],
+      "text_sha256": "6f88efc0251f191d848805137f5659ab170e96a3ad4aefaf8ea02186ce349570",
+      "audio": {
+        "path": "audio/036-082-082.mp3",
+        "input_sha256": "6f88efc0251f191d848805137f5659ab170e96a3ad4aefaf8ea02186ce349570",
+        "file_sha256": "7d3673599521b8381c232fc028f392b91151969f8f851c17c7e0bb77e262120e",
+        "duration_seconds": 36.56
+      }
+    },
+    {
+      "id": "study_quran:36:83:74",
+      "ayahs": [
+        83
+      ],
+      "text_sha256": "c846d1c199483ea0e97c07e9368a090befd4ad9eeb1c79b988acfadcc18c13df",
+      "audio": {
+        "path": "audio/036-083-083.mp3",
+        "input_sha256": "c846d1c199483ea0e97c07e9368a090befd4ad9eeb1c79b988acfadcc18c13df",
+        "file_sha256": "5d06d823153a19f967eb6fe788a0bf6123831bb0157c8b012b9a73e52d5d9751",
+        "duration_seconds": 107.28
+      }
+    }
+  ]
+}

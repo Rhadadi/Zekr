@@ -116,6 +116,7 @@ export function SettingsView({ meta }: { meta: Meta }) {
 
       <h2 class="section">{t('offline')}</h2>
       <p class="muted small">{t('offlineHint')}</p>
+      {meta.studyQuran?.audio ? <p class="muted small">{t('commentaryDownloadHint', { mb: Math.ceil(meta.studyQuran.audio.bytes / 1e6) })}</p> : null}
       <button class="btn" onClick={download} disabled={dl.state === 'running'}>{t('downloadAll')}</button>
       {dl.state === 'running' ? <p role="status" class="small">{t('downloading', { done: dl.done, total: dl.total })}</p> : null}
       {dl.state === 'ok' ? <p role="status" class="small">{t('downloaded')}</p> : null}

@@ -1,11 +1,13 @@
 data/raw/
 build/
 ios/Zekr/Resources/quran.sqlite
+ios/Zekr/Resources/StudyQuranAudio/
 ios/Zekr/Resources/almizan.sqlite
 ios/ZekrWidgets/Resources/widget.sqlite
 ios/*.xcodeproj/
 web/public/data/
-web/node_modules/
+web/node_modules
+web/.node_modules-pre-study-audio/
 web/dist/
 node_modules/
 .DS_Store

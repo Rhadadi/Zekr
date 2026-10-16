@@ -20,6 +20,7 @@ export interface StudyEntry {
   ayah_ids: number[]
   pages: number[]
   references: StudyReference[]
+  audio?: { file: string; duration: number; voice: string; model: string; sha256: string }
 }
 export interface StudyTafsir { surah: number; entries: StudyEntry[]; byAyah: Record<string, string[]> }
 export interface StudyIntroduction { text: string; html: string; pages: number[] }

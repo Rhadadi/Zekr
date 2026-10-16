@@ -497,6 +497,8 @@ def main(argv=None) -> int:
     ap.add_argument("--check", action="store_true", help="download and validate only")
     ap.add_argument("--refresh", action="store_true", help="re-download everything")
     ap.add_argument("--study-quran", type=Path, help="complete Study Quran content database (the Pages deploy unpacks assets/study-quran into one)")
+    ap.add_argument("--study-quran-audio", type=Path, action="append", default=[],
+                    help="local commentary audio package folder; repeat for each surah (requires --study-quran)")
     ap.add_argument("--web-dir", type=Path, default=ROOT / "web" / "public" / "data")
     ap.add_argument("--ios-db", type=Path, default=ROOT / "ios" / "Zekr" / "Resources" / "quran.sqlite")
     ap.add_argument("--widget-db", type=Path, default=ROOT / "ios" / "ZekrWidgets" / "Resources" / "widget.sqlite")
@@ -508,6 +510,8 @@ def main(argv=None) -> int:
     )
     ap.add_argument("--no-wbw", action="store_true", help="leave out the word-by-word Persian meanings (no download)")
     args = ap.parse_args(argv)
+    if args.study_quran_audio and not args.study_quran:
+        ap.error("--study-quran-audio requires --study-quran")
 
     report = Report()
     hashes: dict[str, str] = {}
@@ -562,11 +566,16 @@ def main(argv=None) -> int:
         except (ValueError, RuntimeError, OSError, KeyError) as e:
             report.error(f"word by word: {e}")
 
+    audio_assets = {}
     if args.study_quran:
         from study_quran import load_translation, checksum, TRANSLATION
         try:
             translations[TRANSLATION] = load_translation(args.study_quran, surahs)
             hashes["study_quran"] = checksum(args.study_quran)
+            if args.study_quran_audio:
+                from study_audio import load_audio, fingerprint
+                audio_assets = load_audio(args.study_quran_audio, args.study_quran)
+                hashes["study_quran_audio"] = fingerprint(audio_assets)
         except (ValueError, sqlite3.Error, OSError) as e:
             report.error(f"Study Quran: {e}")
 
@@ -599,6 +608,8 @@ def main(argv=None) -> int:
         from study_quran import install_sqlite, export_web
         install_sqlite(args.study_quran, args.ios_db)
         export_web(args.study_quran, args.web_dir)
+    from study_audio import install as install_audio
+    install_audio(audio_assets, args.ios_db, args.web_dir)
     for p in (args.ios_db, args.widget_db):
         print(f"wrote {p.relative_to(ROOT)} ({p.stat().st_size / 1e6:.1f} MB)")
     if args.almizan or args.almizan_web:

@@ -47,6 +47,14 @@ export default defineConfig({
         additionalManifestEntries: dataPrecache(),
         navigateFallback: 'index.html',
         runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.includes('/data/commentary-audio/'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'zekr-commentary-audio', rangeRequests: true,
+              cacheableResponse: { statuses: [200] }, expiration: { maxEntries: 6000 },
+            },
+          },
           // The printed pages (private builds) are big: keep the ones that were read, not all 604 at once.
           {
             urlPattern: ({ url }) => url.pathname.includes('/data/mushaf/'),

@@ -36,9 +36,29 @@ Where the commentary appears (same design on the website and the iPhone):
 - **Commentary screen** (`#/commentary/<surah>/<ayah>`, a sheet on the iPhone): the notes, a strip of the ayahs they explain, links from cross-references, and the neighbouring notes.
 - **Surah introduction** (`#/intro/<surah>`): a row at the top of each surah in verse view opens it on its own screen. Existing recitation continues to use the same ayah IDs.
 
-The web app loads notes by surah when opened. Search has an additional **Search The Study Quran tafsir** panel. **Download for offline** downloads the translations, all introductions and all commentary chapters; audio retains its existing streaming/download behavior. The iPhone commentary sheet also supports full-text search.
+The web app loads notes by surah when opened. Search has an additional **Search The Study Quran tafsir** panel. **Download for offline** downloads the translations, all introductions and all commentary chapters, including installed commentary recordings. Recitation retains its existing streaming/download behavior. The iPhone commentary sheet also supports full-text search.
 
-Run `python3 tools/build_data.py` without the flag for a normal build. This recreates the generated files without the private package. Generated data and the raw input directory are already ignored by Git. The default Pages workflow runs this normal build. Keep the PDF and import output outside source control.
+Run `python3 tools/build_data.py` without the flag for a normal build. This recreates the generated files without the optional package. Generated data and the raw input directory are already ignored by Git. The Pages workflow installs the text and the published Yasin/Yusuf narration packages under the owner's explicit publication instruction. Keep the PDF and import output outside source control.
+
+## Optional commentary audio
+
+Install completed, local narration packages alongside the exact source database:
+
+```sh
+python3 tools/build_data.py --study-quran /path/to/study_quran.sqlite \
+  --study-quran-audio /path/to/yasin-audio \
+  --study-quran-audio /path/to/yusuf-audio
+```
+
+Each package must contain `manifest.json` and its MP3 files. Before installing anything, the builder checks the source text hash, ayah links and audio file checksum for every note. The source database remains unchanged. The recordings are linked to notes, so a passage shared by several ayahs plays once.
+
+In either app, open a narrated ayah's commentary and choose **Listen from here**. The existing player offers pause, seeking and previous/next notes, continuing through the remaining recorded notes in that surah. Starting recitation replaces commentary playback. The voice is identified as AI generated.
+
+The Yasin and Yusuf packages contain 163 recordings covering 194 ayahs, about 144 MB altogether. The iPhone build bundles them under `ios/Zekr/Resources/StudyQuranAudio`; regenerate the Xcode project after installing them. The web build uses `web/public/data/commentary-audio` and stores complete downloaded files in a separate offline cache that supports range requests. Offline playback requires completing **Download for offline** first.
+
+Both generated directories are ignored by Git. The 163 published source recordings and their minimal manifests live in `assets/study-quran-audio`, with the owner's explicit publication authorization on October 16, 2026. Pages and the iPhone CI build install these packages; the Pages guard checks their expected coverage and file count. Experimental samples, original generation receipts and API caches remain outside git. Building without `--study-quran-audio` removes only the managed installed copies, leaving the original packages and generation cache intact. Building or listening never calls a speech service or spends generation credits.
+
+These initial recordings read the original source text, including citations. Any listening edition that omits citations or expands verse references must keep its separate speech text and provenance; it must not overwrite the book's stored text or mislabel modified speech as an exact reading.
 
 ## Schema and interoperability
 

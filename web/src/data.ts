@@ -42,7 +42,7 @@ export interface Meta {
   translations: TranslationInfo[]
   /** Tafsirs this build includes (private builds only). */
   tafsir?: string[]
-  studyQuran?: { id: string; name: string; pdfSha256: string; importVersion: string }
+  studyQuran?: { id: string; name: string; pdfSha256: string; importVersion: string; audio?: { surahs: number[]; entries: number; bytes: number } }
   /** The owner's printed mushaf as page images (private builds only; tools/mushaf_pages.py). */
   mushaf?: { v: string; w: number; h: number }
   /** Word-by-word meanings in data/wbw/<surah>.json (tools/wbw.py). */
@@ -192,6 +192,23 @@ export async function downloadAll(onProgress: (done: number, total: number) => v
   if (meta.studyQuran) {
     for (const surah of meta.surahs) {
       jobs.push(() => loadStudyIntroduction(meta, surah.id, true), () => loadStudyTafsir(meta, surah.id, true))
+    }
+    if (meta.studyQuran.audio) {
+      const chapters = await Promise.all(meta.studyQuran.audio.surahs.map((s) => loadStudyTafsir(meta, s)))
+      const seen = new Set<string>()
+      for (const entry of chapters.flatMap((c) => c.entries)) {
+        const asset = entry.audio
+        if (!asset || seen.has(asset.file)) continue
+        seen.add(asset.file)
+        jobs.push(async () => {
+          const url = new URL(`${base}data/commentary-audio/${asset.file}?v=${asset.sha256}`, document.baseURI).href
+          const response = await fetch(url)
+          if (!response.ok) throw new Error(`Could not download commentary audio (${response.status})`)
+          // Full responses are needed for offline byte-range playback, rather than a metadata preload.
+          const cache = await caches.open('zekr-commentary-audio')
+          await cache.put(url, response)
+        })
+      }
     }
   }
   let done = 0

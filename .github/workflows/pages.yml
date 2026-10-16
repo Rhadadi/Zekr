@@ -28,7 +28,9 @@ jobs:
         # The Study Quran is published with the owner's confirmation of permission (October 16, 2026).
         run: |
           gunzip -c assets/study-quran/study_quran.sqlite.gz > "$RUNNER_TEMP/study_quran.sqlite"
-          python3 tools/build_data.py --almizan-web --study-quran "$RUNNER_TEMP/study_quran.sqlite"
+          python3 tools/build_data.py --almizan-web --study-quran "$RUNNER_TEMP/study_quran.sqlite" \
+            --study-quran-audio assets/study-quran-audio/yasin \
+            --study-quran-audio assets/study-quran-audio/yusuf
       - name: Printed mushaf pages (published with the owner's confirmation of permission, October 15, 2026)
         run: python3 tools/mushaf_pages.py --apply assets/mushaf
       - uses: actions/setup-node@v4
@@ -43,11 +45,12 @@ jobs:
       - run: npm run build
         working-directory: web
       - uses: actions/configure-pages@v5
-      - name: Make sure no PDF is published
+      - name: Verify published commentary audio and exclude PDFs
         # Al-Mizan, the printed mushaf pages and The Study Quran's text are published on purpose (the owner confirmed
         # permission); the book's PDF is not.
         run: |
           if find web/dist -iname '*.pdf' | grep -q .; then echo "error: a PDF is in web/dist"; exit 1; fi
+          python3 -c 'import json,pathlib; m=json.load(open("web/dist/data/meta.json")); a=m["studyQuran"]["audio"]; assert a["surahs"] == [12,36] and a["entries"] == 163; assert len(list(pathlib.Path("web/dist/data/commentary-audio").glob("*.mp3"))) == 163'
       - uses: actions/upload-pages-artifact@v3
         with:
           path: web/dist

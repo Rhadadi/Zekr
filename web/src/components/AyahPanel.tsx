@@ -39,8 +39,8 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
   // While this ayah is the one in the recitation bar, the bar already says which ayah it is and holds play, pause
   // and repeat: the panel does not repeat them. The phone's sheet hides the bar, so there it has them itself.
   const p = player.value
-  const inPlayer = p?.ayahId === id && !sheetOpen.value
-  const playingHere = p?.ayahId === id && (p.status === 'playing' || p.status === 'loading')
+  const inPlayer = !p?.commentary && p?.ayahId === id && !sheetOpen.value
+  const playingHere = !p?.commentary && p?.ayahId === id && (p.status === 'playing' || p.status === 'loading')
   // on the phone, with the translation already on the page, starting the recitation hands over to the bar
   const handOver = () => { if (!showTranslations && sheetOpen.peek()) onClose() }
   const [more, setMore] = useState(menu)

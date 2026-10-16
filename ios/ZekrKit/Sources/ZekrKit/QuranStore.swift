@@ -18,6 +18,7 @@ public final class QuranStore {
     public let surahs: [Surah]
     private let hasUthmani: Bool
     public let hasStudyQuran: Bool
+    public let hasStudyQuranAudio: Bool
 
     public init(databaseURL: URL) throws {
         db = try SQLiteDatabase(url: databaseURL)
@@ -32,6 +33,7 @@ public final class QuranStore {
         guard surahs.count == 114 else { throw StoreError.missing("114 surahs (found \(surahs.count))") }
         hasUthmani = try db.query("PRAGMA table_info(ayah)") { $0.text(1) }.contains("text_uthmani")
         hasStudyQuran = try db.query("SELECT value FROM meta WHERE key='study_quran'") { $0.text(0) }.first == "1"
+        hasStudyQuranAudio = try db.query("SELECT value FROM meta WHERE key='study_quran_audio'") { $0.text(0) }.first == "1"
     }
 
     /// Opens a bundled database by resource name, e.g. `QuranStore(resource: "widget", in: .main)`.
@@ -170,6 +172,13 @@ public final class QuranStore {
         public let text: String
         public let pages: [Int]
         public let references: [StudyReference]
+        public let audio: StudyAudio?
+    }
+
+    public struct StudyAudio: Hashable, Sendable {
+        public let file: String
+        public let duration: Double
+        public let voice: String
     }
 
     private func studyEntry(_ id: String) throws -> StudyEntry? {
@@ -181,7 +190,10 @@ public final class QuranStore {
         let refs = try db.query("SELECT raw,target_kind,target_surah,COALESCE(first_ayah,0) FROM cross_reference WHERE record_type='tafsir' AND record_id=? ORDER BY char_start", [.text(id)]) {
             StudyReference(raw: $0.text(0), kind: $0.text(1), surah: $0.int(2), ayah: $0.int(3))
         }
-        return StudyEntry(id: id, surah: r.0, firstAyah: r.1, lastAyah: r.2, coverageKind: r.3, text: r.4, pages: pages, references: refs)
+        let audio = hasStudyQuranAudio ? try db.query("SELECT file,duration,voice FROM study_audio WHERE entry_id=?", [.text(id)]) {
+            StudyAudio(file: $0.text(0), duration: Double($0.text(1)) ?? 0, voice: $0.text(2))
+        }.first : nil
+        return StudyEntry(id: id, surah: r.0, firstAyah: r.1, lastAyah: r.2, coverageKind: r.3, text: r.4, pages: pages, references: refs, audio: audio)
     }
 
     public func studyQuranEntries(ayahID: Int) throws -> [StudyEntry] {
@@ -193,6 +205,13 @@ public final class QuranStore {
     public func studyQuranIntroduction(surahID: Int) throws -> String? {
         guard hasStudyQuran else { return nil }
         return try db.query("SELECT text FROM surah_introduction WHERE source_id='study_quran' AND surah_id=?", [.int(surahID)]) { $0.text(0) }.first
+    }
+
+    /// Book order, one item per note even when a note covers several ayahs.
+    public func narratedStudyQuranEntries(surahID: Int) throws -> [StudyEntry] {
+        guard hasStudyQuranAudio else { return [] }
+        let ids = try db.query("SELECT e.id FROM tafsir_entry e JOIN study_audio a ON a.entry_id=e.id WHERE e.surah_id=? ORDER BY e.source_order", [.int(surahID)]) { $0.text(0) }
+        return try ids.compactMap { try studyEntry($0) }
     }
 
     public func searchStudyQuran(_ query: String) throws -> [StudyEntry] {

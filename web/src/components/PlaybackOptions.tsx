@@ -9,6 +9,15 @@ const PLAY_TO: [PlayTo, 'toAyah' | 'toPage' | 'toSurah' | 'toJuz' | 'toRub' | 't
   ['ayah', 'toAyah'], ['page', 'toPage'], ['surah', 'toSurah'], ['juz', 'toJuz'], ['rub', 'toRub'], ['quran', 'toQuran'],
 ]
 
+export function PlaybackSpeed() {
+  return <label class="field">
+    <span>{t('speed')}</span>
+    <select value={settings.value.speed} onChange={(e) => updateSettings({ speed: Number(e.currentTarget.value) })}>
+      {SPEEDS.map((v) => <option value={v} key={v}>{v}×</option>)}
+    </select>
+  </label>
+}
+
 export function PlaybackOptions() {
   const s = settings.value
   const l = lang.value
@@ -26,12 +35,7 @@ export function PlaybackOptions() {
           {PLAY_TO.map(([v, k]) => <option value={v} key={v}>{t(k)}</option>)}
         </select>
       </label>
-      <label class="field">
-        <span>{t('speed')}</span>
-        <select value={s.speed} onChange={(e) => updateSettings({ speed: Number(e.currentTarget.value) })}>
-          {SPEEDS.map((v) => <option value={v} key={v}>{v}×</option>)}
-        </select>
-      </label>
+      <PlaybackSpeed />
       <label class="field">
         <span>{t('repeat')}</span>
         <select value={s.repeat} onChange={(e) => updateSettings({ repeat: Number(e.currentTarget.value) })}>

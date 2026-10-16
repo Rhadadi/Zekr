@@ -12,6 +12,12 @@ final class AyahPlayer {
     private(set) var failed = false
     /// "Repeat this ayah" is on: the ayah being recited plays again and again until it is turned off.
     private(set) var isLooping = false
+    private(set) var commentary: QuranStore.StudyEntry?
+    private(set) var elapsed: Double = 0
+    private(set) var duration: Double = 0
+    @ObservationIgnored private var commentaryQueue: [QuranStore.StudyEntry] = []
+    @ObservationIgnored private var commentaryIndex = 0
+    @ObservationIgnored private var timeObserver: Any?
 
     var playingAyahID: Int? { cursor?.ayahID }
 
@@ -24,11 +30,23 @@ final class AyahPlayer {
     @ObservationIgnored private var statusObserver: NSKeyValueObservation?
     @ObservationIgnored private var remoteCommandsReady = false
 
+    deinit {
+        if let timeObserver { player.removeTimeObserver(timeObserver) }
+        if let endObserver { NotificationCenter.default.removeObserver(endObserver) }
+        if let failObserver { NotificationCenter.default.removeObserver(failObserver) }
+    }
+
     func configure(store: QuranStore, settings: SettingsStore) {
         self.store = store
         self.settings = settings
         settings.onChange = { [weak self] in self?.settingsChanged() }
         setUpRemoteCommands()
+        if timeObserver == nil {
+            timeObserver = player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 0.5, preferredTimescale: 600), queue: .main) { [weak self] time in
+                guard let self, self.commentary != nil else { return }
+                self.elapsed = time.seconds.isFinite ? min(self.duration, max(0, time.seconds)) : 0
+            }
+        }
     }
 
     // MARK: Controls
@@ -37,6 +55,8 @@ final class AyahPlayer {
     func play(from ayahID: Int, scope: PlayTo? = nil, withBasmala: Bool = false) {
         guard let store, let settings, let location = try? store.location(ofAyahID: ayahID) else { return }
         isLooping = false
+        commentary = nil
+        commentaryQueue = []
         let s = settings.settings
         let end = (try? store.endOfPlayback(from: ayahID, to: scope ?? s.playTo)) ?? ayahID
         plan = PlaybackPlan(end: end, repeatCount: s.repeatCount, translation: s.audioTranslation != nil)
@@ -50,11 +70,27 @@ final class AyahPlayer {
 
     /// The play button of an ayah: pause or resume if it is the current ayah, otherwise start there.
     func toggle(ayahID: Int) {
-        if cursor?.ayahID == ayahID {
+        if commentary == nil && cursor?.ayahID == ayahID {
             togglePause()
         } else {
             play(from: ayahID)
         }
+    }
+
+    /// A shared note is queued once, in the book's order, rather than once for every ayah it covers.
+    func playCommentary(_ entry: QuranStore.StudyEntry) {
+        guard entry.audio != nil, let store else { return }
+        let queue = (try? store.narratedStudyQuranEntries(surahID: entry.surah)) ?? []
+        commentaryQueue = queue.isEmpty ? [entry] : queue
+        isLooping = false
+        loadCommentary(commentaryQueue.firstIndex(where: { $0.id == entry.id }) ?? 0)
+    }
+
+    func seekCommentary(to seconds: Double) {
+        guard commentary != nil, seconds.isFinite else { return }
+        let target = max(0, min(duration, seconds))
+        player.seek(to: CMTime(seconds: target, preferredTimescale: 600))
+        elapsed = target
     }
 
     /// Turns "repeat this ayah" on or off for `ayahID`. On: plays that ayah (from the start, unless it is the one
@@ -71,6 +107,7 @@ final class AyahPlayer {
             }
             return
         }
+        if commentary != nil { play(from: ayahID) }
         if cursor?.ayahID != ayahID || failed { play(from: ayahID) }
         isLooping = true
         plan = PlaybackPlan(end: plan.end, repeatCount: Int.max, translation: plan.translation)
@@ -88,6 +125,12 @@ final class AyahPlayer {
     }
 
     func togglePause() {
+        if commentary != nil {
+            if failed || player.currentItem == nil || elapsed >= duration - 0.1 { loadCommentary(commentaryIndex) }
+            else if isPlaying { pause() }
+            else { resume() }
+            return
+        }
         guard let cursor else { return }
         if failed || player.currentItem == nil {
             load(PlaybackCursor(ayahID: cursor.ayahID, phase: .ayah, repeatLeft: plan.repeatCount))
@@ -99,12 +142,14 @@ final class AyahPlayer {
     }
 
     func next() {
+        if commentary != nil { loadCommentary(commentaryIndex + 1); return }
         endLoop()
         guard let cursor, let c = Playback.skipNext(cursor, plan: plan) else { return }
         load(c)
     }
 
     func previous() {
+        if commentary != nil { loadCommentary(commentaryIndex - 1); return }
         endLoop()
         guard let cursor, let c = Playback.skipPrevious(cursor, plan: plan) else { return }
         load(c)
@@ -118,6 +163,10 @@ final class AyahPlayer {
         isPlaying = false
         isLooping = false
         failed = false
+        commentary = nil
+        commentaryQueue = []
+        elapsed = 0
+        duration = 0
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
     }
 
@@ -139,6 +188,37 @@ final class AyahPlayer {
         cursor = c
         failed = false
         let url = Playback.url(for: c, location: location, reciter: s.reciter, translation: s.audioTranslation)
+        startItem(url)
+        updateNowPlaying(for: c, location: location)
+    }
+
+    private func loadCommentary(_ index: Int) {
+        guard commentaryQueue.indices.contains(index), let store else { return }
+        player.pause()
+        removeObservers()
+        let entry = commentaryQueue[index]
+        commentaryIndex = index
+        commentary = entry
+        cursor = PlaybackCursor(ayahID: store.ayahID(surah: entry.surah, ayah: entry.firstAyah), phase: .ayah, repeatLeft: 1)
+        elapsed = 0
+        duration = entry.audio?.duration ?? 0
+        failed = false
+        guard let audio = entry.audio,
+              let url = Bundle.main.url(forResource: (audio.file as NSString).deletingPathExtension, withExtension: "mp3") else {
+            player.replaceCurrentItem(with: nil)
+            fail()
+            return
+        }
+        startItem(url)
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = [
+            MPMediaItemPropertyTitle: "The Study Quran · \(entry.surah):\(entry.firstAyah)\(entry.lastAyah == entry.firstAyah ? "" : "–\(entry.lastAyah)")",
+            MPMediaItemPropertyArtist: audio.voice,
+            MPMediaItemPropertyAlbumTitle: Str.commentaryAudio.text(language: LocalizedText.deviceLanguage),
+            MPMediaItemPropertyPlaybackDuration: duration,
+        ]
+    }
+
+    private func startItem(_ url: URL) {
         let session = AVAudioSession.sharedInstance()
         try? session.setCategory(.playback)
         try? session.setActive(true)
@@ -155,13 +235,17 @@ final class AyahPlayer {
             if observed.status == .failed { DispatchQueue.main.async { self?.fail() } }
         }
         player.replaceCurrentItem(with: item)
-        player.defaultRate = Float(s.speed)
+        player.defaultRate = Float(settings?.settings.speed ?? 1)
         player.play()
         isPlaying = true
-        updateNowPlaying(for: c, location: location)
     }
 
     private func ended() {
+        if commentary != nil {
+            if commentaryIndex + 1 < commentaryQueue.count { loadCommentary(commentaryIndex + 1) }
+            else { isPlaying = false; elapsed = duration }
+            return
+        }
         guard let cursor else { return }
         if let next = Playback.afterEnded(cursor, plan: plan) {
             load(next)
@@ -188,7 +272,7 @@ final class AyahPlayer {
         let s = settings.settings
         player.defaultRate = Float(s.speed)
         if isPlaying { player.rate = Float(s.speed) }
-        if let cursor, let store {
+        if commentary == nil, let cursor, let store {
             let end = (try? store.endOfPlayback(from: cursor.ayahID, to: s.playTo)) ?? cursor.ayahID
             plan = PlaybackPlan(end: end, repeatCount: isLooping ? Int.max : s.repeatCount, translation: s.audioTranslation != nil)
         }
