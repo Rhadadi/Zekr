@@ -1,4 +1,5 @@
 import type { JSX } from 'preact'
+import { useState } from 'preact/hooks'
 import { loopAyah, looping, toggleAyah } from '../audio'
 import { type Meta, type TranslationInfo, locate } from '../data'
 import { ayahRef, t } from '../i18n'
@@ -31,41 +32,47 @@ export function AyahPanel({ meta, id, ar, translations, playing, variant, showTr
   const texts = translations.map((x) => x.text || t('mergedTranslation'))
   const text = () => ayahText(meta, id, ar, texts)
   const repeating = looping.value && playing
+  const [more, setMore] = useState(false)
   return (
     <div ref={panelRef} class={`ayah-panel ayah-${variant}`} style={style} role="region" aria-label={ayahRef(meta.surahs[surah - 1]!, ayah)} data-testid="ayah-panel">
       <div class="sheet-head">
         <strong>{ayahRef(meta.surahs[surah - 1]!, ayah)}</strong>
+        <div class="ayah-actions">
+          <button class="icon-btn" onClick={() => toggleAyah(id)} aria-label={playing ? t('pause') : t('playFromHere')}>
+            <Icon name={playing ? 'pause' : 'play'} size={20} />
+          </button>
+          <button class="icon-btn" onClick={() => loopAyah(id, !repeating)} aria-pressed={repeating} aria-label={t('repeatAyah')}>
+            <Icon name="repeat" size={20} />
+          </button>
+          <button class="icon-btn" onClick={() => toggleBookmark(id)} aria-label={saved ? t('unbookmark') : t('bookmark')} aria-pressed={saved}>
+            <Icon name={saved ? 'bookmarkFilled' : 'bookmark'} size={20} />
+          </button>
+          <button class="icon-btn" onClick={() => setMore(!more)} aria-label={t('more')} aria-expanded={more}>
+            <Icon name="more" size={20} />
+          </button>
+          <button class="icon-btn" onClick={onClose} aria-label={t('close')}>
+            <Icon name="close" size={20} />
+          </button>
+        </div>
       </div>
-      <div class="ayah-main">
-        <button class="btn primary" onClick={() => toggleAyah(id)}>
-          <Icon name={playing ? 'pause' : 'play'} size={18} /> {playing ? t('pause') : t('playFromHere')}
-        </button>
-        <button class="btn" onClick={() => loopAyah(id, !repeating)} aria-pressed={repeating}>
-          <Icon name="repeat" size={18} /> {t('repeatAyah')}
-        </button>
-        {tafsirIndex.value ? (
-          <a class="btn" href={href.tafsir(surah, ayah)} aria-label={`${t('tafsir')}: ${t('almizan')}`}>
-            <Icon name="book" size={18} /> {t('almizan')}
+      {more ? (
+        <div class="ayah-more">
+          {tafsirIndex.value ? (
+            <a href={href.tafsir(surah, ayah)} aria-label={`${t('tafsir')}: ${t('almizan')}`}>
+              <Icon name="book" size={18} /> {t('almizan')}
+            </a>
+          ) : null}
+          <a href={href.verse(surah, ayah)}>
+            <Icon name="list" size={18} /> {t('openVerseView')}
           </a>
-        ) : null}
-      </div>
-      <div class="ayah-actions">
-        <button class="icon-btn" onClick={() => toggleBookmark(id)} aria-label={saved ? t('unbookmark') : t('bookmark')} aria-pressed={saved}>
-          <Icon name={saved ? 'bookmarkFilled' : 'bookmark'} size={20} />
-        </button>
-        <button class="icon-btn" onClick={() => copyText(text())} aria-label={t('copy')}>
-          <Icon name="copy" size={20} />
-        </button>
-        <button class="icon-btn" onClick={() => shareText(text(), ayahLink(meta, id))} aria-label={t('share')}>
-          <Icon name="share" size={20} />
-        </button>
-        <a class="icon-btn" href={href.verse(surah, ayah)} aria-label={t('openVerseView')}>
-          <Icon name="list" size={20} />
-        </a>
-        <button class="icon-btn" onClick={onClose} aria-label={t('close')}>
-          <Icon name="close" size={20} />
-        </button>
-      </div>
+          <button onClick={() => { copyText(text()); setMore(false) }}>
+            <Icon name="copy" size={18} /> {t('copy')}
+          </button>
+          <button onClick={() => { shareText(text(), ayahLink(meta, id)); setMore(false) }}>
+            <Icon name="share" size={18} /> {t('share')}
+          </button>
+        </div>
+      ) : null}
       <div class="sheet-body">
         {showTranslations && translations.length === 0 ? <p class="muted small">{t('translationsHint')}</p> : null}
         {showTranslations ? translations.map((x, i) => (

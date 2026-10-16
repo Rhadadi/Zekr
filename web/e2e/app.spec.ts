@@ -665,6 +665,7 @@ test.describe('Al-Mizan tafsir', () => {
       await useSettings(page, { lang: 'fa' })
       await page.goto('/#/page/305')
       await page.locator('#page-305 .ay').nth(2).click()
+      await page.getByTestId('ayah-panel').getByRole('button', { name: 'بیشتر' }).click()
       await page.getByTestId('ayah-panel').getByRole('link', { name: 'تفسیر: المیزان' }).click()
       await expect(page).toHaveURL(/#\/tafsir\/19\/3$/)
       await expect(page.locator('article.tafsir .tf-h').first()).toHaveText('ترجمه آیات')

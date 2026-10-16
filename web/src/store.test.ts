@@ -16,4 +16,10 @@ describe('settings saved by older versions', () => {
     expect(migrateSettings({ translationPlace: 'inline', pageBox: 'popup' }).translationPlace).toBe('inline')
     expect(migrateSettings({}).translationPlace).toBeUndefined() // the default applies
   })
+
+  it('makes Persian the language once, for those who had "follow the device"', () => {
+    expect(migrateSettings({ lang: 'auto' }, true).lang).toBe('fa')
+    expect(migrateSettings({ lang: 'auto' }, false).lang).toBe('auto') // chosen again later: kept
+    expect(migrateSettings({ lang: 'en' }, true).lang).toBe('en')
+  })
 })
