@@ -342,7 +342,8 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   }, [bottomBox, selected])
 
   const surahOfPage = meta.surahs[locate(meta, pageRange(meta, current).first).surah - 1]!
-  useEffect(() => {
+  // a layout effect, so Escape works as soon as the menu is on screen
+  useLayoutEffect(() => {
     if (!menu) return
     const key = (e: KeyboardEvent) => e.key === 'Escape' && setMenu(null)
     document.addEventListener('keydown', key)
