@@ -2,7 +2,7 @@ import type { JSX } from 'preact'
 import { useState } from 'preact/hooks'
 import { loopAyah, looping, toggleAyah } from '../audio'
 import { type Meta, type TranslationInfo, locate } from '../data'
-import { ayahRef, t } from '../i18n'
+import { ayahRef, num, t } from '../i18n'
 import { href } from '../router'
 import { ayahLink, ayahText, copyText, shareText } from '../share'
 import { isBookmarked, toggleBookmark } from '../store'
@@ -36,7 +36,7 @@ export function AyahPanel({ meta, id, ar, translations, playing, variant, showTr
   return (
     <div ref={panelRef} class={`ayah-panel ayah-${variant}`} style={style} role="region" aria-label={ayahRef(meta.surahs[surah - 1]!, ayah)} data-testid="ayah-panel">
       <div class="sheet-head">
-        <strong>{ayahRef(meta.surahs[surah - 1]!, ayah)}</strong>
+        <strong>{num(surah)}:{num(ayah)}</strong>
         <div class="ayah-actions">
           <button class="icon-btn" onClick={() => toggleAyah(id)} aria-label={playing ? t('pause') : t('playFromHere')}>
             <Icon name={playing ? 'pause' : 'play'} size={20} />
