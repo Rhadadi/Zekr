@@ -24,6 +24,20 @@ describe('translation under each line of a printed page', () => {
     expect(strips.some((s) => !s.line && s.top > 187 && s.bottom < 306)).toBe(true) // the banner is its own strip
   })
 
+  it('ends a line just above the border of the banner after it, when the border reaches up into the line', () => {
+    // a picture 935 rows high: some text ink low in line 2 (bottom 187), and the banner's border from 180 down
+    const ink = new Float32Array(935)
+    const row = (y: number) => Math.round((y / 1000) * 935)
+    for (let y = row(175); y < row(180); y++) ink[y] = 0.5
+    for (let y = row(180); y < row(186); y++) ink[y] = 1
+    const strips = pageStrips(pg, ink)
+    const line2 = strips.filter((s) => s.line)[1]!
+    expect(line2.bottom).toBeLessThan(180)
+    expect(line2.bottom).toBeGreaterThanOrEqual(177) // the text ink above the border stays with its line
+    for (let i = 1; i < strips.length; i++) expect(strips[i]!.top).toBe(strips[i - 1]!.bottom)
+    expect(pageStrips(pg, new Float32Array(935)).filter((s) => s.line)[1]!.bottom).toBe(189) // no border: as before
+  })
+
   it('shares an ayah\'s words over its pieces by their size, keeping every word once', () => {
     const text = 'a b c d e f g h i j k l'
     const parts = splitAcross(text, [800, 400])
