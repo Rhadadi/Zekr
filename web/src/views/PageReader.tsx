@@ -389,7 +389,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
               </button>
             ) : null}
             <button class="mb-surah" lang="ar" aria-haspopup="listbox" aria-expanded={menu === 'surah'} aria-label={`${t('surahs')}: ${surahName(surahOfPage)}`} onClick={() => setMenu(menu === 'surah' ? null : 'surah')}>
-              <span>سورة {surahOfPage.ar}</span>
+              <span>{surahOfPage.ar}</span>
             </button>
             {jumping ? (
               jumpForm
