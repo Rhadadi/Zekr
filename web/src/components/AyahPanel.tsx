@@ -6,6 +6,7 @@ import { ayahRef, num, t } from '../i18n'
 import { href } from '../router'
 import { ayahLink, ayahText, copyText, shareText } from '../share'
 import { isBookmarked, toggleBookmark } from '../store'
+import { sheetOpen } from '../ui'
 import { tafsirIndex } from '../tafsir'
 import { Icon } from './Icon'
 import { StudyChips } from './StudyQuranPanel'
@@ -31,8 +32,12 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
   const texts = translations.map((x) => x.text || t('mergedTranslation'))
   const text = () => ayahText(meta, id, ar, texts)
   // While this ayah is the one in the recitation bar, the bar already says which ayah it is and holds play, pause
-  // and repeat: the panel does not repeat them.
-  const inPlayer = player.value?.ayahId === id
+  // and repeat: the panel does not repeat them. The phone's sheet hides the bar, so there it has them itself.
+  const p = player.value
+  const inPlayer = p?.ayahId === id && !sheetOpen.value
+  const playingHere = p?.ayahId === id && (p.status === 'playing' || p.status === 'loading')
+  // on the phone, with the translation already on the page, starting the recitation hands over to the bar
+  const handOver = () => { if (!showTranslations && sheetOpen.peek()) onClose() }
   const [more, setMore] = useState(false)
   return (
     <div ref={panelRef} class={`ayah-panel ayah-${variant}`} style={style} role="region" aria-label={ayahRef(meta.surahs[surah - 1]!, ayah)} data-testid="ayah-panel">
@@ -40,8 +45,8 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
         <strong class={inPlayer ? 'visually-hidden' : 'ayah-ref'}>{num(surah)}:{num(ayah)}</strong>
         <div class="ayah-actions">
           {inPlayer ? null : (
-            <button class="icon-btn" onClick={() => toggleAyah(id)} aria-label={t('playFromHere')}>
-              <Icon name="play" size={20} />
+            <button class="icon-btn" onClick={() => { toggleAyah(id); if (!playingHere) handOver() }} aria-label={playingHere ? t('pause') : t('playFromHere')}>
+              <Icon name={playingHere ? 'pause' : 'play'} size={20} />
             </button>
           )}
           <button class="icon-btn" onClick={() => toggleBookmark(id)} aria-label={saved ? t('unbookmark') : t('bookmark')} aria-pressed={saved}>
@@ -58,7 +63,7 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
       {more ? (
         <div class="ayah-more">
           {inPlayer ? null : (
-            <button onClick={() => { loopAyah(id, true); setMore(false) }}>
+            <button onClick={() => { loopAyah(id, true); setMore(false); handOver() }}>
               <Icon name="repeat" size={18} /> {t('repeatAyah')}
             </button>
           )}

@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'preact/hooks'
 import { t } from '../i18n'
-import { drawerOpen } from '../ui'
+import { drawerOpen, sheetOpen } from '../ui'
 
 const DRAG = 6 // px of movement that makes a press a drag instead of a tap
 const CLOSE_BELOW = 90 // dragged down this far from the lower detent, it closes
@@ -26,9 +26,11 @@ export function Sheet({ children, onClose }: { children: preact.ComponentChildre
     set()
     const observer = new ResizeObserver(set)
     observer.observe(el)
+    sheetOpen.value = true
     return () => {
       observer.disconnect()
       html.style.removeProperty('--sheet-h')
+      sheetOpen.value = false
     }
   }, [])
 

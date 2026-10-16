@@ -5,6 +5,7 @@ import { ayahRef, num, surahName, t } from '../i18n'
 import { href } from '../router'
 import { Icon } from './Icon'
 import { PlaybackOptions } from './PlaybackOptions'
+import { sheetOpen } from '../ui'
 import { TranslationAudioToggle } from './TranslationAudioToggle'
 
 export function PlayerBar({ meta }: { meta: Meta }) {
@@ -12,7 +13,8 @@ export function PlayerBar({ meta }: { meta: Meta }) {
   const [open, setOpen] = useState(false)
   const bar = useRef<HTMLDivElement>(null)
   // Everything that sits at the bottom of the screen (the translation box, layers, the toast) leaves room for the bar.
-  const showing = !!p
+  // While the phone's sheet is open the bar is not shown: the sheet takes its place (one panel at the bottom).
+  const showing = !!p && !sheetOpen.value
   useLayoutEffect(() => {
     const el = bar.current
     const root = document.documentElement
@@ -32,7 +34,7 @@ export function PlayerBar({ meta }: { meta: Meta }) {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [open])
-  if (!p) return null
+  if (!p || !showing) return null
   const { surah, ayah } = locate(meta, p.ayahId)
   const playing = p.status === 'playing' || p.status === 'loading'
   return (

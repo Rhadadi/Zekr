@@ -20,9 +20,9 @@ After several rounds of feedback the owner is still unhappy with the page layout
 | D1 | **The mushaf is the only reading screen.** It scrolls continuously through all 604 pages. Everything else is a **layer** over it (a panel, sheet or overlay) that closes back to the exact same ayah and scroll position. |
 | D2 | **Navigation is a side drawer** opened by a burger at the start of the top bar: Quran, Today, Search, Saved, Settings. There is no bottom bar. |
 | D3 | **Desktop: tapping an ayah opens a left panel that stays open** (an inspector) with the ayah's actions and its translation. It follows the recitation. The text column never changes width. |
-| D4 | **Phone: tapping an ayah opens a bottom sheet**, draggable to two heights and dismissable, with the same contents. |
+| D4 | **Phone: tapping an ayah opens a bottom sheet**, draggable to two heights and dismissable, with the same contents. *Later (October 16, 2026): while the sheet is open it takes the place of the recitation bar, with play and pause of its own, so there is only one panel at the bottom; with the translation on the page, playing from it closes it.* |
 | D5 | **Verse by verse stays, as a "Study view" layer** with a clear Close, not as a destination. |
-| D6 | **Translation placement is a setting**: panel (the default: left panel on desktop, bottom sheet on phone), card over the ayah, inline under each ayah, or off. |
+| D6 | **Translation placement is a setting**: panel (the default: left panel on desktop, bottom sheet on phone), card over the ayah, inline under each ayah, or off. *Later (October 16, 2026): the owner made inline (under each line of the printed page) the default; a saved panel, the old default, moves to it once.* |
 | D7 | The Study Quran and Al-Mizan text are private. They must never reach the public repository or the public website (see `AGENTS.md`). *Later: the owner confirmed permission to publish Al-Mizan and the printed pages (October 15, 2026) and The Study Quran's text (October 16, 2026); they are on the website.* |
 
 ## 3. The model

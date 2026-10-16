@@ -22,6 +22,8 @@ async function trackAudio(page: Page): Promise<() => Promise<string[]>> {
 async function useSettings(page: Page, settings: Record<string, unknown>) {
   await page.addInitScript((s) => {
     if (!localStorage.getItem('zekr.settings')) localStorage.setItem('zekr.settings', JSON.stringify(s))
+    // these are choices, not an old default to move on from
+    localStorage.setItem('zekr.inlineDefault', 'true')
   }, settings)
 }
 
@@ -332,7 +334,7 @@ test.describe('mushaf page view', () => {
   })
 
   test('tapping an ayah opens the inspector beside the text, and the text does not move', async ({ page }) => {
-    await useSettings(page, { lang: 'en' })
+    await useSettings(page, { lang: 'en', translationPlace: 'panel' })
     await page.goto('/#/page/305')
     await settle(page)
     const inspector = page.getByTestId('inspector')
@@ -372,7 +374,7 @@ test.describe('mushaf page view', () => {
   })
 
   test('with two translations the box shows both in full', async ({ page }) => {
-    await useSettings(page, { lang: 'en', translations: ['fa.safavi', 'en.sahih'] })
+    await useSettings(page, { lang: 'en', translationPlace: 'panel', translations: ['fa.safavi', 'en.sahih'] })
     await page.goto('/#/page/3')
     await page.locator('#page-3 .ay').nth(1).click()
     const box = page.getByTestId('inspector')
@@ -715,7 +717,7 @@ test.describe('page view: recitation, tapping and pressing', () => {
   test.use({ viewport: { width: 1280, height: 800 } }) // a computer: the box beside the text
   test('the open box follows the recitation, with one highlight', async ({ page }) => {
     const played = await trackAudio(page)
-    await useSettings(page, { lang: 'en' })
+    await useSettings(page, { lang: 'en', translationPlace: 'panel' })
     await page.goto('/#/page/305')
     await page.locator('#page-305 .ay').first().click()
     const panel = page.getByTestId('ayah-panel')
@@ -991,18 +993,32 @@ test.describe('page view on a phone', () => {
     expect(card.y).toBeGreaterThanOrEqual(top.y + top.height - 1)
   })
 
-  test('the recitation bar never covers the translation box at the bottom', async ({ page }) => {
+  test('one panel at the bottom: an open box takes the place of the recitation bar, with play and pause of its own', async ({ page }) => {
     await trackAudio(page)
-    await useSettings(page, { lang: 'en' })
+    await useSettings(page, { lang: 'en', translationPlace: 'panel' })
+    await page.goto('/#/page/1')
+    await settle(page)
+    await page.locator('#page-1 .ay').nth(2).click()
+    const box = page.getByTestId('ayah-panel')
+    await box.getByRole('button', { name: 'Play' }).click()
+    // the translation is in the box: it stays, follows the recitation, and the bar waits for it to close
+    await expect(page.locator('.player')).toHaveCount(0)
+    await expect(box.getByRole('button', { name: /Play|Pause/ })).toBeVisible()
+    await expect(page.getByTestId('sheet')).toHaveCSS('bottom', '0px')
+    await box.getByRole('button', { name: 'Close' }).click()
+    await expect(page.locator('.player')).toBeVisible()
+    await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--player-h'))).not.toBe('0px')
+  })
+
+  test('with the translation on the page, playing from an ayah closes its box and leaves the recitation bar', async ({ page }) => {
+    await trackAudio(page)
+    await useSettings(page, { lang: 'en' }) // the default: the translation under each line
     await page.goto('/#/page/1')
     await settle(page)
     await page.locator('#page-1 .ay').nth(2).click()
     await page.getByTestId('ayah-panel').getByRole('button', { name: 'Play' }).click()
+    await expect(page.getByTestId('ayah-panel')).toHaveCount(0)
     await expect(page.locator('.player')).toBeVisible()
-    await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--player-h'))).not.toBe('0px')
-    const box = (await page.getByTestId('sheet').boundingBox())!
-    const bar = (await page.locator('.player').boundingBox())!
-    expect(box.y + box.height).toBeLessThanOrEqual(bar.y + 1)
   })
 
   test('no bottom bar: one small menu button at the top left opens Quran, Today, Search, Saved and Settings', async ({ page }) => {
@@ -1143,7 +1159,7 @@ test.describe('The printed mushaf as pictures (private build, made-up pictures h
   test.use({ serviceWorkers: 'block' })
 
   test('a page is a picture with one tappable area per ayah; tapping one selects it', async ({ page }) => {
-    await useSettings(page, { lang: 'en' })
+    await useSettings(page, { lang: 'en', translationPlace: 'panel' })
     await page.goto('/#/page/3')
     await expect(page.locator('#page-3 .pg-img')).toBeVisible()
     await expect(page.locator('#page-3 .ay')).toHaveCount(11) // 2:6-16
@@ -1157,7 +1173,7 @@ test.describe('The printed mushaf as pictures (private build, made-up pictures h
   })
 
   test('the page number on the page opens "go to page", and so do the reading options', async ({ page }) => {
-    await useSettings(page, { lang: 'en' })
+    await useSettings(page, { lang: 'en', translationPlace: 'panel' })
     await page.goto('/#/page/5')
     await settle(page)
     await page.locator('#page-5 .pg-no').click()
@@ -1172,7 +1188,7 @@ test.describe('The printed mushaf as pictures (private build, made-up pictures h
   })
 
   test('one printed page at a time; small buttons in the bar turn to the next and the previous page', async ({ page }) => {
-    await useSettings(page, { lang: 'en' })
+    await useSettings(page, { lang: 'en', translationPlace: 'panel' })
     await page.goto('/#/page/3')
     await expect(page.locator('#page-3 .pg-img')).toBeVisible()
     await expect(page.locator('.mpage')).toHaveCount(1) // not a long scroll of all the pages
@@ -1222,7 +1238,7 @@ test.describe('The printed mushaf as pictures (private build, made-up pictures h
   })
 
   test('page colour is a filter on the picture only', async ({ page }) => {
-    await useSettings(page, { lang: 'en', pageColor: 'dark' })
+    await useSettings(page, { lang: 'en', translationPlace: 'panel', pageColor: 'dark' })
     await page.goto('/#/page/3')
     await expect(page.locator('#page-3 .pg-img')).toHaveCSS('filter', /invert/)
     await expect(page.locator('#page-3 .ay').first().locator('.seg')).not.toHaveCSS('filter', /invert/)
