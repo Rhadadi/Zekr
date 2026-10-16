@@ -558,12 +558,11 @@ a.player-info { color: var(--ink); text-decoration: none; }
 /* Translation under each line of the printed page: the picture cut into its lines, each followed by its translation */
 .mushaf-flow.printed .mpage.il { max-width: 720px; display: block; background: #fff; }
 .il-strip { position: relative; overflow: hidden; height: 0; }
-.il-strip .pg-img { position: absolute; top: 0; left: 0; width: 100%; height: auto; }
+.il .il-pic { position: absolute; inset: 0; width: auto; height: auto; background-repeat: no-repeat; }
 .il .seg { position: absolute; display: block; cursor: pointer; border-radius: 5px; padding: 0; scroll-margin: calc(var(--bar-h) + 40px) 0 calc(var(--sheet-h, 0px) + 40px); }
 .il .seg.ay:not(.sel):not(.playing) { background: none; }
 /* The box under a line: the frame stretched down its sides, a plain light box inside it */
 .il-tr { position: relative; overflow: hidden; padding: 1px 11.5% 3px; color: #262624; font-family: var(--font-ui); }
-.il-tr .il-frame { position: absolute; left: 0; width: 100%; }
 .il-paper { position: absolute; inset: 0 10.4%; background: #fbfaf5; border-block: 1px solid #ece8da; }
 .il-under { padding: 10px 6% 12px; background: #fbfaf5; }
 .il-under .il-p { font-size: inherit; }
