@@ -569,3 +569,18 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .il-mark { color: #8a6d1d; font-size: 0.85em; white-space: nowrap; }
 .mushaf-flow[data-color='dark'] .mpage.il { background: #111; }
 .mushaf-flow[data-color='dark'] .il-tr { background: #1b1b19; border-color: #2a2a26; color: #e8e6df; }
+
+/* Word by word: each Arabic word over its Persian meaning, both in the same colour; lines justified like the page */
+.mushaf-flow.printed .mpage.wbw { max-width: 720px; }
+.mpage.wbw { padding: 6px 10px 0; }
+.wflow { margin: 6px 0; text-align: justify; text-align-last: start; line-height: 1; word-spacing: 0.15em; }
+.wflow .ay { padding: 0; border-radius: 8px; }
+.wflow .wb { display: inline-flex; flex-direction: column; align-items: center; vertical-align: top; margin: 0 0 14px; max-width: 11em; }
+.wb-ar { font-family: var(--font-quran); line-height: 1.75; white-space: nowrap; }
+.wb-fa { font-family: var(--font-ui); line-height: 1.35; text-align: center; white-space: normal; margin-top: -2px; max-width: 8.5em; }
+.wb-mark { justify-content: flex-start; }
+.wflow .wb-mark .mark { font-size: 0.75em; line-height: 2.2; }
+.wflow { --w1: #1f6b58; --w2: #8a4b12; --w3: #2c4a8a; --w4: #7a2e4a; }
+:root[data-theme='dark'] .wflow { --w1: #7fd1b5; --w2: #e2a86b; --w3: #9db7ef; --w4: #e39bb8; }
+@media (prefers-color-scheme: dark) { :root[data-theme='auto'] .wflow { --w1: #7fd1b5; --w2: #e2a86b; --w3: #9db7ef; --w4: #e39bb8; } }
+.wflow .c0 { color: var(--ink); } .wflow .c1 { color: var(--w1); } .wflow .c2 { color: var(--w2); } .wflow .c3 { color: var(--w3); } .wflow .c4 { color: var(--w4); }

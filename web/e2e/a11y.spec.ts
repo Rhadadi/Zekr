@@ -65,3 +65,17 @@ for (const theme of ['light', 'sepia', 'dark'] as const) {
     })
   }
 }
+
+test('no accessibility violations on a word-by-word page, in Persian and English', async ({ page }) => {
+  test.setTimeout(120_000)
+  const problems: string[] = []
+  for (const lang of ['fa', 'en'] as const) {
+    await page.addInitScript((l) => localStorage.setItem('zekr.settings', JSON.stringify({ lang: l, translationPlace: 'words' })), lang)
+    await page.goto('about:blank')
+    await page.goto('/#/page/3')
+    await page.waitForSelector('#page-3 .wb')
+    const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()
+    problems.push(...result.violations.map((v) => `${lang}: ${v.id} (${v.impact}): ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join(' | ')}`))
+  }
+  expect(problems).toEqual([])
+})

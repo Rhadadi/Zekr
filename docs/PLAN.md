@@ -125,7 +125,7 @@ A static website (no server, no login) that works on a phone, tablet or computer
 | Tafsir, English | Quran.com / [QUL](https://qul.tarteel.ai): Ibn Kathir (abridged), Ma'arif al-Qur'an, Tazkirul Quran | Each resource has its own license |
 | Tafsir, Persian | QUL: Al-Mukhtasar (Persian), As-Sa'di (Persian) | Each resource has its own license. A free QUL account is needed to download |
 | Tafsir, Arabic | Quran.com / QUL: Muyassar, Ibn Kathir, Tabari, Qurtubi, Sa'di, Baghawi, Wasit | Each resource has its own license |
-| Persian word-by-word (later) | QUL | Free QUL account needed |
+| Persian word-by-word | [SakinaDevGroup/quran-word-by-word-farsi](https://github.com/SakinaDevGroup/quran-word-by-word-farsi) v1.0 (77,429 words; `tools/wbw.py`, checksum-pinned) | **No license stated.** In use on the website since October 2026 at the owner's request; ask the authors before any App Store or commercial use |
 
 **Not available from open sources:**
 - Tafsir Nemooneh (which you use in Quran Hadi), Al-Mizan and Tafsir Noor

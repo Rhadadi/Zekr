@@ -828,6 +828,33 @@ test.describe('page view: recitation, tapping and pressing', () => {
   })
 })
 
+test.describe('word by word', () => {
+  test('each Arabic word with its Persian meaning under it, one page at a time; a word opens its ayah', async ({ page }) => {
+    await useSettings(page, { lang: 'fa', translationPlace: 'words' })
+    await page.goto('/#/page/1')
+    const pg = page.locator('#page-1')
+    await expect(pg.locator('.wb').first()).toBeVisible()
+    await expect(page.locator('.mpage')).toHaveCount(1)
+    const first = pg.locator('.wb').first()
+    await expect(first.locator('.wb-ar')).toHaveText('بِسْمِ')
+    await expect(first.locator('.wb-fa')).toHaveText('به نام')
+    // the meaning has the same colour as its word, and the next word another one
+    const colour = (el: import('@playwright/test').Locator) => el.evaluate((e) => getComputedStyle(e).color)
+    expect(await colour(first.locator('.wb-fa'))).toBe(await colour(first.locator('.wb-ar')))
+    expect(await colour(pg.locator('.wb').nth(1).locator('.wb-ar'))).not.toBe(await colour(first.locator('.wb-ar')))
+    await expect(pg.locator('.wb-mark')).toHaveCount(7)
+    await pg.locator('.wb').nth(5).click() // a word of 1:2
+    const panel = page.getByTestId('ayah-panel')
+    await expect(panel).toContainText('۱:۲')
+    await expect(panel.locator('.tr')).toHaveCount(1) // the ayah's full translation is in its panel
+    await page.keyboard.press('Escape')
+    await page.getByRole('button', { name: 'صفحهٔ بعد' }).click()
+    await expect(page.locator('#page-2 .wb').first()).toBeVisible()
+    await page.goto('/#/settings')
+    await expect(page.getByLabel('ترجمه در صفحه').locator('option:checked')).toHaveText('کلمه به کلمه، زیر هر کلمهٔ عربی')
+  })
+})
+
 test.describe('page view on a phone', () => {
   test('the translation is a box at the bottom by default; the text keeps its width and the ayah stays clear of the box', async ({ page }) => {
     await useSettings(page, { lang: 'en' })
@@ -846,7 +873,7 @@ test.describe('page view on a phone', () => {
     expect(after.width).toBeGreaterThanOrEqual(before.width - 1)
     // the four places a translation can show
     await page.goto('/#/settings')
-    await expect(page.getByLabel('Translation on the page').locator('option')).toHaveText(['In a sheet at the bottom', 'Over the ayah (hover or tap)', 'Under each ayah, in the text', 'Not on the page'])
+    await expect(page.getByLabel('Translation on the page').locator('option')).toHaveText(['In a sheet at the bottom', 'Over the ayah (hover or tap)', 'Under each ayah, in the text', 'Word by word, under each Arabic word', 'Not on the page'])
   })
 
   test('the sheet has two heights: the handle toggles them, dragging it up grows it and down closes it, Escape closes it', async ({ page }) => {
