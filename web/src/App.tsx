@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'preact/hooks'
 import { initAudio } from './audio'
 import { AppBar } from './components/AppBar'
 import { Drawer } from './components/Drawer'
+import { GoTo } from './components/GoTo'
 import { Icon } from './components/Icon'
 import { LoadError, Loading } from './components/Page'
 import { PlayerBar } from './components/PlayerBar'
@@ -128,6 +129,7 @@ export function App() {
       <main id="main" {...(drawerOpen.value ? { inert: true } : {})}>{content}</main>
       {meta.value ? <PlayerBar meta={meta.value} /> : null}
       <Drawer meta={meta.value} active={active} onMushaf={!layer} />
+      {meta.value ? <GoTo meta={meta.value} /> : null}
       {toast.value ? <div class="toast" role="status">{toast.value}</div> : null}
     </div>
   )

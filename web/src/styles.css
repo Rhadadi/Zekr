@@ -670,6 +670,12 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .mushaf-flow[data-color='dark'] .il-tr { color: #e8e6df; }
 .mushaf-flow[data-color='dark'] :is(.il-paper, .il-under) { background: #1b1b19; border-color: #2a2a26; }
 
+/* A page turn: the new page slides in a little from the side the book advances from (the next page from the left) */
+.mushaf-flow[data-turn='next'] .mpage { animation: page-in-next 0.28s cubic-bezier(0.05, 0.7, 0.1, 1); }
+.mushaf-flow[data-turn='prev'] .mpage { animation: page-in-prev 0.28s cubic-bezier(0.05, 0.7, 0.1, 1); }
+@keyframes page-in-next { from { opacity: 0; transform: translateX(-3%); } to { opacity: 1; transform: none; } }
+@keyframes page-in-prev { from { opacity: 0; transform: translateX(3%); } to { opacity: 1; transform: none; } }
+
 /* Word by word: each Arabic word over its Persian meaning, both in the same colour; lines justified like the page */
 .mushaf-flow.printed .mpage.wbw { max-width: 720px; }
 .mpage.wbw { padding: 6px 10px 0; }
@@ -684,3 +690,20 @@ a.player-info { color: var(--ink); text-decoration: none; }
 :root[data-theme='dark'] .wflow { --w1: #7fd1b5; --w2: #e2a86b; --w3: #9db7ef; --w4: #e39bb8; }
 @media (prefers-color-scheme: dark) { :root[data-theme='auto'] .wflow { --w1: #7fd1b5; --w2: #e2a86b; --w3: #9db7ef; --w4: #e39bb8; } }
 .wflow .c0 { color: var(--ink); } .wflow .c1 { color: var(--w1); } .wflow .c2 { color: var(--w2); } .wflow .c3 { color: var(--w3); } .wflow .c4 { color: var(--w4); }
+
+/* "Go to…": a small box near the top, over everything (a modal <dialog>, so focus stays in it and Escape closes it) */
+.goto {
+  position: fixed; inset: 0 0 auto 0; margin: min(14dvh, 120px) auto 0; width: min(560px, calc(100vw - 24px)); max-height: 70dvh; padding: 0; overflow: hidden;
+  display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--ink);
+  box-shadow: 0 24px 60px -16px rgb(0 0 0 / 0.4);
+}
+.goto:not([open]) { display: none; }
+.goto::backdrop { background: rgb(0 0 0 / 0.4); }
+.goto-input { flex: none; min-height: 56px; padding: 0 18px; border: 0; border-bottom: 1px solid var(--line); background: none; font: inherit; font-size: 1.15rem; color: var(--ink); }
+.goto-input:focus { outline: none; }
+.goto:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.goto-list { margin: 0; padding: 6px; list-style: none; overflow-y: auto; }
+.goto-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding: 0 12px; border-radius: 10px; cursor: pointer; }
+.goto-list li.on { background: var(--hl); font-weight: 600; }
+.goto-sub { color: var(--muted); font-family: var(--font-quran); font-size: 1.05rem; }
+.goto-none { margin: 0; padding: 16px 18px; }

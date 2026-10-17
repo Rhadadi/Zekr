@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'preact/hooks'
 import type { Meta } from '../data'
 import { t } from '../i18n'
 import { type LayerName, href } from '../router'
-import { drawerOpen, pageOptionsAsked } from '../ui'
+import { drawerOpen, gotoOpen, pageOptionsAsked } from '../ui'
 import { SettingsView } from '../views/Settings'
 import { Logo } from './AppBar'
 import { Icon } from './Icon'
@@ -113,6 +113,10 @@ export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active
             <button type="submit" class="icon-btn" aria-label={t('navSearch')}><Icon name="search" size={20} /></button>
           </form>
           <nav class="drawer-links" aria-label="Main">
+            <button class="drawer-item" onClick={() => { close(); gotoOpen.value = true }}>
+              <Icon name="goto" size={20} />
+              <span>{t('goTo')}</span>
+            </button>
             {link(href.today, 'today', 'sun', t('navToday'))}
             {link(href.saved, 'saved', 'bookmark', t('navBookmarks'))}
             {onMushaf ? (

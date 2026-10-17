@@ -1300,11 +1300,26 @@ test.describe('The printed mushaf as pictures (private build, made-up pictures h
     await expect(page.locator('#page-3 .pg-img')).toBeVisible()
     await page.locator('.edge-next').click()
     await expect(page.locator('#page-4 .pg-img')).toBeVisible()
-    // opening an ayah does not move the page at this size
+    // opening an ayah does not move the page at this size (once the turn has come in)
+    await expect.poll(() => page.evaluate(() => document.getAnimations().length)).toBe(0)
     const before = (await page.locator('#page-4 .pg').boundingBox())!
     await page.locator('#page-4 .ay').first().locator('.seg').click()
     await expect(page.getByTestId('side-panel')).toBeVisible()
     expect((await page.locator('#page-4 .pg').boundingBox())!).toEqual(before)
+  })
+
+  test('on a computer the translation under each line is large enough to read, and a page turn comes in from the side the book advances from', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await useSettings(page, { lang: 'fa', translationPlace: 'inline' })
+    await page.goto('/#/page/3')
+    await expect(page.locator('#page-3 .il-p').first()).toBeVisible()
+    expect(await page.locator('#page-3 .il-p').first().evaluate((e) => parseFloat(getComputedStyle(e).fontSize))).toBeGreaterThanOrEqual(14)
+    await expect(page.locator('.mushaf-flow')).not.toHaveAttribute('data-turn', /.+/)
+    await page.keyboard.press('ArrowLeft')
+    await expect(page.locator('#page-4')).toBeVisible()
+    await expect(page.locator('.mushaf-flow')).toHaveAttribute('data-turn', 'next')
+    await page.keyboard.press('ArrowRight')
+    await expect(page.locator('.mushaf-flow')).toHaveAttribute('data-turn', 'prev')
   })
 
   test('a sideways swipe turns the page: to the right for the next (the book is right to left), to the left for the previous', async ({ page }) => {
