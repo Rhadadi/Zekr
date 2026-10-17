@@ -385,19 +385,22 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   }, [sideBox])
   // One page at a time, the arrow keys turn the pages in the book's direction: left for the next page, right for the
   // previous one, in both languages.
+  // (through a ref, so a key pressed right after a turn still sees the page it is now on)
+  const turnBy = useRef<(by: number) => void>()
+  turnBy.current = (by) => turnTo(current + by)
   useEffect(() => {
     if (!single || paused) return
     const key = (e: KeyboardEvent) => {
       if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || drawerOpen.peek()) return
       if (e.target instanceof Element && e.target.closest('input, select, textarea, [role="listbox"], [role="menu"]')) return
-      if (e.key === 'ArrowLeft') turnTo(current + 1)
-      else if (e.key === 'ArrowRight') turnTo(current - 1)
+      if (e.key === 'ArrowLeft') turnBy.current?.(1)
+      else if (e.key === 'ArrowRight') turnBy.current?.(-1)
       else return
       e.preventDefault()
     }
     document.addEventListener('keydown', key)
     return () => document.removeEventListener('keydown', key)
-  })
+  }, [single, paused])
 
   const surahOfPage = meta.surahs[locate(meta, pageRange(meta, current).first).surah - 1]!
   // a layout effect, so Escape works as soon as the menu is on screen
