@@ -1247,6 +1247,26 @@ test.describe('The printed mushaf as pictures (private build, made-up pictures h
     await expect(page.locator('#page-603')).toBeVisible()
   })
 
+  test('a sideways swipe turns the page: to the right for the next (the book is right to left), to the left for the previous', async ({ page }) => {
+    await useSettings(page, { lang: 'fa', translationPlace: 'panel' })
+    await page.goto('/#/page/3')
+    await expect(page.locator('#page-3 .pg-img')).toBeVisible()
+    const swipe = (dx: number, dy = 0) =>
+      page.locator('.mushaf-flow').evaluate((el, { dx, dy }) => {
+        const at = (x: number, y: number) => new Touch({ identifier: 1, target: el, clientX: x, clientY: y })
+        el.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, touches: [at(195, 400)], changedTouches: [at(195, 400)] }))
+        el.dispatchEvent(new TouchEvent('touchmove', { bubbles: true, touches: [at(195 + dx, 400 + dy)], changedTouches: [at(195 + dx, 400 + dy)] }))
+        el.dispatchEvent(new TouchEvent('touchend', { bubbles: true, touches: [], changedTouches: [at(195 + dx, 400 + dy)] }))
+      }, { dx, dy })
+    await swipe(150)
+    await expect(page.locator('#page-4 .pg-img')).toBeVisible()
+    await swipe(-150)
+    await expect(page.locator('#page-3 .pg-img')).toBeVisible()
+    await swipe(80, 120) // mostly down: a scroll, not a swipe
+    await expect(page.locator('#page-3 .pg-img')).toBeVisible()
+    await expect(page).toHaveURL(/#\/page\/3$/)
+  })
+
   test('translation under each line: the page is cut into its lines, each followed by the translation of that line', async ({ page }) => {
     await useSettings(page, { lang: 'fa', translationPlace: 'inline' })
     await page.goto('/#/page/3')
