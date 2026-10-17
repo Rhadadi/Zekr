@@ -13,7 +13,7 @@ import { Sheet } from '../components/Sheet'
 import { SurahBanner } from '../components/SurahBanner'
 import { type Meta, type MushafPageMap, type TranslationInfo, juzOf, loadMushafMap, loadText, loadTranslation, locate, mushafImage, pageOf, pageRange } from '../data'
 import { useAsync, useWide } from '../hooks'
-import { num, surahName, t } from '../i18n'
+import { ayahRef, num, surahName, t } from '../i18n'
 import { href } from '../router'
 import { type TranslationPlace, setLastRead, settings } from '../store'
 
@@ -78,7 +78,7 @@ const MushafPage = memo(function MushafPage({ meta, n, ar, basmala, size, highli
   return (
     <section class="mpage" id={`page-${n}`} data-page={n} aria-label={t('pageN', { n })}>
       {out}
-      <div class="page-no" aria-hidden="true"><span>{num(n)}</span></div>
+      <button class="page-no" aria-label={`${t('goToPage')}: ${t('pageN', { n })}`}><span>{num(n)}</span></button>
     </section>
   )
 })
@@ -145,7 +145,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   const [hoverId, setHoverId] = useState<number | undefined>(undefined)
   const [current, setCurrent] = useState(pageNo)
   const [jumping, setJumping] = useState(false)
-  const [menu, setMenu] = useState<'surah' | 'juz' | null>(null)
+  const [menu, setMenu] = useState<'surah' | 'juz' | 'ayah' | null>(null)
   const popRef = useRef<HTMLDivElement>(null)
   const touch = useRef<{ x: number; y: number; at: number; timer?: number; long?: boolean } | null>(null)
   const playingId = player.value?.ayahId
@@ -428,7 +428,8 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
             {jumping ? (
               jumpForm
             ) : (
-              <button class="mb-page" onClick={() => { setMenu(null); setJumping(true) }} aria-label={`${t('goToPage')}: ${t('pageN', { n: current })}`}>
+              // the page number opens the surah's ayahs to jump to; typing a page is the page number at the foot of the page
+              <button class="mb-page" aria-haspopup="listbox" aria-expanded={menu === 'ayah'} onClick={() => setMenu(menu === 'ayah' ? null : 'ayah')} aria-label={`${t('goToAyah')}: ${t('pageN', { n: current })}`}>
                 {num(current)}
               </button>
             )}
@@ -446,8 +447,18 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
       {menu ? (
         <>
           <button class="mb-menu-backdrop" aria-label={t('close')} tabIndex={-1} onClick={() => setMenu(null)} />
-          <div class="mb-menu" role="listbox" aria-label={menu === 'surah' ? t('surahs') : t('juz')}>
-            {menu === 'surah'
+          <div class={`mb-menu${menu === 'ayah' ? ' mb-ayahs' : ''}`} role="listbox" aria-label={menu === 'surah' ? t('surahs') : menu === 'ayah' ? `${t('goToAyah')}: ${surahName(surahOfPage)}` : t('juz')}>
+            {menu === 'ayah'
+              ? Array.from({ length: surahOfPage.ayahs }, (_, i) => i + 1).map((a) => {
+                  const here = pageOf(meta, surahOfPage.first + a - 1) === current
+                  return (
+                    <button key={a} role="option" aria-selected={here} class={here ? 'on' : ''} aria-label={ayahRef(surahOfPage, a)}
+                      onClick={() => { setMenu(null); location.hash = href.ayah(surahOfPage.id, a) }}>
+                      {num(a)}
+                    </button>
+                  )
+                })
+              : menu === 'surah'
               ? meta.surahs.map((x) => (
                   <button key={x.id} role="option" aria-selected={x.id === surahOfPage.id} class={x.id === surahOfPage.id ? 'on' : ''} ref={x.id === surahOfPage.id ? (el) => el?.scrollIntoView({ block: 'center' }) : undefined} onClick={() => goPage(pageOf(meta, x.first))}>
                     <span class="mb-n">{num(x.id)}</span> {surahName(x)} <span class="mb-ar" lang="ar">{x.ar}</span>
@@ -473,6 +484,8 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
           data-color={printed ? s.pageColor : undefined}
           onClick={(e) => {
             if (touch.current?.long) return
+            // the page number at the foot of a page opens "go to page"
+            if ((e.target as Element).closest('.page-no')) return setJumping(true)
             if ((e.target as Element).closest('.ayah-popup')) return
             pressAt(e.target, true)
           }}
