@@ -63,7 +63,7 @@ export const WordsPage = memo(function WordsPage({ meta, n, basmala, size, trSiz
   return (
     <section class="mpage wbw" id={`page-${n}`} data-page={n} aria-label={t('pageN', { n })}>
       {out}
-      <div class="page-no" aria-hidden="true"><span>{num(n)}</span></div>
+      <button class="page-no" aria-label={`${t('goToPage')}: ${t('pageN', { n })}`}><span>{num(n)}</span></button>
     </section>
   )
 })

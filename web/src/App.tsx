@@ -127,7 +127,7 @@ export function App() {
     <div class="app">
       <main id="main" {...(drawerOpen.value ? { inert: true } : {})}>{content}</main>
       {meta.value ? <PlayerBar meta={meta.value} /> : null}
-      <Drawer active={active} onMushaf={!layer} />
+      <Drawer meta={meta.value} active={active} onMushaf={!layer} />
       {toast.value ? <div class="toast" role="status">{toast.value}</div> : null}
     </div>
   )

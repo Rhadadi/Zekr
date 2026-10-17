@@ -268,15 +268,28 @@ test.describe('mushaf page view', () => {
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/page/305')
     await settle(page)
-    await page.locator('.mb-page').click()
-    await page.getByLabel('Go to page').fill('284')
+    await page.locator('#page-305 .page-no').click() // the page number at the foot of the page
+    await page.getByLabel('Go to page', { exact: true }).fill('284')
     await page.getByRole('button', { name: 'Go', exact: true }).click()
     await expect(page.locator('.mb-page')).toHaveText('284')
     await expect(page.locator('#page-284 .ay').first()).toBeInViewport()
-    await page.locator('.mb-page').click()
-    await page.getByLabel('Go to page').fill('300')
-    await page.getByLabel('Go to page').blur() // what Done on the iPhone keyboard does
+    await page.locator('#page-284 .page-no').click()
+    await page.getByLabel('Go to page', { exact: true }).fill('300')
+    await page.getByLabel('Go to page', { exact: true }).blur() // what Done on the iPhone keyboard does
     await expect(page.locator('.mb-page')).toHaveText('300')
+  })
+
+  test('the page number in the bar opens the surah\'s ayahs to jump to', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/305')
+    await settle(page)
+    await page.locator('.mb-page').click()
+    const grid = page.getByRole('listbox', { name: /Go to an ayah/ })
+    await expect(grid.getByRole('option').first()).toHaveText('1')
+    await expect(grid.locator('[aria-selected="true"]').first()).toBeVisible() // the ayahs on this page are marked
+    await grid.getByRole('option', { name: /· 19:40$/ }).click()
+    await expect(page).toHaveURL(/#\/ayah\/19\/40$/)
+    await expect(page.getByTestId('ayah-panel')).toContainText('19:40')
   })
 
   test('the surah and the juz in the bar open a menu to pick from', async ({ page }) => {
@@ -325,8 +338,8 @@ test.describe('mushaf page view', () => {
   test('jump to a page by number', async ({ page }) => {
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/page/305')
-    await page.locator('.mb-page').click()
-    await page.getByLabel('Go to page').fill('284')
+    await page.locator('#page-305 .page-no').click()
+    await page.getByLabel('Go to page', { exact: true }).fill('284')
     await page.keyboard.press('Enter')
     await expect(page.locator('.mb-page')).toHaveText('284')
     await expect(page.locator('.mb-surah')).toContainText('الإسراء')
@@ -437,7 +450,7 @@ test.describe('layers over the mushaf', () => {
     const top = () => page.locator('#page-320').evaluate((el) => el.getBoundingClientRect().top)
     const before = await top()
     await menu(page).click()
-    await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Settings' }).click()
+    await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Saved' }).click()
     await expect(page.locator('.layer')).toBeVisible()
     await expect(page.locator('.mushaf-host')).toHaveAttribute('inert', '')
     await page.locator('.layer-close').click()
@@ -700,7 +713,6 @@ test.describe('opening the app', () => {
     await expect(page.locator('.layer')).toHaveCount(0)
     await expect(page.getByTestId('daily-card')).toHaveCount(0)
     await menu(page).click()
-    await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Quran' })).toHaveAttribute('aria-current', 'page')
     await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Today' }).click()
     await expect(page.getByTestId('daily-card')).toBeVisible()
   })
@@ -1058,10 +1070,14 @@ test.describe('page view on a phone', () => {
     expect(r.width).toBeLessThanOrEqual(44)
     await btn.click()
     const nav = page.getByRole('navigation', { name: 'Main' })
-    await expect(nav.getByRole('link')).toHaveText(['Quran', 'Today', 'Search', 'Saved', 'Settings'])
-    await expect(nav.getByRole('link', { name: 'Settings' })).toHaveAttribute('aria-current', 'page')
-    await nav.getByRole('link', { name: 'Search' }).click()
-    await expect(page).toHaveURL(/#\/search$/)
+    // everything is in the one panel: search, Today and Saved, and the settings themselves
+    await expect(nav.getByRole('link')).toHaveText(['Today', 'Saved'])
+    const menuPanel = page.getByRole('dialog', { name: 'Menu' })
+    await expect(menuPanel.getByLabel('Language')).toBeVisible()
+    await expect(menuPanel.getByLabel('Reciter')).toBeVisible()
+    await menuPanel.getByRole('searchbox', { name: 'Search' }).fill('mercy')
+    await menuPanel.getByRole('searchbox', { name: 'Search' }).press('Enter')
+    await expect(page).toHaveURL(/#\/search\?q=mercy$/)
     await expect(nav).toHaveCount(0) // closes after a choice
   })
 
@@ -1215,12 +1231,12 @@ test.describe('The printed mushaf as pictures (private build, made-up pictures h
     await page.goto('/#/page/5')
     await settle(page)
     await page.locator('#page-5 .pg-no').click()
-    await page.getByLabel('Go to page').fill('12')
+    await page.getByLabel('Go to page', { exact: true }).fill('12')
     await page.keyboard.press('Enter')
     await expect(page.locator('#page-12 .pg-img')).toBeVisible()
     await page.locator('#page-12 .pg').click({ position: { x: 5, y: 5 } }) // not on an ayah: the reading options
     await page.getByTestId('page-options').getByRole('button', { name: 'Go to page' }).click()
-    await page.getByLabel('Go to page').fill('20')
+    await page.getByLabel('Go to page', { exact: true }).fill('20')
     await page.keyboard.press('Enter')
     await expect(page.locator('#page-20 .pg-img')).toBeVisible()
   })

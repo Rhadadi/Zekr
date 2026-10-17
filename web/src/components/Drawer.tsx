@@ -1,21 +1,17 @@
 import { useEffect, useRef } from 'preact/hooks'
+import type { Meta } from '../data'
 import { t } from '../i18n'
 import { type LayerName, href } from '../router'
 import { drawerOpen, pageOptionsAsked } from '../ui'
-import { Icon, type IconName } from './Icon'
+import { SettingsView } from '../views/Settings'
+import { Logo } from './AppBar'
+import { Icon } from './Icon'
 
-const ITEMS: { name: LayerName; href: string; icon: IconName; label: () => string }[] = [
-  { name: 'index', href: href.index, icon: 'list', label: () => t('navIndex') },
-  { name: 'today', href: href.today, icon: 'sun', label: () => t('navToday') },
-  { name: 'search', href: href.search(), icon: 'search', label: () => t('navSearch') },
-  { name: 'saved', href: href.saved, icon: 'bookmark', label: () => t('navBookmarks') },
-  { name: 'settings', href: href.settings, icon: 'settings', label: () => t('navSettings') },
-]
-
-/** The navigation drawer: Quran, Today, Search, Saved, Settings, and on the mushaf its reading options. It opens from
- * the end side, where its button is (the left in Persian), traps focus, and closes on Escape, on the backdrop, on a
- * choice and on Back. */
-export function Drawer({ active, onMushaf = false }: { active: LayerName; onMushaf?: boolean }) {
+/** The menu: everything in one panel. At the top the name (back to the mushaf), a search field, Today and Saved, and
+ * on the mushaf its reading options; below them all the settings, recitation included, to change in place. It opens
+ * from the end side, where its button is (the left in Persian), traps focus, and closes on Escape, on the backdrop, on
+ * a choice and on Back. */
+export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active: LayerName; onMushaf?: boolean }) {
   const open = drawerOpen.value
   const panel = useRef<HTMLElement>(null)
   // Back closes the drawer: opening it adds one history entry for the same address.
@@ -37,7 +33,7 @@ export function Drawer({ active, onMushaf = false }: { active: LayerName; onMush
         e.preventDefault()
         close()
       } else if (e.key === 'Tab') {
-        const focusable = panel.current?.querySelectorAll<HTMLElement>('a[href], button')
+        const focusable = panel.current?.querySelectorAll<HTMLElement>('a[href], button:not(:disabled), input, select')
         if (!focusable?.length) return
         const first = focusable[0]!
         const last = focusable[focusable.length - 1]!
@@ -72,6 +68,9 @@ export function Drawer({ active, onMushaf = false }: { active: LayerName; onMush
   function go(e: MouseEvent, to: string) {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
     e.preventDefault()
+    goTo(to)
+  }
+  function goTo(to: string) {
     if (to === location.hash) return close()
     // the history entry the drawer added becomes the place we are going to, so Back does not land on a twin of the page
     drawerOpen.value = false
@@ -83,28 +82,48 @@ export function Drawer({ active, onMushaf = false }: { active: LayerName; onMush
   }
 
   if (!open) return null
+  const link = (to: string, name: LayerName, icon: 'sun' | 'bookmark', label: string) => (
+    <a href={to} class={active === name ? 'on' : ''} aria-current={active === name ? 'page' : undefined} onClick={(e) => go(e, to)}>
+      <Icon name={icon} size={20} />
+      <span>{label}</span>
+    </a>
+  )
   return (
     <div class="drawer-wrap">
       <div class="drawer-backdrop" onClick={close} />
-      <aside class="drawer" ref={panel} role="dialog" aria-modal="true" aria-label={t('menu')}>
+      <aside
+        class="drawer" ref={panel} role="dialog" aria-modal="true" aria-label={t('menu')}
+        // a link further down (About, in the settings) leaves the menu as the ones above do
+        onClick={(e) => {
+          const a = (e.target as Element).closest<HTMLAnchorElement>('.drawer-body a[href^="#"]')
+          if (a && !a.closest('.drawer-links')) go(e, a.getAttribute('href')!)
+        }}
+      >
         <div class="drawer-head">
-          <strong>{t('appName')}</strong>
+          <a class="drawer-logo" href={href.start} onClick={(e) => go(e, href.start)}><Logo /></a>
           <button class="icon-btn" onClick={close} aria-label={t('close')}><Icon name="close" size={20} /></button>
         </div>
-        <nav aria-label="Main">
-          {ITEMS.map((n) => (
-            <a key={n.name} href={n.href} class={active === n.name ? 'on' : ''} aria-current={active === n.name ? 'page' : undefined} onClick={(e) => go(e, n.href)}>
-              <Icon name={n.icon} size={22} />
-              <span>{n.label()}</span>
-            </a>
-          ))}
-          {onMushaf ? (
-            <button class="drawer-item" onClick={() => { close(); pageOptionsAsked.value++ }}>
-              <Icon name="sliders" size={22} />
-              <span>{t('pageOptions')}</span>
-            </button>
-          ) : null}
-        </nav>
+        <div class="drawer-body">
+          <form class="drawer-search" role="search" onSubmit={(e) => {
+            e.preventDefault()
+            const q = new FormData(e.currentTarget).get('q')?.toString().trim() ?? ''
+            goTo(href.search(q))
+          }}>
+            <input type="search" name="q" enterKeyHint="search" placeholder={t('searchPlaceholder')} aria-label={t('navSearch')} />
+            <button type="submit" class="icon-btn" aria-label={t('navSearch')}><Icon name="search" size={20} /></button>
+          </form>
+          <nav class="drawer-links" aria-label="Main">
+            {link(href.today, 'today', 'sun', t('navToday'))}
+            {link(href.saved, 'saved', 'bookmark', t('navBookmarks'))}
+            {onMushaf ? (
+              <button class="drawer-item" onClick={() => { close(); pageOptionsAsked.value++ }}>
+                <Icon name="sliders" size={20} />
+                <span>{t('pageOptions')}</span>
+              </button>
+            ) : null}
+          </nav>
+          {meta ? <div class="drawer-settings"><SettingsView meta={meta} /></div> : null}
+        </div>
       </aside>
     </div>
   )
