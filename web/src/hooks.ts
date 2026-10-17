@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'preact/hooks'
+import { route } from './router'
 
 export interface AsyncState<T> {
   value: T | undefined
@@ -37,6 +38,20 @@ export function useWide(): boolean {
     return () => q.removeEventListener('change', on)
   }, [])
   return wide
+}
+
+/** Whether the menu is a panel docked at the left of the page: a window wide enough to hold it beside the page, and
+ * the mushaf showing (a layer covers the mushaf, so there the menu stays a drawer over it). */
+export const DOCK_QUERY = '(min-width: 1280px)'
+export function useDocked(): boolean {
+  const [wide, setWide] = useState(() => matchMedia(DOCK_QUERY).matches)
+  useEffect(() => {
+    const q = matchMedia(DOCK_QUERY)
+    const on = () => setWide(q.matches)
+    q.addEventListener('change', on)
+    return () => q.removeEventListener('change', on)
+  }, [])
+  return wide && !route.value.layer
 }
 
 /** Current time in ms, refreshed every `intervalMs`. */

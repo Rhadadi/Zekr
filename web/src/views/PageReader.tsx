@@ -145,6 +145,8 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   const [hoverId, setHoverId] = useState<number | undefined>(undefined)
   const [current, setCurrent] = useState(pageNo)
   const [jumping, setJumping] = useState(false)
+  // which way the last page turn went, so the new page comes in from that side
+  const [turned, setTurned] = useState<'next' | 'prev'>()
   const [menu, setMenu] = useState<'surah' | 'juz' | 'ayah' | null>(null)
   const popRef = useRef<HTMLDivElement>(null)
   const touch = useRef<{ x: number; y: number; at: number; timer?: number; long?: boolean } | null>(null)
@@ -167,9 +169,9 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
     const id = data.value?.ids[0]
     const info = id ? meta.translations.find((x) => x.id === id) : undefined
     return place === 'inline' && printed && info && data.value
-      ? { texts: data.value.trs[0]!, dir: info.dir, lang: info.lang, size: Math.round(s.trSize * 0.7) }
+      ? { texts: data.value.trs[0]!, dir: info.dir, lang: info.lang, size: Math.round(s.trSize * (wide ? 0.95 : 0.7)) } // the sheet is twice as wide on a computer
       : undefined
-  }, [place, printed, data.value, s.trSize])
+  }, [place, printed, data.value, s.trSize, wide])
   const selected = panel?.kind === 'ayah' ? panel.id : undefined
   // One highlight at a time: the ayah being shown, otherwise the one being recited.
   const highlight = selected ?? playingId
@@ -234,6 +236,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
     if (n < 1 || n > PAGES || n === current) return
     wanted.current = n
     history.replaceState(history.state, '', href.page(n))
+    setTurned(n > current ? 'next' : 'prev')
     setCurrent(n)
     if (!keepPanel) setPanel(null)
     window.scrollTo(0, 0)
@@ -342,6 +345,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
         showTranslations={place === 'panel' || place === 'card' || place === 'words'}
         menu={panel?.kind === 'ayah' && panel.id === id && !!panel.menu}
         offerWords={!words}
+        inlineStudy={variant === 'box' && wide}
         panelRef={variant === 'popup' ? popRef : undefined}
         onClose={() => {
           setPanel(null)
@@ -525,6 +529,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
         <div
           class={`mushaf-flow${printed ? ' printed' : ''}`}
           data-page={current}
+          data-turn={single ? turned : undefined}
           data-color={printed ? s.pageColor : undefined}
           onClick={(e) => {
             if (touch.current?.long) return

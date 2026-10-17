@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'preact/hooks'
 import type { Meta } from '../data'
 import { t } from '../i18n'
 import { type LayerName, href } from '../router'
-import { drawerOpen, pageOptionsAsked } from '../ui'
+import { useDocked } from '../hooks'
+import { dockOpen, drawerOpen, gotoOpen, pageOptionsAsked, setDock } from '../ui'
 import { SettingsView } from '../views/Settings'
 import { Logo } from './AppBar'
 import { Icon } from './Icon'
@@ -13,6 +14,13 @@ import { Icon } from './Icon'
  * a choice and on Back. */
 export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active: LayerName; onMushaf?: boolean }) {
   const open = drawerOpen.value
+  // in a wide window the menu is a panel docked beside the page instead: not modal, the page stays in use beside it
+  const docked = useDocked()
+  const dockShown = docked && dockOpen.value
+  useEffect(() => {
+    document.documentElement.toggleAttribute('data-dock', dockShown)
+    return () => document.documentElement.removeAttribute('data-dock')
+  }, [dockShown])
   const panel = useRef<HTMLElement>(null)
   // Back closes the drawer: opening it adds one history entry for the same address.
   const pushed = useRef(false)
@@ -81,13 +89,62 @@ export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active
     } else location.hash = to
   }
 
+  const body = (nav: ((e: MouseEvent, to: string) => void) | undefined, navTo: (to: string) => void, closeAfter: boolean) => {
+    const link = (to: string, name: LayerName, icon: 'sun' | 'bookmark', label: string) => (
+      <a href={to} class={active === name ? 'on' : ''} aria-current={active === name ? 'page' : undefined} onClick={nav ? (e) => nav(e, to) : undefined}>
+        <Icon name={icon} size={20} />
+        <span>{label}</span>
+      </a>
+    )
+    return (
+      <div class="drawer-body">
+        <form class="drawer-search" role="search" onSubmit={(e) => {
+          e.preventDefault()
+          const q = new FormData(e.currentTarget).get('q')?.toString().trim() ?? ''
+          navTo(href.search(q))
+        }}>
+          <input type="search" name="q" enterKeyHint="search" placeholder={t('searchPlaceholder')} aria-label={t('navSearch')} />
+          <button type="submit" class="icon-btn" aria-label={t('navSearch')}><Icon name="search" size={20} /></button>
+        </form>
+        <nav class="drawer-links" aria-label="Main">
+          <button class="drawer-item" onClick={() => { if (closeAfter) close(); gotoOpen.value = true }}>
+            <Icon name="goto" size={20} />
+            <span>{t('goTo')}</span>
+          </button>
+          {link(href.today, 'today', 'sun', t('navToday'))}
+          {link(href.saved, 'saved', 'bookmark', t('navBookmarks'))}
+          {onMushaf ? (
+            <button class="drawer-item" onClick={() => { if (closeAfter) close(); pageOptionsAsked.value++ }}>
+              <Icon name="sliders" size={20} />
+              <span>{t('pageOptions')}</span>
+            </button>
+          ) : null}
+        </nav>
+        {meta ? <div class="drawer-settings"><SettingsView meta={meta} /></div> : null}
+      </div>
+    )
+  }
+
+  if (dockShown) {
+    return (
+      <aside id="dock" class="drawer docked" aria-label={t('menu')}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape' && !e.defaultPrevented) {
+            e.preventDefault()
+            setDock(false)
+            document.querySelector<HTMLElement>('.burger')?.focus()
+          }
+        }}>
+        <div class="drawer-head">
+          <strong class="dock-title">{t('menu')}</strong>
+          <button class="icon-btn" onClick={() => setDock(false)} aria-label={t('close')}><Icon name="close" size={20} /></button>
+        </div>
+        {body(undefined, (to) => { location.hash = to }, false)}
+      </aside>
+    )
+  }
+
   if (!open) return null
-  const link = (to: string, name: LayerName, icon: 'sun' | 'bookmark', label: string) => (
-    <a href={to} class={active === name ? 'on' : ''} aria-current={active === name ? 'page' : undefined} onClick={(e) => go(e, to)}>
-      <Icon name={icon} size={20} />
-      <span>{label}</span>
-    </a>
-  )
   return (
     <div class="drawer-wrap">
       <div class="drawer-backdrop" onClick={close} />
@@ -103,27 +160,7 @@ export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active
           <a class="drawer-logo" href={href.start} onClick={(e) => go(e, href.start)}><Logo /></a>
           <button class="icon-btn" onClick={close} aria-label={t('close')}><Icon name="close" size={20} /></button>
         </div>
-        <div class="drawer-body">
-          <form class="drawer-search" role="search" onSubmit={(e) => {
-            e.preventDefault()
-            const q = new FormData(e.currentTarget).get('q')?.toString().trim() ?? ''
-            goTo(href.search(q))
-          }}>
-            <input type="search" name="q" enterKeyHint="search" placeholder={t('searchPlaceholder')} aria-label={t('navSearch')} />
-            <button type="submit" class="icon-btn" aria-label={t('navSearch')}><Icon name="search" size={20} /></button>
-          </form>
-          <nav class="drawer-links" aria-label="Main">
-            {link(href.today, 'today', 'sun', t('navToday'))}
-            {link(href.saved, 'saved', 'bookmark', t('navBookmarks'))}
-            {onMushaf ? (
-              <button class="drawer-item" onClick={() => { close(); pageOptionsAsked.value++ }}>
-                <Icon name="sliders" size={20} />
-                <span>{t('pageOptions')}</span>
-              </button>
-            ) : null}
-          </nav>
-          {meta ? <div class="drawer-settings"><SettingsView meta={meta} /></div> : null}
-        </div>
+        {body(go, goTo, true)}
       </aside>
     </div>
   )

@@ -363,9 +363,9 @@ test.describe('mushaf page view', () => {
     const after = (await flow.boundingBox())!
     expect(after).toEqual(before)
     expect(await page.evaluate(() => scrollY)).toBe(scrollBefore)
-    // in the free margin at the left, in view, and not under the app bar
+    // in the free margin at the right, in view, and not under the app bar
     const box = (await panel.boundingBox())!
-    expect(box.x + box.width).toBeLessThanOrEqual(after.x)
+    expect(box.x).toBeGreaterThanOrEqual(after.x + after.width)
     expect(box.y).toBeGreaterThanOrEqual(52)
     await page.keyboard.press('Escape')
     await expect(panel).toHaveCount(0)
@@ -393,7 +393,40 @@ test.describe('mushaf page view', () => {
     }
   })
 
-  test('in Persian the panel is at the left too, and stays in view while the page scrolls', async ({ page }) => {
+  test('on a wide window the menu is a panel docked at the left, beside the page: nothing dims, the page stays in use', async ({ page }) => {
+    await useSettings(page, { lang: 'en', translationPlace: 'panel' })
+    await page.goto('/#/page/305')
+    await settle(page)
+    await expect(page.locator('#dock')).toHaveCount(0) // closed until asked for
+    await menu(page).click()
+    const dock = page.locator('#dock')
+    await expect(dock).toBeVisible()
+    await expect(menu(page)).toHaveAttribute('aria-expanded', 'true')
+    await expect(page.locator('.drawer-backdrop')).toHaveCount(0)
+    await expect(page.locator('#main')).not.toHaveAttribute('inert', '')
+    await expect(dock.getByLabel('Language')).toBeVisible() // the settings, in place
+    const d = (await dock.boundingBox())!
+    expect(d.x).toBeLessThan(20)
+    // the page beside it still works: an ayah opens its panel at the right, and the menu stays
+    await page.locator('#page-305 .ay').nth(1).click()
+    const side = page.getByTestId('side-panel')
+    await expect(side.getByTestId('ayah-panel')).toContainText('19:2')
+    const sb = (await side.boundingBox())!
+    expect(sb.x).toBeGreaterThan(d.x + d.width)
+    await expect(dock).toBeVisible()
+    // a reload finds it as it was; Escape in it, or the burger, closes it
+    await page.reload()
+    await expect(page.locator('#dock')).toBeVisible()
+    await page.locator('#dock').getByLabel('Language').focus()
+    await page.keyboard.press('Escape')
+    await expect(page.locator('#dock')).toHaveCount(0)
+    await expect(menu(page)).toBeFocused()
+    await menu(page).click()
+    await menu(page).click()
+    await expect(page.locator('#dock')).toHaveCount(0)
+  })
+
+  test('in Persian the panel is at the right too, and stays in view while the page scrolls', async ({ page }) => {
     await useSettings(page, { lang: 'fa' })
     await page.goto('/#/page/305')
     await settle(page)
@@ -402,7 +435,7 @@ test.describe('mushaf page view', () => {
     await expect(panel.getByTestId('ayah-panel')).toBeVisible()
     const box = (await panel.boundingBox())!
     const text = (await page.locator('#page-305 .flow').first().boundingBox())!
-    expect(box.x + box.width).toBeLessThanOrEqual(text.x)
+    expect(box.x).toBeGreaterThanOrEqual(text.x + text.width)
     await page.mouse.wheel(0, 900)
     await expect.poll(async () => (await panel.boundingBox())!.y).toBeGreaterThanOrEqual(52)
     await expect(panel).toBeInViewport()
@@ -1189,6 +1222,39 @@ test.describe('The Study Quran (private content, made-up text here)', () => {
     await expect(page).toHaveURL(/#\/verse\/2\/1$/)
   })
 
+  test('on a computer the commentary opens under the translation in the panel, not on a screen of its own', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await useSettings(page, { lang: 'en', translationPlace: 'panel' })
+    await page.goto('/#/page/2')
+    await settle(page)
+    await page.locator('#page-2 .ay').nth(3).click() // 2:4
+    const panel = page.getByTestId('side-panel')
+    await expect(panel.locator('.tr').first()).toBeVisible()
+    const chip = panel.locator('.study-chip')
+    await expect(chip).toHaveText(/Commentary on 2:1–5/)
+    await expect(panel.locator('.study-inline')).toHaveCount(0)
+    await chip.click()
+    await expect(page).toHaveURL(/#\/page\/2$/) // still the same page
+    await expect(panel.locator('.study-inline')).toContainText('[Made-up note 1–5.]')
+    expect(await panel.locator('.tr').first().boundingBox().then((b) => b!.y)).toBeLessThan((await panel.locator('.study-inline').boundingBox())!.y) // under the translation
+    await expect(chip).toHaveAttribute('aria-expanded', 'true')
+    await chip.click()
+    await expect(panel.locator('.study-inline')).toHaveCount(0)
+  })
+
+  test('with the translation under the lines, the panel is the actions and its list has the commentary, which opens in the panel', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/2')
+    await settle(page)
+    await page.locator('#page-2 .ay').nth(3).click()
+    const panel = page.getByTestId('side-panel')
+    await panel.getByRole('button', { name: 'More' }).click()
+    await panel.getByRole('button', { name: 'Commentary: The Study Quran' }).click()
+    await expect(page).toHaveURL(/#\/page\/2$/)
+    await expect(panel.locator('.study-inline')).toContainText('[Made-up note 1–5.]')
+  })
+
   test('page view: the ayah card lists the notes that cover the ayah, as chips', async ({ page }) => {
     await useSettings(page, { lang: 'en', translationPlace: 'panel' })
     await page.goto('/#/page/2')
@@ -1300,11 +1366,26 @@ test.describe('The printed mushaf as pictures (private build, made-up pictures h
     await expect(page.locator('#page-3 .pg-img')).toBeVisible()
     await page.locator('.edge-next').click()
     await expect(page.locator('#page-4 .pg-img')).toBeVisible()
-    // opening an ayah does not move the page at this size
+    // opening an ayah does not move the page at this size (once the turn has come in)
+    await expect.poll(() => page.evaluate(() => document.getAnimations().length)).toBe(0)
     const before = (await page.locator('#page-4 .pg').boundingBox())!
     await page.locator('#page-4 .ay').first().locator('.seg').click()
     await expect(page.getByTestId('side-panel')).toBeVisible()
     expect((await page.locator('#page-4 .pg').boundingBox())!).toEqual(before)
+  })
+
+  test('on a computer the translation under each line is large enough to read, and a page turn comes in from the side the book advances from', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await useSettings(page, { lang: 'fa', translationPlace: 'inline' })
+    await page.goto('/#/page/3')
+    await expect(page.locator('#page-3 .il-p').first()).toBeVisible()
+    expect(await page.locator('#page-3 .il-p').first().evaluate((e) => parseFloat(getComputedStyle(e).fontSize))).toBeGreaterThanOrEqual(14)
+    await expect(page.locator('.mushaf-flow')).not.toHaveAttribute('data-turn', /.+/)
+    await page.keyboard.press('ArrowLeft')
+    await expect(page.locator('#page-4')).toBeVisible()
+    await expect(page.locator('.mushaf-flow')).toHaveAttribute('data-turn', 'next')
+    await page.keyboard.press('ArrowRight')
+    await expect(page.locator('.mushaf-flow')).toHaveAttribute('data-turn', 'prev')
   })
 
   test('a sideways swipe turns the page: to the right for the next (the book is right to left), to the left for the previous', async ({ page }) => {

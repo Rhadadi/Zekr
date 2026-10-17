@@ -10,7 +10,7 @@ import { isBookmarked, toggleBookmark } from '../store'
 import { sheetOpen } from '../ui'
 import { tafsirIndex } from '../tafsir'
 import { Icon } from './Icon'
-import { StudyChips, StudyLink } from './StudyQuranPanel'
+import { StudyChips, StudyInline, StudyLink } from './StudyQuranPanel'
 
 interface Props {
   meta: Meta
@@ -25,13 +25,15 @@ interface Props {
   menu?: boolean
   /** False when the page already shows each word's meaning. */
   offerWords?: boolean
+  /** Beside the page (a computer): the commentary opens under the translation, here, not on a screen of its own. */
+  inlineStudy?: boolean
   style?: JSX.CSSProperties
   panelRef?: preact.Ref<HTMLDivElement>
   onClose: () => void
 }
 
 /** Translation and actions for an ayah on a mushaf page. */
-export function AyahPanel({ meta, id, ar, translations, variant, showTranslations = true, menu = false, offerWords = true, style, panelRef, onClose }: Props) {
+export function AyahPanel({ meta, id, ar, translations, variant, showTranslations = true, menu = false, offerWords = true, inlineStudy = false, style, panelRef, onClose }: Props) {
   const { surah, ayah } = locate(meta, id)
   const saved = isBookmarked(id)
   const texts = translations.map((x) => x.text || t('mergedTranslation'))
@@ -47,10 +49,13 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
   // asked for from the list: the whole translation (when the page shows it split over its lines) and each word's meaning
   const [fullTr, setFullTr] = useState(false)
   const [words, setWords] = useState(false)
+  // the commentary shown under the translation: false, true (every note on the ayah) or the id of one note
+  const [study, setStudy] = useState<boolean | string>(false)
   useEffect(() => {
     setMore(menu)
     setFullTr(false)
     setWords(false)
+    setStudy(false)
   }, [id, menu])
   const wbw = useAsync(async () => (words ? (await loadWbw(surah))[ayah - 1] ?? [] : null), [words, surah, ayah])
   const showTr = showTranslations || fullTr
@@ -98,7 +103,7 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
             </a>
           ) : null}
           {/* with nothing else in the box, its commentary is listed here rather than taking a row of its own */}
-          {meta.studyQuran && !showTr ? <StudyLink meta={meta} ayahID={id} /> : null}
+          {meta.studyQuran && !showTr ? <StudyLink meta={meta} ayahID={id} onOpen={inlineStudy ? () => { setStudy(study ? false : true); setMore(false) } : undefined} open={!!study} /> : null}
           <a href={href.verse(surah, ayah)}>
             <Icon name="list" size={18} /> {t('openVerseView')}
           </a>
@@ -127,7 +132,11 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
             </p>
           </div>
         )) : null}
-        {meta.studyQuran && showTr ? <StudyChips meta={meta} ayahID={id} all /> : null}
+        {meta.studyQuran && showTr
+          ? <StudyChips meta={meta} ayahID={id} all open={typeof study === 'string' ? study : null}
+              onOpen={inlineStudy ? (entry) => setStudy(study === entry ? false : entry) : undefined} />
+          : null}
+        {inlineStudy && study ? <StudyInline meta={meta} ayahID={id} only={typeof study === 'string' ? study : null} /> : null}
       </div>
     </div>
   )

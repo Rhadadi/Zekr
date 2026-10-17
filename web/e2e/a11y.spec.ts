@@ -53,7 +53,9 @@ for (const theme of ['light', 'sepia', 'dark'] as const) {
         await page.getByRole('button', { name: /^(Menu|منو)$/ }).first().click()
         await page.waitForSelector('.drawer')
         problems.push(...(await check(`${size.width}px drawer`)))
-        await page.keyboard.press('Escape')
+        // the drawer closes with Escape; the menu docked beside the page (wide windows) with its button
+        if (size.width >= 1280) await page.getByRole('button', { name: /^(Menu|منو)$/ }).first().click()
+        else await page.keyboard.press('Escape')
         await page.waitForSelector('.drawer', { state: 'detached' })
         await page.waitForTimeout(100)
         await page.locator('#page-305 .ay').nth(1).click()
