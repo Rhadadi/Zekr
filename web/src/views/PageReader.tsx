@@ -147,7 +147,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   const [jumping, setJumping] = useState(false)
   const [menu, setMenu] = useState<'surah' | 'juz' | null>(null)
   const popRef = useRef<HTMLDivElement>(null)
-  const touch = useRef<{ x: number; y: number; timer?: number; long?: boolean } | null>(null)
+  const touch = useRef<{ x: number; y: number; at: number; timer?: number; long?: boolean } | null>(null)
   const playingId = player.value?.ayahId
   const boxBottomRef = useRef(false)
   // The translation shows in the inspector beside the text (wide screens), in a box at the bottom (phones), or in a
@@ -499,10 +499,19 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
           onTouchStart={(e) => {
             const p = e.touches[0]
             if (!p) return
+            if (e.touches.length > 1) {
+              // a pinch: neither a long press nor a swipe
+              if (touch.current) {
+                clearTimeout(touch.current.timer)
+                touch.current.long = true
+              }
+              return
+            }
             const target = e.target
             touch.current = {
               x: p.clientX,
               y: p.clientY,
+              at: Date.now(),
               timer: window.setTimeout(() => {
                 if (touch.current) touch.current.long = true
                 pressAt(target, false)
@@ -514,9 +523,21 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
             const p = e.touches[0]
             if (start && p && Math.hypot(p.clientX - start.x, p.clientY - start.y) > 10) clearTimeout(start.timer)
           }}
-          onTouchEnd={() => {
+          onTouchEnd={(e) => {
             const start = touch.current
             if (start) clearTimeout(start.timer)
+            // one page at a time: a quick sideways swipe turns the page. The book is right to left, so the next page
+            // comes in from the left, as with a printed mushaf: swipe to the right for the next, to the left for the
+            // previous. Not while pinch-zoomed (the finger is moving around the page then).
+            const p = e.changedTouches[0]
+            if (single && start && !start.long && p && e.touches.length === 0 && (window.visualViewport?.scale ?? 1) <= 1.01) {
+              const dx = p.clientX - start.x
+              const dy = p.clientY - start.y
+              if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy) && Date.now() - start.at < 700) {
+                start.long = true // the click that may follow is not a tap
+                turnTo(current + (dx > 0 ? 1 : -1))
+              }
+            }
             // keep the record a moment so the click that follows a long press is ignored
             window.setTimeout(() => { if (touch.current === start) touch.current = null }, 0)
           }}
