@@ -1,7 +1,7 @@
 import { memo } from 'preact/compat'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { player, playFrom } from '../audio'
-import { pageOptionsAsked } from '../ui'
+import { drawerOpen, pageOptionsAsked } from '../ui'
 import { AppBar, Logo } from '../components/AppBar'
 import { AyahPanel } from '../components/AyahPanel'
 import { Icon } from '../components/Icon'
@@ -150,8 +150,8 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   const touch = useRef<{ x: number; y: number; at: number; timer?: number; long?: boolean } | null>(null)
   const playingId = player.value?.ayahId
   const boxBottomRef = useRef(false)
-  // The translation shows in the inspector beside the text (wide screens), in a box at the bottom (phones), or in a
-  // card over the page under its ayah.
+  // The translation shows in a panel in the margin beside the page (wide screens, only while an ayah is open), in a box
+  // at the bottom (phones), or in a card over the page under its ayah.
   const wide = useWide()
   // "In the page": under each ayah on the text pages, under each line on the printed pages.
   const place: TranslationPlace = s.translationPlace === 'words' && !meta.wbw ? 'panel' : s.translationPlace
@@ -159,7 +159,6 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   // one page at a time: the printed pages, and word by word (too much text to lay out all 604 pages at once)
   const single = printed || words
   const popup = place === 'card'
-  const inspector = wide && !popup
   const inlineTr = useMemo(
     () => (place === 'inline' && !printed && data.value ? { info: data.value.ids.map((id) => meta.translations.find((x) => x.id === id)!), texts: data.value.trs, size: Math.round(s.trSize * 0.9) } : undefined),
     [place, data.value, s.trSize],
@@ -295,7 +294,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
 
   // The popup sits under the last line of its ayah (or above its first line, near the bottom of the screen),
   // and moves with it as the page scrolls.
-  const popupId = popup ? (selected ?? hoverId) : undefined
+  const popupId = popup && panel?.kind !== 'options' ? (selected ?? hoverId) : undefined
   useLayoutEffect(() => {
     if (popupId === undefined) return
     const place = () => {
@@ -351,20 +350,54 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
       />
     ) : null
 
-  // The side box: the ayah's panel (unless translations show over the page), or the reading options.
+  // The ayah's panel (unless translations show over the page), or the reading options.
   const box =
     panel?.kind === 'options' ? (
       <PageOptions pageNo={current} juz={juzOf(meta, pageRange(meta, current).first)} onPlay={() => { setPanel(null); playFrom(pageRange(meta, current).first) }} onJump={() => { setPanel(null); setJumping(true) }} onVerseView={toVerse} onClose={() => setPanel(null)} />
     ) : selected !== undefined && !popup ? ayahPanel(selected, 'box') : null
   // On a phone the sheet covers the lower part of the screen. It is not hidden while a layer is open (the layer
   // covers the mushaf), and the ayah is kept clear of it by scroll-margin rather than by padding or jumping.
-  const bottomBox = box !== null && !inspector && !paused
+  const bottomBox = box !== null && !wide && !paused
+  const sideBox = box !== null && wide
   boxBottomRef.current = bottomBox
   useLayoutEffect(() => {
     if (!bottomBox || selected === undefined) return
     const id = selected
     scrollTo(() => ayahEl(id), 'nearest')
   }, [bottomBox, selected])
+  // The panel in the margin closes with Escape, and focus left in it goes back to the ayah it was about.
+  const sideRef = useRef<HTMLElement>(null)
+  const sideAyah = useRef<number>()
+  sideAyah.current = selected
+  useLayoutEffect(() => {
+    if (!sideBox) return
+    const key = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !e.defaultPrevented && !drawerOpen.peek() && !document.querySelector('.mb-menu')) setPanel(null)
+    }
+    document.addEventListener('keydown', key)
+    const el = sideRef.current
+    return () => {
+      document.removeEventListener('keydown', key)
+      const id = sideAyah.current
+      const lost = document.activeElement === document.body || !!el?.contains(document.activeElement)
+      if (lost && id !== undefined) document.querySelector<HTMLElement>(`.ay[data-id="${id}"]`)?.focus({ preventScroll: true })
+    }
+  }, [sideBox])
+  // One page at a time, the arrow keys turn the pages in the book's direction: left for the next page, right for the
+  // previous one, in both languages.
+  useEffect(() => {
+    if (!single || paused) return
+    const key = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || drawerOpen.peek()) return
+      if (e.target instanceof Element && e.target.closest('input, select, textarea, [role="listbox"], [role="menu"]')) return
+      if (e.key === 'ArrowLeft') turnTo(current + 1)
+      else if (e.key === 'ArrowRight') turnTo(current - 1)
+      else return
+      e.preventDefault()
+    }
+    document.addEventListener('keydown', key)
+    return () => document.removeEventListener('keydown', key)
+  })
 
   const surahOfPage = meta.surahs[locate(meta, pageRange(meta, current).first).surah - 1]!
   // a layout effect, so Escape works as soon as the menu is on screen
@@ -472,11 +505,19 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
           </div>
         </>
       ) : null}
-      <div class={`mushaf-layout${inspector ? ' has-inspector' : ''}`}>
-        {inspector ? (
-          <section class="inspector" aria-label={t('inspectorLabel')} data-testid="inspector">
-            {box ?? <p class="inspector-hint muted">{t('inspectorHint')}</p>}
-          </section>
+      {/* fitted: the printed page whole, sized to the window; the other modes are a column that scrolls */}
+      <div class={`mushaf-layout${printed && !lineTr && !words ? ' fitted' : ''}${sideBox ? ' side-open' : ''}`}>
+        {sideBox ? (
+          <aside class="side-panel" ref={sideRef} aria-label={t('inspectorLabel')} data-testid="side-panel">
+            {box}
+          </aside>
+        ) : null}
+        {wide && single ? (
+          // beside the page, for the mouse; the bar's buttons and the arrow keys do the same for everyone
+          <>
+            <button class="edge-turn edge-next" aria-hidden="true" tabIndex={-1} disabled={current >= PAGES} onClick={() => turnTo(current + 1)}><Icon name="chevron" size={24} /></button>
+            <button class="edge-turn edge-prev" aria-hidden="true" tabIndex={-1} disabled={current <= 1} onClick={() => turnTo(current - 1)}><Icon name="chevron" size={24} /></button>
+          </>
         ) : null}
         <div
           class={`mushaf-flow${printed ? ' printed' : ''}`}

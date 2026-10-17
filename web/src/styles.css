@@ -410,21 +410,72 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .page-no::before, .page-no::after { content: ''; flex: 1; border-top: 1px solid var(--line); }
 @media (hover: hover) { .ay:not(.sel):not(.playing):hover { background: var(--sel); } }
 
-/* The inspector: a column of its own beside the text on wide screens. It is always there, so opening it moves nothing. */
-:root { --insp-w: clamp(300px, 26vw, 380px); }
+/* A computer: the page in the middle of the window, on its own. Whole printed pages are sized to the window's height;
+   the other modes are a column. The ayah's panel opens in the free margin at the left (the facing page of a right to
+   left book), only while an ayah or the reading options are open; where the margin is too narrow the page moves aside
+   just enough, and comes back when the panel closes. */
+:root { --stage: #f1eee6; }
+:root[data-theme='sepia'] { --stage: #e9ddc2; }
+:root[data-theme='dark'] { --stage: #0d100f; }
+@media (prefers-color-scheme: dark) { :root[data-theme='auto'] { --stage: #0d100f; } }
 @media (min-width: 1000px) {
-  .app { max-width: calc(var(--insp-w) + 24px + 720px + 32px); }
-  .mushaf-host .appbar-in { max-width: calc(var(--insp-w) + 24px + 720px); }
-  .mushaf-layout.has-inspector { display: grid; grid-template-columns: var(--insp-w) minmax(0, 1fr); gap: 24px; }
-  .inspector {
-    position: sticky; z-index: 1; align-self: start; overflow-y: auto;
-    top: calc(var(--bar-h) + 8px); max-height: calc(100dvh - var(--bar-h) - var(--player-h) - 24px);
-    background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 8px 12px;
+  body:has(.mushaf-host:not([inert])) { background: var(--stage); }
+  .mushaf-host .appbar { background: var(--stage); }
+  .app { max-width: none; }
+  .appbar .appbar-in { max-width: none; padding-inline: 16px; }
+  .mushaf-layout {
+    --page-w: clamp(560px, 100vw - 640px, 720px);
+    --m: calc((100vw - var(--page-w)) / 2);
+    --panel-w: clamp(280px, var(--m) - 48px, 420px);
+    --nudge: 0px;
   }
-  .inspector-hint { padding: 12px 0; font-size: 0.9rem; }
+  .mushaf-layout.fitted { --page-w: min(calc((100dvh - var(--bar-h) - 28px) * 654 / 935), 820px, calc(100vw - 48px)); }
+  /* where the margin is too narrow for the recitation card, the page makes room under it */
+  @media (max-width: 1279px) { .mushaf-layout.fitted { --page-w: min(calc((100dvh - var(--bar-h) - 28px - var(--player-h)) * 654 / 935), 820px, calc(100vw - 48px)); } }
+  .mushaf-layout.side-open { --nudge: clamp(0px, var(--panel-w) + 40px - var(--m), var(--m) - 16px); }
+  .mushaf-flow { width: var(--page-w); margin-inline: auto; transition: translate 0.3s cubic-bezier(0.2, 0, 0, 1); }
+  /* only while the panel is open: a moved box holds the card over the page (position: fixed) to itself */
+  .side-open .mushaf-flow { translate: var(--nudge) 0; }
+  .mushaf-flow.printed .mpage, .mushaf-flow.printed .mpage.il, .mushaf-flow.printed .mpage.wbw { max-width: none; }
+  .fitted .mushaf-flow { padding-top: calc(var(--bar-h) + 10px); }
+  /* the printed page as a sheet of paper on the desk */
+  .fitted .pg { background: #fff; border-radius: 3px; box-shadow: 0 1px 2px rgb(40 30 10 / 0.08), 0 18px 44px -14px rgb(40 30 10 / 0.32); }
+  .fitted .mpage.printed { margin-bottom: 14px; }
+  :root[data-theme='dark'] .fitted .pg { box-shadow: 0 0 0 1px rgb(255 255 255 / 0.05), 0 22px 50px -12px rgb(0 0 0 / 0.7); }
+  .side-panel {
+    position: fixed; z-index: 4; top: calc(var(--bar-h) + 10px); left: max(12px, calc(var(--m) + var(--nudge) - 40px - var(--panel-w)));
+    width: var(--panel-w); max-height: calc(100dvh - var(--bar-h) - var(--player-h) - 24px); overflow-y: auto; overscroll-behavior: contain;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 8px 14px 12px;
+    box-shadow: 0 20px 48px -18px rgb(30 25 10 / 0.3); animation: side-in 0.28s cubic-bezier(0.05, 0.7, 0.1, 1);
+  }
+  :root[data-theme='dark'] .side-panel { box-shadow: 0 0 0 1px rgb(255 255 255 / 0.04), 0 24px 56px -16px rgb(0 0 0 / 0.7); }
+  .side-panel .tr { font-size: 1.02rem; line-height: 1.8; }
+  /* turning the page with the mouse: a quiet arrow in the margin each side of the page */
+  .edge-turn {
+    position: fixed; z-index: 3; top: calc(50dvh + var(--bar-h) / 2 - 48px); width: 44px; height: 96px; display: grid; place-items: center;
+    border: 0; border-radius: 22px; background: none; color: var(--muted); opacity: 0.55; cursor: pointer; transition: opacity 0.15s, background 0.15s;
+  }
+  .edge-turn:hover { opacity: 1; background: color-mix(in srgb, var(--ink) 6%, transparent); color: var(--ink); }
+  .edge-turn:disabled { visibility: hidden; }
+  .edge-next { left: max(4px, calc(var(--m) + var(--nudge) - 60px)); }
+  .edge-next svg { transform: scaleX(-1); }
+  .edge-prev { right: max(4px, calc(var(--m) - var(--nudge) - 60px)); }
+  .side-open .edge-next { display: none; }
+  /* the recitation: a small card in the corner, beside the page rather than over its last lines */
+  .player {
+    inset-inline: auto; right: 16px; bottom: 16px; margin: 0; width: 360px; max-width: calc(100vw - 32px); flex-wrap: wrap;
+    border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 20px 48px -18px rgb(30 25 10 / 0.35);
+  }
+  :root[data-theme='dark'] .player { box-shadow: 0 0 0 1px rgb(255 255 255 / 0.04), 0 24px 56px -16px rgb(0 0 0 / 0.7); }
+  .appbar .mushaf-id { gap: 8px; }
+  .mb-surah { font-size: 1.3rem; }
+  .mb-juz { font-size: 0.9rem; }
 }
-.side-box .sheet-head, .inspector .sheet-head { flex-wrap: wrap; gap: 4px; }
-.side-box .ayah-actions, .inspector .ayah-actions { flex-wrap: wrap; }
+@keyframes side-in { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .mushaf-flow { transition: none; } .side-panel { animation: none; } }
+@media (hover: none) { .edge-turn { display: none; } }
+.side-panel .sheet-head { flex-wrap: wrap; gap: 4px; }
+.side-panel .ayah-actions { flex-wrap: wrap; }
 .ayah-panel .tr { font-size: 0.95rem; }
 
 /* The translation over the page, under its ayah */
@@ -518,14 +569,26 @@ a.player-info { color: var(--ink); text-decoration: none; }
 :root { --bar-h: calc(52px + env(safe-area-inset-top)); }
 .appbar { position: fixed; top: 0; inset-inline: 0; z-index: 5; padding-top: env(safe-area-inset-top); background: var(--bg); border-bottom: 1px solid var(--line); }
 .appbar.sticky { position: sticky; }
-.appbar-in { max-width: 720px; height: 52px; margin-inline: auto; padding-inline: 4px; display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 4px; }
+.appbar-in {
+  max-width: 720px; height: 52px; margin-inline: auto; padding-inline: 4px; display: grid; align-items: center; gap: 4px;
+  grid-template-columns: minmax(44px, 1fr) minmax(0, auto) minmax(44px, 1fr); /* equal sides, so the centre is the middle */
+}
 .appbar-centre { min-width: 0; display: flex; justify-content: center; align-items: center; }
-.appbar-start { display: flex; justify-content: flex-start; }
-/* the name in nastaliq (src/assets/zekr-logo.png, from the owner), as a mask so it takes the theme's accent colour */
+/* the same way round in both languages: the burger at the left, the name or Close at the right */
+.appbar-in > .burger { justify-self: start; }
+.appbar-start { display: flex; justify-content: flex-end; }
+:root[dir='rtl'] .appbar-in > .burger { justify-self: end; }
+:root[dir='rtl'] .appbar-start { justify-content: flex-start; }
+/* the name in nastaliq (src/assets/zekr-logo.png, from the owner), as a mask so it takes the theme's colour. The
+   picture's strokes are thin: a second copy a fraction of a pixel across gives them weight. */
+:root { --brand: color-mix(in srgb, var(--accent) 62%, var(--ink)); }
 .logo {
-  display: block; width: 44px; height: 38px; background: var(--accent);
+  position: relative; display: block; width: 48px; height: 42px; background: var(--brand);
   -webkit-mask: url('./assets/zekr-logo.png') center / contain no-repeat; mask: url('./assets/zekr-logo.png') center / contain no-repeat;
 }
+.logo::after { content: ''; position: absolute; inset: 0; background: inherit; -webkit-mask: inherit; mask: inherit; translate: 0.7px 0.35px; }
+@media (min-width: 1000px) { .appbar .logo { width: 60px; height: 50px; } }
+@media (forced-colors: active) { .logo, .logo::after { forced-color-adjust: none; background: CanvasText; } }
 .appbar-title { text-align: center; min-width: 0; }
 .appbar-title h1 { font-size: 1.05rem; font-weight: 700; line-height: 1.35; }
 .appbar-title p { font-size: 0.78rem; color: var(--muted); line-height: 1.3; }
@@ -544,7 +607,7 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .drawer-wrap { position: fixed; inset: 0; z-index: 20; }
 .drawer-backdrop { position: absolute; inset: 0; background: rgb(0 0 0 / 0.4); animation: fade-in 0.15s ease-out; }
 .drawer {
-  position: absolute; inset-block: 0; inset-inline-end: 0; width: min(400px, 92vw); padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  position: absolute; inset-block: 0; left: 0; width: min(400px, 92vw); padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
   background: var(--surface); box-shadow: 0 0 30px rgb(0 0 0 / 0.25); display: flex; flex-direction: column; animation: drawer-in 0.18s ease-out;
 }
 .drawer-head { display: flex; align-items: center; justify-content: space-between; height: 52px; padding: 0 12px 0 20px; border-bottom: 1px solid var(--line); }
@@ -560,9 +623,8 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .drawer-item { grid-column: 1 / -1; width: 100%; background: none; font: inherit; font-weight: 500; cursor: pointer; }
 .drawer-links a.on { background: var(--hl); color: var(--accent); font-weight: 700; }
 .drawer-settings { border-top: 1px solid var(--line); margin-top: 10px; }
-@keyframes drawer-in { from { transform: translateX(100%); } to { transform: none; } }
-:root[dir='rtl'] .drawer { animation-name: drawer-in-rtl; }
-@keyframes drawer-in-rtl { from { transform: translateX(-100%); } to { transform: none; } }
+/* from the left, the burger's side, in both languages */
+@keyframes drawer-in { from { transform: translateX(-100%); } to { transform: none; } }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .drawer, .drawer-backdrop { animation: none; } }
 
