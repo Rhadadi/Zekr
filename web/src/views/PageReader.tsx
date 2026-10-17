@@ -345,6 +345,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
         showTranslations={place === 'panel' || place === 'card' || place === 'words'}
         menu={panel?.kind === 'ayah' && panel.id === id && !!panel.menu}
         offerWords={!words}
+        inlineStudy={variant === 'box' && wide}
         panelRef={variant === 'popup' ? popRef : undefined}
         onClose={() => {
           setPanel(null)

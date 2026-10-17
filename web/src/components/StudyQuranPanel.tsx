@@ -5,6 +5,7 @@ import { lang, num, t } from '../i18n'
 import { type Meta, locate } from '../data'
 import { useAsync } from '../hooks'
 import { href } from '../router'
+import { Loading } from './Page'
 import { entriesForAyah, loadAllStudyEntries, loadStudyTafsir, searchStudyEntries,
   type StudyEntry } from '../studyQuran'
 
@@ -34,7 +35,7 @@ export function Note({ entry, queue }: { entry: StudyEntry; queue?: StudyEntry[]
 
 /** One chip per commentary group: "Commentary on 2:1–5". On a verse row it shows only at the first ayah of a group; in the
  * ayah panel (`all`) it shows every note that covers the ayah. Notes shared by several ayahs are one chip, one note. */
-export function StudyChips({ meta, ayahID, all = false }: { meta: Meta; ayahID: number; all?: boolean }) {
+export function StudyChips({ meta, ayahID, all = false, onOpen, open }: { meta: Meta; ayahID: number; all?: boolean; onOpen?: (entryId: string) => void; open?: string | null }) {
   const { surah, ayah } = locate(meta, ayahID)
   const data = useAsync(async () => (meta.studyQuran ? loadStudyTafsir(meta, surah) : null), [surah, meta.version])
   if (!meta.studyQuran || !data.value) return null
@@ -42,7 +43,13 @@ export function StudyChips({ meta, ayahID, all = false }: { meta: Meta; ayahID: 
   if (!entries.length) return null
   return (
     <div class="study-chips">
-      {entries.map((e) => (
+      {entries.map((e) => onOpen ? (
+        // beside the page the commentary opens right under the translation instead of on a screen of its own
+        <button key={e.id} class="study-chip" data-entry={e.id} aria-expanded={open === e.id} onClick={() => onOpen(e.id)}>
+          <Icon name="speech" size={16} />
+          {t('commentaryOn')} {num(`${surah}:${rangeLabel(e)}`)}
+        </button>
+      ) : (
         <a key={e.id} class="study-chip" href={href.commentary(surah, e.first_ayah)} data-entry={e.id}>
           <Icon name="speech" size={16} />
           {t('commentaryOn')} {num(`${surah}:${rangeLabel(e)}`)}
@@ -52,11 +59,34 @@ export function StudyChips({ meta, ayahID, all = false }: { meta: Meta; ayahID: 
   )
 }
 
+/** The Study Quran's notes on an ayah, shown where they were asked for: under the translation in the panel beside the page.
+ * `only` is one note (a chip); without it, every note that covers the ayah. */
+export function StudyInline({ meta, ayahID, only }: { meta: Meta; ayahID: number; only?: string | null }) {
+  const { surah } = locate(meta, ayahID)
+  const data = useAsync(async () => (meta.studyQuran ? loadStudyTafsir(meta, surah) : null), [surah, meta.version])
+  if (!meta.studyQuran) return null
+  const entries = data.value ? entriesForAyah(data.value, ayahID).filter((e) => !only || e.id === only) : []
+  return (
+    <section class="study-inline" aria-label={t('commentary')}>
+      {data.error ? <p role="alert" class="muted small">{t('noCommentary')} <button class="btn" onClick={data.retry}>{t('retry')}</button></p> : !data.value ? <Loading /> : (
+        entries.length ? entries.map((e) => <Note key={e.id} entry={e} queue={data.value!.entries} />) : <p class="muted small">{t('noCommentary')}</p>
+      )}
+    </section>
+  )
+}
+
 /** In an ayah's list of actions: the Study Quran's commentary on it, when the book has a note on it. */
-export function StudyLink({ meta, ayahID }: { meta: Meta; ayahID: number }) {
+export function StudyLink({ meta, ayahID, onOpen, open }: { meta: Meta; ayahID: number; onOpen?: () => void; open?: boolean }) {
   const { surah, ayah } = locate(meta, ayahID)
   const data = useAsync(async () => (meta.studyQuran ? loadStudyTafsir(meta, surah) : null), [surah, meta.version])
   if (!meta.studyQuran || !data.value || !entriesForAyah(data.value, ayahID).length) return null
+  if (onOpen) {
+    return (
+      <button onClick={onOpen} aria-expanded={open}>
+        <Icon name="speech" size={18} /> {t('commentary')}: {t('studyQuranName')}
+      </button>
+    )
+  }
   return (
     <a href={href.commentary(surah, ayah)}>
       <Icon name="speech" size={18} /> {t('commentary')}: {t('studyQuranName')}

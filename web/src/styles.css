@@ -410,57 +410,72 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .page-no::before, .page-no::after { content: ''; flex: 1; border-top: 1px solid var(--line); }
 @media (hover: hover) { .ay:not(.sel):not(.playing):hover { background: var(--sel); } }
 
-/* A computer: the page in the middle of the window, on its own. Whole printed pages are sized to the window's height;
-   the other modes are a column. The ayah's panel opens in the free margin at the left (the facing page of a right to
-   left book), only while an ayah or the reading options are open; where the margin is too narrow the page moves aside
-   just enough, and comes back when the panel closes. */
-:root { --stage: #f1eee6; }
-:root[data-theme='sepia'] { --stage: #e9ddc2; }
-:root[data-theme='dark'] { --stage: #0d100f; }
-@media (prefers-color-scheme: dark) { :root[data-theme='auto'] { --stage: #0d100f; } }
+/* A computer: the page in the middle of the window, lit on its own: the stage fades away from it, it stands on a deep
+   shadow, and the panels at its sides are flat and quiet. The settings panel (the menu) can be docked at the left; the
+   ayah's panel (the translation, the commentary under it) opens at the right, only while an ayah or the reading options are
+   open. Where a margin is too narrow for its panel the page moves aside just enough, and comes back when it closes. */
+:root { --stage: #ebe7dc; --spot: #fcfaf5; --panel: #f4f1ea; }
+:root[data-theme='sepia'] { --stage: #e4d6b8; --spot: #f4e9d1; --panel: #eee2c6; }
+:root[data-theme='dark'] { --stage: #0d100f; --spot: #1c211f; --panel: #141817; }
+@media (prefers-color-scheme: dark) { :root[data-theme='auto'] { --stage: #0d100f; --spot: #1c211f; --panel: #141817; } }
 @media (min-width: 1000px) {
-  body:has(.mushaf-host:not([inert])) { background: var(--stage); }
+  body:has(.mushaf-host:not([inert])) { background: var(--stage) radial-gradient(ellipse 52% 78% at 50% 50%, var(--spot), var(--stage)) fixed; }
   .mushaf-host .appbar { background: var(--stage); }
+  /* one whole page and nothing scrolling under the bar: it lets the lit stage show through */
+  body:has(.mushaf-layout.fitted) .mushaf-host .appbar { background: transparent; border-bottom-color: transparent; }
   .app { max-width: none; }
   .appbar .appbar-in { max-width: none; padding-inline: 16px; }
   .mushaf-layout {
     --page-w: clamp(560px, 100vw - 640px, 720px);
     --m: calc((100vw - var(--page-w)) / 2);
-    --panel-w: clamp(280px, var(--m) - 48px, 420px);
-    --nudge: 0px;
+    --panel-w: clamp(264px, var(--m) - 56px, 420px);
+    --lpush: 0px; --rpush: 0px; --tx: calc(var(--lpush) - var(--rpush));
   }
   .mushaf-layout.fitted { --page-w: min(calc((100dvh - var(--bar-h) - 28px) * 654 / 935), 820px, calc(100vw - 48px)); }
   /* where the margin is too narrow for the recitation card, the page makes room under it */
   @media (max-width: 1279px) { .mushaf-layout.fitted { --page-w: min(calc((100dvh - var(--bar-h) - 28px - var(--player-h)) * 654 / 935), 820px, calc(100vw - 48px)); } }
-  .mushaf-layout.side-open { --nudge: clamp(0px, var(--panel-w) + 40px - var(--m), var(--m) - 16px); }
+  /* the right panel pushes the page left, the docked menu pushes it right, each only as far as it must */
+  .mushaf-layout.side-open { --rpush: clamp(0px, 16px + var(--panel-w) + 40px - var(--m), var(--m) - 16px); }
+  html[data-dock] .mushaf-layout { --lpush: clamp(0px, 12px + 340px + 28px - var(--m), var(--m) - 16px); }
   .mushaf-flow { width: var(--page-w); margin-inline: auto; transition: translate 0.3s cubic-bezier(0.2, 0, 0, 1); }
-  /* only while the panel is open: a moved box holds the card over the page (position: fixed) to itself */
-  .side-open .mushaf-flow { translate: var(--nudge) 0; }
+  /* only while a panel is open: a moved box holds the card over the page (position: fixed) to itself */
+  .side-open .mushaf-flow, html[data-dock] .mushaf-flow { translate: var(--tx) 0; }
   .mushaf-flow.printed .mpage, .mushaf-flow.printed .mpage.il, .mushaf-flow.printed .mpage.wbw { max-width: none; }
   .fitted .mushaf-flow { padding-top: calc(var(--bar-h) + 10px); }
-  /* the printed page as a sheet of paper on the desk */
-  .fitted .pg { background: #fff; border-radius: 3px; box-shadow: 0 1px 2px rgb(40 30 10 / 0.08), 0 18px 44px -14px rgb(40 30 10 / 0.32); }
+  /* the printed page as a sheet of paper standing out of the dark */
+  .fitted .pg { background: #fff; border-radius: 3px; box-shadow: 0 0 0 1px rgb(60 45 15 / 0.1), 0 2px 5px rgb(40 30 10 / 0.12), 0 34px 80px -20px rgb(40 30 10 / 0.5); }
   .fitted .mpage.printed { margin-bottom: 14px; }
-  :root[data-theme='dark'] .fitted .pg { box-shadow: 0 0 0 1px rgb(255 255 255 / 0.05), 0 22px 50px -12px rgb(0 0 0 / 0.7); }
+  :root[data-theme='dark'] .fitted .pg { box-shadow: 0 0 0 1px rgb(255 255 255 / 0.07), 0 0 90px -10px rgb(255 245 220 / 0.1), 0 34px 80px -16px rgb(0 0 0 / 0.85); }
+  /* the translation (and the commentary under it) at the right: flat, so the page stays the thing to look at */
   .side-panel {
-    position: fixed; z-index: 4; top: calc(var(--bar-h) + 10px); left: max(12px, calc(var(--m) + var(--nudge) - 40px - var(--panel-w)));
+    position: fixed; z-index: 4; top: calc(var(--bar-h) + 10px); right: max(12px, calc(var(--m) - var(--tx) - 40px - var(--panel-w)));
     width: var(--panel-w); max-height: calc(100dvh - var(--bar-h) - var(--player-h) - 24px); overflow-y: auto; overscroll-behavior: contain;
-    background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 8px 14px 12px;
-    box-shadow: 0 20px 48px -18px rgb(30 25 10 / 0.3); animation: side-in 0.28s cubic-bezier(0.05, 0.7, 0.1, 1);
+    background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 8px 14px 12px; animation: side-in 0.28s cubic-bezier(0.05, 0.7, 0.1, 1);
   }
-  :root[data-theme='dark'] .side-panel { box-shadow: 0 0 0 1px rgb(255 255 255 / 0.04), 0 24px 56px -16px rgb(0 0 0 / 0.7); }
+  .side-panel .ayah-head { background: var(--panel); }
   .side-panel .tr { font-size: 1.02rem; line-height: 1.8; }
+  .study-inline { margin-top: 10px; padding-top: 4px; border-top: 1px solid var(--line); }
+  .study-inline .study-note h4 { margin-top: 10px; font-size: 0.85rem; color: var(--muted); }
+  .study-inline .study-note p { font-size: 0.95rem; line-height: 1.75; }
+  /* the settings at the left, docked: the same panel as the drawer, beside the page instead of over it */
+  .drawer.docked {
+    position: fixed; z-index: 4; top: calc(var(--bar-h) + 10px); bottom: 12px; left: 12px; width: 340px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 16px; box-shadow: none; overflow: hidden; padding: 0;
+    animation: dock-in 0.28s cubic-bezier(0.05, 0.7, 0.1, 1);
+  }
+  .drawer.docked .drawer-head { height: 48px; }
+  .dock-title { font-size: 1.05rem; }
   /* turning the page with the mouse: a quiet arrow in the margin each side of the page */
   .edge-turn {
     position: fixed; z-index: 3; top: calc(50dvh + var(--bar-h) / 2 - 48px); width: 44px; height: 96px; display: grid; place-items: center;
-    border: 0; border-radius: 22px; background: none; color: var(--muted); opacity: 0.55; cursor: pointer; transition: opacity 0.15s, background 0.15s;
+    border: 0; border-radius: 22px; background: none; color: var(--muted); opacity: 0.4; cursor: pointer; transition: opacity 0.15s, background 0.15s;
   }
   .edge-turn:hover { opacity: 1; background: color-mix(in srgb, var(--ink) 6%, transparent); color: var(--ink); }
   .edge-turn:disabled { visibility: hidden; }
-  .edge-next { left: max(4px, calc(var(--m) + var(--nudge) - 60px)); }
+  .edge-next { left: max(4px, calc(var(--m) + var(--tx) - 60px)); }
   .edge-next svg { transform: scaleX(-1); }
-  .edge-prev { right: max(4px, calc(var(--m) - var(--nudge) - 60px)); }
-  .side-open .edge-next { display: none; }
+  .edge-prev { right: max(4px, calc(var(--m) - var(--tx) - 60px)); }
+  .side-open .edge-prev, html[data-dock] .edge-next { display: none; }
   /* the recitation: a small card in the corner, beside the page rather than over its last lines */
   .player {
     inset-inline: auto; right: 16px; bottom: 16px; margin: 0; width: 360px; max-width: calc(100vw - 32px); flex-wrap: wrap;
@@ -471,8 +486,9 @@ a.player-info { color: var(--ink); text-decoration: none; }
   .mb-surah { font-size: 1.3rem; }
   .mb-juz { font-size: 0.9rem; }
 }
-@keyframes side-in { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .mushaf-flow { transition: none; } .side-panel { animation: none; } }
+@keyframes side-in { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+@keyframes dock-in { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .mushaf-flow { transition: none; } .side-panel, .drawer.docked { animation: none; } }
 @media (hover: none) { .edge-turn { display: none; } }
 .side-panel .sheet-head { flex-wrap: wrap; gap: 4px; }
 .side-panel .ayah-actions { flex-wrap: wrap; }
