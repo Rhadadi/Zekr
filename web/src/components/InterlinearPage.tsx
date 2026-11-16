@@ -115,7 +115,7 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
   const seen = new Set<number>()
   return (
     <section ref={root} class="mpage printed il" id={`page-${n}`} data-page={n} aria-label={t('pageN', { n })}>
-      {strips.map((s) => {
+      {strips.map((s, si) => {
         const h = s.bottom - s.top
         const row = pieces.get(s)
         return (
@@ -123,6 +123,10 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
             <div class="il-strip" style={{ paddingTop: `${(h / 1000) * ratio * 100}%` }}>
               <i class="pg-img il-pic" style={slice(s.top, h)} />
               {fonted && s.line?.length ? (lineNo++, <FontLine tokens={laid![lineNo]!} band={bands[lineNo]!} box={s} paper={paper.value?.[lineNo]} />) : null}
+              {/* the tips of the next line's printed letters reach up into the strip above it (the frame, a banner): hidden too */}
+              {fonted && !s.line?.length && strips[si + 1]?.line?.length && h > 14
+                ? <FontLine tokens={[]} band={{ ...bands[lineNo + 1]!, top: s.bottom - 7, bottom: s.bottom - 3 }} box={s} paper={paper.value?.[lineNo + 1]} />
+                : null}
               {(s.line ?? []).map((seg) => {
                 const first = !seen.has(seg.id)
                 seen.add(seg.id)

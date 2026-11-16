@@ -75,7 +75,7 @@ export function FontLine({ tokens, band, box, paper }: { tokens: PageLine; band:
     <div class="fl" aria-hidden="true" style={{
       left: `${band.left / 10}%`, width: `${(band.right - band.left) / 10}%`,
       // a little taller than the line, to hide the tips of the printed letters above and below it
-      top: `${((band.top - 4 - box.top) / h) * 100}%`, height: `${((band.bottom - band.top + 8) / h) * 100}%`, background: paper,
+      top: `${((band.top - 7 - box.top) / h) * 100}%`, height: `${((band.bottom - band.top + 10) / h) * 100}%`, background: paper,
     }}>
       <p class="fl-t" lang="ar" dir="rtl">
         {tokens.map((t, i) => (typeof t === 'number' ? <span key={i} class="fl-n">{arabicNum(t)}</span> : <span key={i}>{t}</span>))}
@@ -91,7 +91,7 @@ export function useFontLinesFit(root: { current: HTMLElement | null }, deps: unk
     const el = root.current
     if (!el) return
     const run = () => {
-      const lines = [...el.querySelectorAll<HTMLElement>('.fl-t')]
+      const lines = [...el.querySelectorAll<HTMLElement>('.fl-t')].filter((p) => p.childElementCount) // not the bare covers
       if (!lines.length) return
       el.style.setProperty('--fl-size', '20px')
       let ratio = Infinity
