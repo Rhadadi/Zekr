@@ -55,7 +55,7 @@ export function SettingsView({ meta }: { meta: Meta }) {
           </select>
         </label>
         <h2 class="section">{t('reading')}</h2>
-        <label class="field">
+        <label class="field stack">
           <span>{t('pageTranslation')}</span>
           <select value={s.translationPlace} onChange={(e) => updateSettings({ translationPlace: e.currentTarget.value as TranslationPlace })}>
             <option value="panel">{wide ? t('pageTranslationPanel') : t('pageTranslationBottom')}</option>

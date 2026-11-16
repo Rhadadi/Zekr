@@ -1379,7 +1379,8 @@ test.describe('The printed mushaf as pictures (private build, made-up pictures h
     await useSettings(page, { lang: 'fa', translationPlace: 'inline' })
     await page.goto('/#/page/3')
     await expect(page.locator('#page-3 .il-p').first()).toBeVisible()
-    expect(await page.locator('#page-3 .il-p').first().evaluate((e) => parseFloat(getComputedStyle(e).fontSize))).toBeGreaterThanOrEqual(14)
+    // the owner asked for it smaller (November 16, 2026): 14px, which fitting a line may shrink by a few percent
+    expect(await page.locator('#page-3 .il-p').first().evaluate((e) => parseFloat(getComputedStyle(e).fontSize))).toBeGreaterThanOrEqual(13)
     await expect(page.locator('.mushaf-flow')).not.toHaveAttribute('data-turn', /.+/)
     await page.keyboard.press('ArrowLeft')
     await expect(page.locator('#page-4')).toBeVisible()
@@ -1493,7 +1494,7 @@ test.describe('the drawer', () => {
   test('in Persian the menu is at the top left and opens from the left; the name is at the top right', async ({ page }) => {
     await useSettings(page, { lang: 'fa' })
     await page.goto('/#/page/305')
-    const logo = (await page.getByRole('img', { name: 'ذکر' }).boundingBox())!
+    const logo = (await page.getByRole('img', { name: 'آیه شنو' }).boundingBox())!
     expect(logo.x + logo.width).toBeGreaterThan(page.viewportSize()!.width - 20)
     const burger = page.getByRole('button', { name: 'منو' }).last()
     expect((await burger.boundingBox())!.x).toBeLessThan(20)
