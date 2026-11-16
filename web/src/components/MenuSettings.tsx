@@ -52,8 +52,8 @@ function Stepper({ label, value, min, max, set }: { label: string; value: number
   )
 }
 
-/** The settings as the menu shows them: one quiet row each, the frequent ones a tap away (the theme and the page colour
- * as buttons, the sizes as − and +), and the long lists (translations, recitation, offline) folded until asked for.
+/** The settings as the menu shows them: the four used most a tap away (language, the theme and the page colour as
+ * buttons, the translation's size as − and +), everything else folded by subject until asked for.
  * The Settings screen keeps the full form with its explanations. */
 export function MenuSettings({ meta }: { meta: Meta }) {
   const wide = useWide()
@@ -88,35 +88,37 @@ export function MenuSettings({ meta }: { meta: Meta }) {
           </span>
         </div>
       ) : null}
-      <label class="mrow">
-        <span>{t('pageTranslation')}</span>
-        <select value={s.translationPlace} onChange={(e) => updateSettings({ translationPlace: e.currentTarget.value as TranslationPlace })}>
-          <option value="panel">{wide ? t('pageTranslationPanel') : t('pageTranslationBottom')}</option>
-          <option value="card">{t('pageTranslationPopup')}</option>
-          <option value="inline">{meta.mushaf ? t('pageTranslationLines') : t('pageTranslationInline')}</option>
-          {meta.wbw ? <option value="words">{t('pageTranslationWords')}</option> : null}
-          <option value="off">{t('pageTranslationOff')}</option>
-        </select>
-      </label>
       <Stepper label={t('trSize')} value={s.trSize} min={TR_MIN} max={TR_MAX} set={(v) => updateSettings({ trSize: v })} />
-      <Stepper label={t('arabicSize')} value={s.arabicSize} min={22} max={52} set={(v) => updateSettings({ arabicSize: v })} />
-      <label class="mrow">
-        <span>{t('script')}</span>
-        <select value={s.script} onChange={(e) => updateSettings({ script: e.currentTarget.value as Script })}>
-          <option value="uthmani">{t('scriptUthmani')}</option>
-          <option value="simple">{t('scriptSimple')}</option>
-        </select>
-      </label>
-      <label class="mrow">
-        <span>{t('quranFont')}</span>
-        <select value={s.quranFont} onChange={(e) => updateSettings({ quranFont: e.currentTarget.value as QuranFont })}>
-          {QURAN_FONTS.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
-        </select>
-      </label>
+      <Section id="reading" title={t('reading')}>
+        <label class="mrow">
+          <span>{t('pageTranslation')}</span>
+          <select value={s.translationPlace} onChange={(e) => updateSettings({ translationPlace: e.currentTarget.value as TranslationPlace })}>
+            <option value="panel">{wide ? t('pageTranslationPanel') : t('pageTranslationBottom')}</option>
+            <option value="card">{t('pageTranslationPopup')}</option>
+            <option value="inline">{meta.mushaf ? t('pageTranslationLines') : t('pageTranslationInline')}</option>
+            {meta.wbw ? <option value="words">{t('pageTranslationWords')}</option> : null}
+            <option value="off">{t('pageTranslationOff')}</option>
+          </select>
+        </label>
+        <label class="mrow">
+          <span>{t('script')}</span>
+          <select value={s.script} onChange={(e) => updateSettings({ script: e.currentTarget.value as Script })}>
+            <option value="uthmani">{t('scriptUthmani')}</option>
+            <option value="simple">{t('scriptSimple')}</option>
+          </select>
+        </label>
+        <label class="mrow">
+          <span>{t('quranFont')}</span>
+          <select value={s.quranFont} onChange={(e) => updateSettings({ quranFont: e.currentTarget.value as QuranFont })}>
+            {QURAN_FONTS.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
+          </select>
+        </label>
+        <Stepper label={t('arabicSize')} value={s.arabicSize} min={22} max={52} set={(v) => updateSettings({ arabicSize: v })} />
+      </Section>
       <Section id="translations" title={t('translations')}><TranslationChecks meta={meta} /></Section>
       <Section id="recitation" title={t('recitation')}><PlaybackOptions /></Section>
       <Section id="offline" title={t('offline')}><OfflineDownload /></Section>
-      <a class="mrow mlink" href={href.about}>{t('about')}<span class="chev-fwd"><Icon name="chevron" size={16} /></span></a>
+      <a class="menu-about" href={href.about}>{t('about')}</a>
     </div>
   )
 }

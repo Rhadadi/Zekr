@@ -1,5 +1,5 @@
 import type { JSX } from 'preact'
-import { useEffect, useState } from 'preact/hooks'
+import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks'
 import { loopAyah, player, toggleAyah } from '../audio'
 import { type Meta, type TranslationInfo, loadWbw, locate } from '../data'
 import { useAsync } from '../hooks'
@@ -29,11 +29,14 @@ interface Props {
   inlineStudy?: boolean
   style?: JSX.CSSProperties
   panelRef?: preact.Ref<HTMLDivElement>
+  /** Beside the page: the translation of the whole page as one continuous text, this ayah opened in it, with tabs for
+   * its tafsir and its words. */
+  run?: { ids: number[]; texts: (id: number) => { info: TranslationInfo; text: string }[]; playing?: number; onPick: (id: number) => void }
   onClose: () => void
 }
 
 /** Translation and actions for an ayah on a mushaf page. */
-export function AyahPanel({ meta, id, ar, translations, variant, showTranslations = true, menu = false, offerWords = true, inlineStudy = false, style, panelRef, onClose }: Props) {
+export function AyahPanel({ meta, id, ar, translations, variant, showTranslations = true, menu = false, offerWords = true, inlineStudy = false, style, panelRef, run, onClose }: Props) {
   const { surah, ayah } = locate(meta, id)
   const saved = isBookmarked(id)
   const texts = translations.map((x) => x.text || t('mergedTranslation'))
@@ -57,8 +60,25 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
     setWords(false)
     setStudy(false)
   }, [id, menu])
-  const wbw = useAsync(async () => (words ? (await loadWbw(surah))[ayah - 1] ?? [] : null), [words, surah, ayah])
+  // the tabs beside the page: the translation, then what the reader has of the ayah's tafsir and its words
+  type Tab = 'tr' | 'tafsir' | 'words'
+  const tabs: Tab[] = run ? ['tr', ...(meta.studyQuran || tafsirIndex.value ? ['tafsir' as const] : []), ...(meta.wbw ? ['words' as const] : [])] : []
+  const [tab, setTab] = useState<Tab>('tr')
+  const shownTab: Tab = tabs.includes(tab) ? tab : 'tr'
+  const wbw = useAsync(async () => (words || (run && shownTab === 'words') ? (await loadWbw(surah))[ayah - 1] ?? [] : null), [words, run, shownTab, surah, ayah])
   const showTr = showTranslations || fullTr
+  // keep the opened ayah in view in the run, under the panel's head
+  const runRef = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const list = runRef.current
+    const box = list?.closest<HTMLElement>('.side-panel')
+    const at = list?.querySelector<HTMLElement>('.run-ay.sel')
+    if (!box || !at) return
+    const head = box.querySelector<HTMLElement>('.ayah-head')?.offsetHeight ?? 0
+    const tabsH = box.querySelector<HTMLElement>('.ayah-tabs')?.offsetHeight ?? 0
+    const top = at.getBoundingClientRect().top - box.getBoundingClientRect().top
+    if (top < head + tabsH || top > box.clientHeight - 80) box.scrollTop += top - head - tabsH - 8
+  }, [id, shownTab])
   return (
     <div ref={panelRef} class={`ayah-panel ayah-${variant}`} style={style} role="region" aria-label={ayahRef(meta.surahs[surah - 1]!, ayah)} data-testid="ayah-panel">
       <div class="sheet-head ayah-head">
@@ -82,12 +102,12 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
       </div>
       {more ? (
         <div class="ayah-more">
-          {showTranslations ? null : (
+          {showTranslations || run ? null : (
             <button onClick={() => { setFullTr(!fullTr); setMore(false) }} aria-pressed={fullTr}>
               <Icon name="book" size={18} /> {t('ayahTranslation')}
             </button>
           )}
-          {meta.wbw && offerWords ? (
+          {meta.wbw && offerWords && !run ? (
             <button onClick={() => { setWords(!words); setMore(false) }} aria-pressed={words}>
               <Icon name="list" size={18} /> {t('wordByWord')}
             </button>
@@ -103,7 +123,7 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
             </a>
           ) : null}
           {/* with nothing else in the box, its commentary is listed here rather than taking a row of its own */}
-          {meta.studyQuran && !showTr ? <StudyLink meta={meta} ayahID={id} onOpen={inlineStudy ? () => { setStudy(study ? false : true); setMore(false) } : undefined} open={!!study} /> : null}
+          {meta.studyQuran && !showTr && !run ? <StudyLink meta={meta} ayahID={id} onOpen={inlineStudy ? () => { setStudy(study ? false : true); setMore(false) } : undefined} open={!!study} /> : null}
           <a href={href.verse(surah, ayah)}>
             <Icon name="list" size={18} /> {t('openVerseView')}
           </a>
@@ -115,6 +135,66 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
           </button>
         </div>
       ) : null}
+      {tabs.length > 1 ? (
+        <div class="ayah-tabs" role="tablist" aria-label={ayahRef(meta.surahs[surah - 1]!, ayah)}>
+          {tabs.map((k) => (
+            <button key={k} type="button" role="tab" aria-selected={shownTab === k} onClick={() => setTab(k)}>
+              {t(k === 'tr' ? 'tabTranslation' : k === 'tafsir' ? 'tabTafsir' : 'tabWords')}
+            </button>
+          ))}
+        </div>
+      ) : null}
+      {run ? (
+        <div class="sheet-body" role={tabs.length > 1 ? 'tabpanel' : undefined}>
+          {shownTab === 'tr' ? (
+            <div class="tr-run" ref={runRef}>
+              {run.ids.map((i) => {
+                const n = locate(meta, i).ayah
+                if (i !== id) {
+                  const first = run.texts(i)[0]
+                  return (
+                    <div key={i} class={`run-ay${i === run.playing ? ' playing' : ''}`} data-id={i}>
+                      <button type="button" class="run-pick" lang={first?.info.lang} dir={first?.info.dir} onClick={() => run.onPick(i)}>
+                        {first?.text || t('mergedTranslation')} <span class="run-n">{num(n)}</span>
+                      </button>
+                    </div>
+                  )
+                }
+                return (
+                  <div key={i} class={`run-ay sel${i === run.playing ? ' playing' : ''}`} data-id={i} aria-current="true">
+                    {translations.map((x, k) => (
+                      <div class="tr-block" key={x.info.id}>
+                        {translations.length > 1 ? <p class="tr-label">{x.info.name}</p> : null}
+                        <p class={`tr${x.text ? '' : ' merged'}`} lang={x.info.lang} dir={x.info.dir}>
+                          {texts[k]}{k === 0 ? <span class="run-n"> {num(n)}</span> : null}
+                        </p>
+                      </div>
+                    ))}
+                    {meta.studyQuran
+                      ? <StudyChips meta={meta} ayahID={id} all open={typeof study === 'string' ? study : null}
+                          onOpen={(entry) => setStudy(study === entry ? false : entry)} />
+                      : null}
+                    {study ? <StudyInline meta={meta} ayahID={id} only={typeof study === 'string' ? study : null} /> : null}
+                  </div>
+                )
+              })}
+            </div>
+          ) : shownTab === 'tafsir' ? (
+            <>
+              {meta.studyQuran ? <StudyInline meta={meta} ayahID={id} only={null} /> : null}
+              {tafsirIndex.value ? (
+                <a class="mrow mlink" href={href.tafsir(surah, ayah)}>{t('tafsir')}: {t('almizan')}<span class="chev-fwd"><Icon name="chevron" size={16} /></span></a>
+              ) : null}
+            </>
+          ) : wbw.value ? (
+            <p class="panel-wbw" lang="ar" dir="rtl">
+              {wbw.value.map(([w, fa], k) => (
+                <span class="pw" key={k}><span class="pw-ar">{w}</span><span class="pw-fa" lang="fa">{fa}</span></span>
+              ))}
+            </p>
+          ) : null}
+        </div>
+      ) : (
       <div class="sheet-body">
         {words && wbw.value ? (
           <p class="panel-wbw" lang="ar" dir="rtl">
@@ -138,6 +218,7 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
           : null}
         {inlineStudy && study ? <StudyInline meta={meta} ayahID={id} only={typeof study === 'string' ? study : null} /> : null}
       </div>
+      )}
     </div>
   )
 }

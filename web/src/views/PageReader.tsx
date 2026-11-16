@@ -334,6 +334,18 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
     else setPanel(toggle && panel ? null : { kind: 'options' })
   }
 
+  // beside the page, the translation of the whole page the ayah is on, as one text; a click opens another ayah
+  const pageRun = (id: number) => {
+    const r = pageRange(meta, pageOf(meta, id))
+    const d = data.value!
+    return {
+      ids: Array.from({ length: r.last - r.first + 1 }, (_, k) => r.first + k),
+      texts: (i: number) => d.ids.map((trId, k) => ({ info: meta.translations.find((x) => x.id === trId)!, text: d.trs[k]![i - 1] as string })),
+      playing: playingId,
+      onPick: (i: number) => setPanel({ kind: 'ayah', id: i }),
+    }
+  }
+
   const ayahPanel = (id: number, variant: 'box' | 'popup') =>
     data.value ? (
       <AyahPanel
@@ -346,6 +358,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
         menu={panel?.kind === 'ayah' && panel.id === id && !!panel.menu}
         offerWords={!words}
         inlineStudy={variant === 'box' && wide}
+        run={variant === 'box' && wide && place !== 'off' ? pageRun(id) : undefined}
         panelRef={variant === 'popup' ? popRef : undefined}
         onClose={() => {
           setPanel(null)

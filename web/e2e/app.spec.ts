@@ -899,28 +899,24 @@ test.describe('page view: recitation, tapping and pressing', () => {
     await expect(page.getByTestId('ayah-panel')).toContainText('19:3')
   })
 
-  test('a long press on an ayah lists what can be done with it: its whole translation, word by word, and the rest', async ({ page }) => {
+  test('a long press on an ayah lists what can be done with it; beside the page its translation is in the text and its words a tab', async ({ page }) => {
     await useSettings(page, { lang: 'en', translations: ['en.sahih'] })
     await page.goto('/#/page/305')
     await settle(page)
     await page.locator('#page-305 .ay').nth(2).dispatchEvent('contextmenu')
     const box = page.getByTestId('ayah-panel')
     await expect(box.getByRole('button', { name: 'More' })).toHaveAttribute('aria-expanded', 'true')
-    for (const name of ['Translation', 'Word by word', 'Repeat this ayah', 'Copy', 'Share']) {
+    for (const name of ['Repeat this ayah', 'Copy', 'Share']) {
       await expect(box.getByRole('button', { name, exact: true })).toBeVisible()
     }
-    // the translation is under each ayah on the page; the box can show it whole too
-    await expect(box.locator('.tr')).toHaveCount(0)
-    await box.getByRole('button', { name: 'Translation', exact: true }).click()
-    await expect(box.locator('.tr')).toHaveCount(1)
-    await box.getByRole('button', { name: 'More' }).click()
-    await box.getByRole('button', { name: 'Word by word', exact: true }).click()
+    // the chosen ayah's whole translation is lit in the page's text in the panel; its words are a tab
+    await expect(box.locator('.run-ay.sel .tr')).toHaveCount(1)
+    await box.getByRole('tab', { name: 'Words' }).click()
     await expect(box.locator('.panel-wbw .pw').first()).toBeVisible()
     await expect(box.locator('.panel-wbw .pw-fa').first()).not.toBeEmpty()
     // a tap opens the box without the list
     await page.locator('#page-305 .ay').nth(3).click()
     await expect(box.getByRole('button', { name: 'More' })).toHaveAttribute('aria-expanded', 'false')
-    await expect(box.locator('.panel-wbw')).toHaveCount(0)
   })
 })
 
@@ -1244,16 +1240,22 @@ test.describe('The Study Quran (private content, made-up text here)', () => {
     await expect(panel.locator('.study-inline')).toHaveCount(0)
   })
 
-  test('with the translation under the lines, the panel is the actions and its list has the commentary, which opens in the panel', async ({ page }) => {
+  test('beside the page the panel is the page translation as one text: the ayah lit, its commentary under it, a tab for its tafsir', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 })
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/page/2')
     await settle(page)
-    await page.locator('#page-2 .ay').nth(3).click()
+    await page.locator('#page-2 .ay').nth(3).click() // 2:4 (id 11; the page holds 2:1–5 here)
     const panel = page.getByTestId('side-panel')
-    await panel.getByRole('button', { name: 'More' }).click()
-    await panel.getByRole('button', { name: 'Commentary: The Study Quran' }).click()
+    await expect(panel.locator('.run-ay')).toHaveCount(5)
+    await expect(panel.locator('.run-ay.sel')).toHaveAttribute('data-id', '11')
+    await panel.locator('.run-ay.sel .study-chip').click()
     await expect(page).toHaveURL(/#\/page\/2$/)
+    await expect(panel.locator('.study-inline')).toContainText('[Made-up note 1–5.]')
+    // another ayah of the text opens it
+    await panel.locator('.run-pick').first().click()
+    await expect(panel.locator('.run-ay.sel')).toHaveAttribute('data-id', '8')
+    await panel.getByRole('tab', { name: 'Tafsir' }).click()
     await expect(panel.locator('.study-inline')).toContainText('[Made-up note 1–5.]')
   })
 
