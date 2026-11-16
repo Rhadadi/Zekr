@@ -11,7 +11,7 @@ export function About({ meta }: { meta: Meta }) {
         <li><a href="https://tanzil.net/trans/" target="_blank" rel="noopener noreferrer">Tanzil translations</a></li>
         <li><a href="https://everyayah.com" target="_blank" rel="noopener noreferrer">EveryAyah.com</a></li>
       </ul>
-      <p class="muted small">Data {meta.version}</p>
+      <p class="muted small">App {__APP_BUILD__} · Data {meta.version}</p>
     </>
   )
 }

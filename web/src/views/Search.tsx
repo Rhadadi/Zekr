@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'preact/hooks'
 import { AyahCard } from '../components/AyahCard'
+import { hrefOf, targetLabel } from '../components/GoTo'
+import { Icon } from '../components/Icon'
+import { gotoTargets } from '../goto'
 import { LoadError } from '../components/Page'
 import { type Meta, loadText, loadTranslation } from '../data'
 import { useAsync } from '../hooks'
@@ -29,6 +32,8 @@ export function SearchView({ meta, initial }: { meta: Meta; initial: string }) {
   }, [trKey])
 
   const found = corpora.value && query.trim() ? search(query, corpora.value) : undefined
+  // a reference or a name is a place to go first, so "12:2" is never an empty text search
+  const places = query.trim() ? gotoTargets(meta, query) : []
   const script = useAsync(() => loadText(s.script), [s.script])
 
   return (
@@ -38,9 +43,25 @@ export function SearchView({ meta, initial }: { meta: Meta; initial: string }) {
       {meta.studyQuran ? <StudySearchPanel meta={meta} query={query} /> : null}
       {corpora.error ? <LoadError retry={corpora.retry} /> : null}
       {!query.trim() ? <p class="muted tip">{t('searchHint')}</p> : null}
+      {places.length ? (
+        <ul class="list search-places" aria-label={t('goTo')}>
+          {places.map((x) => {
+            const l = targetLabel(meta, x)
+            return (
+              <li key={hrefOf(x)}>
+                <a class="row" href={hrefOf(x)}>
+                  <Icon name="goto" size={20} />
+                  <span class="row-main">{l.main}</span>
+                  {l.sub ? <span class="goto-sub" lang={x.kind === 'juz' ? undefined : 'ar'}>{l.sub}</span> : null}
+                </a>
+              </li>
+            )
+          })}
+        </ul>
+      ) : null}
       {query.trim() && corpora.loading && !found ? <p class="status" role="status">{t('searching')}</p> : null}
       {found ? (
-        found.total === 0 ? <p class="status" role="status">{t('noResults')}</p> : (
+        found.total === 0 ? (places.length ? null : <p class="status" role="status">{t('noResults')}</p>) : (
           <>
             <p class="muted small" role="status">
               {found.total > found.hits.length ? t('resultsMore', { n: found.hits.length }) : t('results', { n: found.total })}

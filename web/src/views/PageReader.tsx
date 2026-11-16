@@ -406,7 +406,10 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
     return () => document.removeEventListener('keydown', key)
   }, [single, paused])
 
-  const surahOfPage = meta.surahs[locate(meta, pageRange(meta, current).first).surah - 1]!
+  // a page can hold the end of one surah and the start of the next: the bar names the surah of the ayah that is chosen
+  // (or being recited) when it is on this page, otherwise the surah the page starts in
+  const barAyah = highlight !== undefined && pageOf(meta, highlight) === current ? highlight : pageRange(meta, current).first
+  const surahOfPage = meta.surahs[locate(meta, barAyah).surah - 1]!
   // a layout effect, so Escape works as soon as the menu is on screen
   useLayoutEffect(() => {
     if (!menu) return

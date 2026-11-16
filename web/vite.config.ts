@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import preact from '@preact/preset-vite'
 import { defineConfig } from 'vite'
@@ -16,9 +17,17 @@ function dataPrecache() {
   ]
 }
 
+/** The commit and date of this build, for About: which version a reader has is otherwise invisible behind the service worker. */
+function buildId() {
+  let commit = 'dev'
+  try { commit = execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim() } catch { /* not a git checkout */ }
+  return `${commit} · ${new Date().toISOString().slice(0, 10)}`
+}
+
 // Relative base + hash routing: the built site works from any host or sub-path.
 export default defineConfig({
   base: './',
+  define: { __APP_BUILD__: JSON.stringify(buildId()) },
   plugins: [
     preact(),
     VitePWA({

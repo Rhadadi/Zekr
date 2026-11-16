@@ -7,6 +7,19 @@ export interface StudyReference {
   first_ayah: number | null
   last_ayah: number | null
 }
+/** Where a cross-reference in a note leads and how it reads: the book writes "39:28c" for its commentary on 39:28, which
+ * opens that note, not the verse; an introduction opens the surah's introduction. */
+export function referenceTarget(meta: Meta, r: StudyReference): { to: 'commentary' | 'verse' | 'intro'; surah: number; ayah?: number; label: string } {
+  const surah = r.target_surah
+  const name = meta.surahs[surah - 1]?.tr ?? String(surah)
+  const last = r.last_ayah && r.last_ayah !== r.first_ayah ? `–${r.last_ayah}` : ''
+  const at = r.first_ayah ? `${surah}:${r.first_ayah}${last}` : ''
+  if (r.target_kind === 'introduction') return { to: 'intro', surah, label: `Introduction to ${name}` }
+  if (!r.first_ayah) return { to: 'verse', surah, label: name }
+  if (r.target_kind === 'commentary') return { to: 'commentary', surah, ayah: r.first_ayah, label: `Commentary on ${name} ${at}` }
+  return { to: 'verse', surah, ayah: r.first_ayah, label: `${name} ${at}` }
+}
+
 export interface StudyEntry {
   id: string
   surah_id: number

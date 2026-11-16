@@ -1517,3 +1517,25 @@ test.describe('the drawer', () => {
     await expect(page.getByRole('dialog', { name: 'Menu' }).getByRole('button', { name: 'Reading options' })).toHaveCount(0)
   })
 })
+
+test.describe('finding a passage', () => {
+  test('search offers a reference as a place to go: 12:2 (in any digits) opens Yusuf 12:2, never "nothing found"', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    for (const q of ['12:2', '۱۲:۲']) {
+      await page.goto(`/#/search?q=${encodeURIComponent(q)}`)
+      const places = page.getByRole('list', { name: 'Go to…' })
+      await expect(places.getByRole('link', { name: /Yusuf 12:2/ })).toBeVisible()
+      await expect(page.getByText('Nothing found.')).toHaveCount(0)
+    }
+    await page.getByRole('list', { name: 'Go to…' }).getByRole('link', { name: /Yusuf 12:2/ }).click()
+    await expect(page).toHaveURL(/#\/ayah\/12\/2$/)
+  })
+
+  test('on a page that holds two surahs, the bar names the surah of the chosen ayah', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/235')
+    await expect(page.getByRole('button', { name: 'Surahs: Hud' })).toBeVisible()
+    await page.goto('/#/ayah/12/2')
+    await expect(page.getByRole('button', { name: 'Surahs: Yusuf' })).toBeVisible()
+  })
+})

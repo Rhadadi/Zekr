@@ -5,7 +5,7 @@ import { num, surahName, t } from '../i18n'
 import { href } from '../router'
 import { gotoOpen } from '../ui'
 
-const hrefOf = (x: Target) => (x.kind === 'ayah' ? href.ayah(x.surah!, x.ayah!) : x.kind === 'surah' ? href.surah(x.surah!) : href.page(x.page!))
+export const hrefOf = (x: Target) => (x.kind === 'ayah' ? href.ayah(x.surah!, x.ayah!) : x.kind === 'surah' ? href.surah(x.surah!) : href.page(x.page!))
 
 /** "Go to…": one field for a surah, an ayah (2:255), a page or a juz. Opened with Ctrl/Cmd-K or from the menu. */
 export function GoTo({ meta }: { meta: Meta }) {
@@ -21,6 +21,15 @@ export function GoTo({ meta }: { meta: Meta }) {
     return () => document.removeEventListener('keydown', key)
   }, [])
   return gotoOpen.value ? <GoToBox meta={meta} /> : null
+}
+
+/** How a place reads in a list: "Yusuf 12:2" over its Arabic name, "Page 235", "Juz 12" over its first page. */
+export function targetLabel(meta: Meta, x: Target) {
+  const s = x.surah ? meta.surahs[x.surah - 1]! : undefined
+  if (x.kind === 'ayah') return { main: `${surahName(s!)} ${num(x.surah!)}:${num(x.ayah!)}`, sub: s!.ar }
+  if (x.kind === 'surah') return { main: `${num(x.surah!)} · ${surahName(s!)}`, sub: s!.ar }
+  if (x.kind === 'juz') return { main: t('juzN', { n: x.juz! }), sub: t('pageN', { n: x.page! }) }
+  return { main: t('pageN', { n: x.page! }), sub: '' }
 }
 
 function GoToBox({ meta }: { meta: Meta }) {
@@ -39,13 +48,7 @@ function GoToBox({ meta }: { meta: Meta }) {
     }
   }, [])
   const close = () => (gotoOpen.value = false)
-  const label = (x: Target) => {
-    const s = x.surah ? meta.surahs[x.surah - 1]! : undefined
-    if (x.kind === 'ayah') return { main: `${surahName(s!)} ${num(x.surah!)}:${num(x.ayah!)}`, sub: s!.ar }
-    if (x.kind === 'surah') return { main: `${num(x.surah!)} · ${surahName(s!)}`, sub: s!.ar }
-    if (x.kind === 'juz') return { main: t('juzN', { n: x.juz! }), sub: t('pageN', { n: x.page! }) }
-    return { main: t('pageN', { n: x.page! }), sub: '' }
-  }
+  const label = (x: Target) => targetLabel(meta, x)
   const choose = (x: Target | undefined) => {
     if (!x) return
     close()

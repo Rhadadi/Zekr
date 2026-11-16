@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { entriesForAyah, loadStudyTafsir, searchStudyEntries, type StudyEntry, type StudyTafsir } from './studyQuran'
+import { entriesForAyah, loadStudyTafsir, referenceTarget, searchStudyEntries, type StudyEntry, type StudyTafsir } from './studyQuran'
 import type { Meta } from './data'
 
 const note = { id: 'shared', text: 'The meaning of tawḥīd and mercy.', ayah_ids: [18, 19] } as StudyEntry
@@ -36,5 +36,21 @@ describe('Study Quran content', () => {
     await loadStudyTafsir({ ...meta, version: 'test-2' },2,true)
     expect(fetch).toHaveBeenCalledTimes(4)
     vi.unstubAllGlobals()
+  })
+})
+
+describe('cross-references in a note', () => {
+  const meta = { surahs: Array.from({ length: 114 }, (_, i) => ({ id: i + 1, tr: i === 38 ? 'Az-Zumar' : `Surah ${i + 1}` })) } as unknown as Meta
+  it('opens the commentary for a commentary reference ("39:28c"), not the verse', () => {
+    expect(referenceTarget(meta, { raw: '39:28c', target_kind: 'commentary', target_surah: 39, first_ayah: 28, last_ayah: 28 }))
+      .toEqual({ to: 'commentary', surah: 39, ayah: 28, label: 'Commentary on Az-Zumar 39:28' })
+  })
+  it('opens the verse for an ayah reference, with its range', () => {
+    expect(referenceTarget(meta, { raw: '39:28-30', target_kind: 'ayah', target_surah: 39, first_ayah: 28, last_ayah: 30 }))
+      .toEqual({ to: 'verse', surah: 39, ayah: 28, label: 'Az-Zumar 39:28–30' })
+  })
+  it("opens the surah's introduction for an introduction reference", () => {
+    expect(referenceTarget(meta, { raw: '39 intro', target_kind: 'introduction', target_surah: 39, first_ayah: null, last_ayah: null }))
+      .toEqual({ to: 'intro', surah: 39, label: 'Introduction to Az-Zumar' })
   })
 })
