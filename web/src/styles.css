@@ -421,7 +421,7 @@ a.player-info { color: var(--ink); text-decoration: none; }
 @media (min-width: 1000px) {
   /* The page's width and its margins are set on the root, so the menu at the left (outside the page's layout) and the
      ayah's panel at the right can share one width: what the margin beside the page holds, so the page stays where it is */
-  :root { --page-w: clamp(560px, 100vw - 640px, 720px); --m: calc((100vw - var(--page-w)) / 2); --side-w: clamp(264px, var(--m) - 56px, 380px); }
+  :root { --page-w: clamp(560px, 100vw - 640px, 720px); --m: calc((100vw - var(--page-w)) / 2); --side-w: clamp(264px, var(--m) - 56px, 320px); }
   :root:has(.mushaf-layout.fitted) { --page-w: min(calc((100dvh - var(--bar-h) - 28px) * 654 / 935), 820px, calc(100vw - 48px)); }
   /* where the margin is too narrow for the recitation card, the page makes room under it */
   @media (max-width: 1279px) { :root:has(.mushaf-layout.fitted) { --page-w: min(calc((100dvh - var(--bar-h) - 28px - var(--player-h)) * 654 / 935), 820px, calc(100vw - 48px)); } }
@@ -639,25 +639,53 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .drawer-search input { flex: 1; min-width: 0; min-height: 44px; border: 0; background: none; font: inherit; color: var(--ink); }
 .drawer-search input:focus { outline: none; }
 .drawer-search:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
-.drawer-links { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; gap: 6px; margin: 10px 0 4px; }
-.drawer-links a, .drawer-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 58px; padding: 6px 6px; font-size: 0.85rem; line-height: 1.25; text-align: center; border: 1px solid var(--line); border-radius: 12px; color: var(--ink); font-weight: 500; text-decoration: none; }
-.drawer-item { width: 100%; background: none; font: inherit; font-size: 0.85rem; font-weight: 500; cursor: pointer; }
-/* an odd one out (no reading options away from the mushaf) takes the whole first row */
-.drawer-links > :first-child:nth-last-child(odd) { grid-column: 1 / -1; }
+.drawer-links { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; margin: 10px 0 6px; }
+.drawer-links a, .drawer-item {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 56px; padding: 6px 2px;
+  border: 0; border-radius: 12px; background: color-mix(in srgb, var(--ink) 4%, transparent); color: var(--ink);
+  font: inherit; font-size: 0.74rem; font-weight: 500; line-height: 1.2; text-align: center; text-decoration: none; cursor: pointer;
+}
+.drawer-links a:hover, .drawer-item:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.drawer-links svg { color: var(--accent); }
 .drawer-links a.on { background: var(--hl); color: var(--accent); font-weight: 700; }
-.drawer-settings { border-top: 1px solid var(--line); margin-top: 12px; }
-.drawer-settings .form { gap: 10px; margin: 12px 0; }
-.drawer-settings .field:not(.row):not(.stack) { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); align-items: center; column-gap: 10px; }
-.drawer-settings select { padding-inline: 10px 6px; font-size: 0.95rem; }
-.drawer-settings .field > .hint { grid-column: 1 / -1; }
-.drawer-settings .field > span:first-child { font-weight: 500; }
-.drawer-settings .section { margin: 18px 0 2px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 0.8rem; font-weight: 700; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
-.drawer-settings .checks { border: 0; padding: 0; margin: 8px 0; }
-.drawer-settings .checks legend { padding: 0; font-size: 0.85rem; font-weight: 600; color: var(--muted); }
-.drawer-settings .checks .field.row { min-height: 40px; }
-.drawer-settings .sample { padding: 10px 14px; margin: 4px 0 0; box-shadow: none; }
-.drawer-settings .sample .ar { margin: 0; line-height: 1.9; }
-.drawer-settings .sample .tr { margin: 0; line-height: 1.7; }
+.drawer-item { width: 100%; }
+
+/* The settings in the menu: quiet rows (the label, then the value at the end), the frequent ones as buttons */
+.menu-settings { margin-top: 4px; font-size: 0.88rem; }
+.mrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; border-bottom: 1px solid var(--line); color: var(--ink); text-decoration: none; }
+.mrow > span:first-child { flex: 1; min-width: 0; }
+.menu-settings select {
+  width: auto; min-width: 0; max-width: 58%; min-height: 44px; padding: 0 2px; border: 0; background: none; color: var(--muted);
+  font: inherit; text-align: end; text-overflow: ellipsis; cursor: pointer;
+}
+.menu-settings select:hover, .menu-settings select:focus-visible { color: var(--ink); }
+.seg { display: inline-flex; gap: 2px; padding: 2px; border-radius: 10px; background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.seg button { display: grid; place-items: center; width: 36px; height: 32px; border: 0; border-radius: 8px; background: none; color: var(--muted); cursor: pointer; }
+.seg button[aria-pressed='true'] { background: var(--surface); color: var(--accent); box-shadow: 0 1px 2px rgb(0 0 0 / 0.12); }
+.swatches { display: inline-flex; gap: 2px; }
+.swatches button { width: 30px; height: 32px; border: 0; border-radius: 50%; background: none; cursor: pointer; position: relative; }
+.swatches button::before { content: ''; position: absolute; inset: 7px; border-radius: 50%; background: var(--sw); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 28%, transparent); }
+.swatches button[aria-pressed='true']::after { content: ''; position: absolute; inset: 3px; border-radius: 50%; box-shadow: 0 0 0 2px var(--accent); }
+.stepper { display: inline-flex; align-items: center; gap: 2px; }
+.stepper button { width: 32px; height: 32px; border: 0; border-radius: 50%; background: color-mix(in srgb, var(--ink) 6%, transparent); color: var(--ink); font: inherit; font-size: 1.05rem; cursor: pointer; }
+.stepper button:disabled { opacity: 0.4; cursor: default; }
+.stepper output { min-width: 30px; text-align: center; font-variant-numeric: tabular-nums; color: var(--muted); }
+/* the long lists fold away */
+.msec { border-bottom: 1px solid var(--line); }
+.msec > summary { display: flex; align-items: center; justify-content: space-between; min-height: 44px; list-style: none; cursor: pointer; font-weight: 600; }
+.msec > summary::-webkit-details-marker { display: none; }
+.msec > summary::after { content: ''; width: 7px; height: 7px; margin-inline-end: 4px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg) translateY(-2px); transition: transform 0.15s; }
+.msec[open] > summary::after { transform: rotate(-135deg) translateY(-2px); }
+.msec-body { padding-bottom: 10px; }
+.msec-body .form { gap: 0; margin: 0; grid-template-columns: minmax(0, 1fr); } /* a long option must not widen the menu */
+.msec-body .field:not(.row) { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; }
+.msec-body .field:not(.row) > span:first-child { flex: 1; min-width: 0; font-weight: 400; font-size: inherit; }
+.msec-body .hint { display: none; }
+.msec-body .checks { border: 0; padding: 0; margin: 4px 0; }
+.msec-body .checks legend { padding: 0; font-size: 0.78rem; font-weight: 600; color: var(--muted); }
+.msec-body .checks .field.row { min-height: 40px; font-size: inherit; }
+.msec-body .checks .field.row > span { font-size: inherit; }
+.mlink { border-bottom: 0; }
 /* from the left, the burger's side, in both languages */
 @keyframes drawer-in { from { transform: translateX(-100%); } to { transform: none; } }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }

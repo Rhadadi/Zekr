@@ -8,12 +8,27 @@ import { lang, t } from '../i18n'
 import { href } from '../router'
 import { type PageColor, type TranslationPlace, settings, updateSettings } from '../store'
 
-export function SettingsView({ meta }: { meta: Meta }) {
-  const wide = useWide()
+/** The translations to show, Persian then English, each a checkbox. */
+export function TranslationChecks({ meta }: { meta: Meta }) {
   const s = settings.value
+  const toggle = (id: string, on: boolean) => updateSettings({ translations: on ? [...s.translations, id] : s.translations.filter((x) => x !== id) })
+  const group = (code: 'fa' | 'en', title: string) => (
+    <fieldset class="checks">
+      <legend>{title}</legend>
+      {meta.translations.filter((x) => x.lang === code).map((x) => (
+        <label class="field row" key={x.id}>
+          <input type="checkbox" checked={s.translations.includes(x.id)} onChange={(e) => toggle(x.id, e.currentTarget.checked)} />
+          <span>{x.name}{x.translator && x.translator !== x.name ? <span class="muted small"> · {x.translator}</span> : null}</span>
+        </label>
+      ))}
+    </fieldset>
+  )
+  return <>{group('fa', t('persian'))}{group('en', t('english'))}</>
+}
+
+/** Download everything for offline use, with its progress. */
+export function OfflineDownload() {
   const [dl, setDl] = useState<{ done: number; total: number; state: 'idle' | 'running' | 'ok' | 'failed' }>({ done: 0, total: 0, state: 'idle' })
-  const toggleTranslation = (id: string, on: boolean) =>
-    updateSettings({ translations: on ? [...s.translations, id] : s.translations.filter((x) => x !== id) })
   const download = async () => {
     setDl({ done: 0, total: 0, state: 'running' })
     try {
@@ -23,17 +38,19 @@ export function SettingsView({ meta }: { meta: Meta }) {
       setDl((d) => ({ ...d, state: 'failed' }))
     }
   }
-  const group = (code: 'fa' | 'en', title: string) => (
-    <fieldset class="checks">
-      <legend>{title}</legend>
-      {meta.translations.filter((x) => x.lang === code).map((x) => (
-        <label class="field row" key={x.id}>
-          <input type="checkbox" checked={s.translations.includes(x.id)} onChange={(e) => toggleTranslation(x.id, e.currentTarget.checked)} />
-          <span>{x.name}{x.translator && x.translator !== x.name ? <span class="muted small"> · {x.translator}</span> : null}</span>
-        </label>
-      ))}
-    </fieldset>
+  return (
+    <>
+      <button class="btn" onClick={download} disabled={dl.state === 'running'}>{t('downloadAll')}</button>
+      {dl.state === 'running' ? <p role="status" class="small">{t('downloading', { done: dl.done, total: dl.total })}</p> : null}
+      {dl.state === 'ok' ? <p role="status" class="small">{t('downloaded')}</p> : null}
+      {dl.state === 'failed' ? <p role="alert" class="small">{t('downloadFailed')}</p> : null}
+    </>
   )
+}
+
+export function SettingsView({ meta }: { meta: Meta }) {
+  const wide = useWide()
+  const s = settings.value
   return (
     <>
       <div class="form">
@@ -55,7 +72,7 @@ export function SettingsView({ meta }: { meta: Meta }) {
           </select>
         </label>
         <h2 class="section">{t('reading')}</h2>
-        <label class="field stack">
+        <label class="field">
           <span>{t('pageTranslation')}</span>
           <select value={s.translationPlace} onChange={(e) => updateSettings({ translationPlace: e.currentTarget.value as TranslationPlace })}>
             <option value="panel">{wide ? t('pageTranslationPanel') : t('pageTranslationBottom')}</option>
@@ -108,8 +125,7 @@ export function SettingsView({ meta }: { meta: Meta }) {
 
       <h2 class="section">{t('translations')}</h2>
       <p class="muted small">{t('translationsHint')}</p>
-      {group('fa', t('persian'))}
-      {group('en', t('english'))}
+      <TranslationChecks meta={meta} />
 
       <h2 class="section">{t('recitation')}</h2>
       <PlaybackOptions />
@@ -117,10 +133,7 @@ export function SettingsView({ meta }: { meta: Meta }) {
       <h2 class="section">{t('offline')}</h2>
       <p class="muted small">{t('offlineHint')}</p>
       {meta.studyQuran?.audio ? <p class="muted small">{t('commentaryDownloadHint', { mb: Math.ceil(meta.studyQuran.audio.bytes / 1e6) })}</p> : null}
-      <button class="btn" onClick={download} disabled={dl.state === 'running'}>{t('downloadAll')}</button>
-      {dl.state === 'running' ? <p role="status" class="small">{t('downloading', { done: dl.done, total: dl.total })}</p> : null}
-      {dl.state === 'ok' ? <p role="status" class="small">{t('downloaded')}</p> : null}
-      {dl.state === 'failed' ? <p role="alert" class="small">{t('downloadFailed')}</p> : null}
+      <OfflineDownload />
 
       <p class="link-row"><a href={href.about}>{t('about')}</a></p>
     </>

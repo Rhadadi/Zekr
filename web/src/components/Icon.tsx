@@ -8,6 +8,8 @@ const stroked = {
   copy: 'M9 9h11v12H9zM5 15V3h11',
   share: 'M12 3v12M7 8l5-5 5 5M5 13v8h14v-8',
   chevron: 'M9 6l6 6-6 6',
+  moon: 'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z',
+  auto: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 3v18M12 8h4.5M12 12h6M12 16h4.5',
   sliders: 'M4 6h16M7 12h10M10 18h4',
   repeat: 'M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3',
   clock: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2',

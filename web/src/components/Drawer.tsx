@@ -4,9 +4,9 @@ import { t } from '../i18n'
 import { type LayerName, href } from '../router'
 import { useDocked } from '../hooks'
 import { dockOpen, drawerOpen, gotoOpen, pageOptionsAsked, setDock } from '../ui'
-import { SettingsView } from '../views/Settings'
 import { Logo } from './AppBar'
 import { Icon } from './Icon'
+import { MenuSettings } from './MenuSettings'
 
 /** The menu: everything in one panel. At the top the name (back to the mushaf), a search field, Today and Saved, and
  * on the mushaf its reading options; below them all the settings, recitation included, to change in place. It opens
@@ -114,13 +114,13 @@ export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active
           {link(href.today, 'today', 'sun', t('navToday'))}
           {link(href.saved, 'saved', 'bookmark', t('navBookmarks'))}
           {onMushaf ? (
-            <button class="drawer-item" onClick={() => { if (closeAfter) close(); pageOptionsAsked.value++ }}>
+            <button class="drawer-item" aria-label={t('pageOptions')} title={t('pageOptions')} onClick={() => { if (closeAfter) close(); pageOptionsAsked.value++ }}>
               <Icon name="sliders" size={20} />
-              <span>{t('pageOptions')}</span>
+              <span>{t('optionsShort')}</span>
             </button>
           ) : null}
         </nav>
-        {meta ? <div class="drawer-settings"><SettingsView meta={meta} /></div> : null}
+        {meta ? <MenuSettings meta={meta} /> : null}
       </div>
     )
   }

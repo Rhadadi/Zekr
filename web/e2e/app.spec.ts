@@ -1130,6 +1130,8 @@ test.describe('page view on a phone', () => {
     await expect(nav.getByRole('link')).toHaveText(['Today', 'Saved'])
     const menuPanel = page.getByRole('dialog', { name: 'Menu' })
     await expect(menuPanel.getByLabel('Language')).toBeVisible()
+    // the long lists fold away in the menu: Recitation opens in place
+    await menuPanel.locator('summary', { hasText: 'Recitation' }).click()
     await expect(menuPanel.getByLabel('Reciter')).toBeVisible()
     await menuPanel.getByRole('searchbox', { name: 'Search' }).fill('mercy')
     await menuPanel.getByRole('searchbox', { name: 'Search' }).press('Enter')
