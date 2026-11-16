@@ -6,13 +6,15 @@ import { AppBar, Logo } from '../components/AppBar'
 import { AyahPanel } from '../components/AyahPanel'
 import { Icon } from '../components/Icon'
 import { LoadError, Loading } from '../components/Page'
+import { FontLine, hafsReady, layoutLines, textBands, useFontLinesFit } from '../components/FontLines'
 import { InterlinearPage } from '../components/InterlinearPage'
 import { PageOptions } from '../components/PageOptions'
 import { WordsPage } from '../components/WordsPage'
 import { Sheet } from '../components/Sheet'
 import { SurahBanner } from '../components/SurahBanner'
-import { type Meta, type MushafPageMap, type TranslationInfo, juzOf, loadMushafMap, loadText, loadTranslation, locate, mushafImage, pageOf, pageRange } from '../data'
+import { type Meta, type MushafPageMap, type TranslationInfo, juzOf, loadMushafMap, loadPageLines, loadText, loadTranslation, locate, mushafImage, pageOf, pageRange } from '../data'
 import { useAsync, useWide } from '../hooks'
+import { bandPaper, pageStrips } from '../interlinear'
 import { ayahRef, num, surahName, t } from '../i18n'
 import { href } from '../router'
 import { type TranslationPlace, setLastRead, settings } from '../store'
@@ -98,16 +100,29 @@ interface PrintedProps {
   ar: string[]
   highlight?: number
   kind?: 'sel' | 'playing'
+  /** The text in the chosen Quran font, line for line over the picture's frame, instead of the picture's own text. */
+  font?: boolean
   onJump: () => void
 }
 
 /** One page of the owner's printed mushaf as a picture, with a tappable area over each ayah. */
-const PrintedPage = memo(function PrintedPage({ meta, pg, ar, highlight, kind, onJump }: PrintedProps) {
+const PrintedPage = memo(function PrintedPage({ meta, pg, ar, highlight, kind, font = false, onJump }: PrintedProps) {
   const n = pg.n
+  const src = mushafImage(meta, n)
+  // in a font: the opening pages (illumination all round) keep their picture, and so does a page whose lines do not match
+  const strips = useMemo(() => pageStrips(pg), [pg])
+  const bands = useMemo(() => textBands(strips), [strips])
+  const page = useAsync(async () => (font && meta.lines && n > 2 ? (await hafsReady(), loadPageLines(meta, n)) : undefined), [font, n])
+  const laid = useMemo(() => (page.value ? layoutLines(pg, strips, page.value) : undefined), [page.value, pg, strips])
+  const fonted = !!laid && laid.length === bands.length
+  const paper = useAsync(async () => (fonted ? bandPaper(src, bands) : undefined), [fonted, src])
+  const root = useRef<HTMLElement>(null)
+  useFontLinesFit(root, [fonted, n])
   return (
-    <section class="mpage printed" id={`page-${n}`} data-page={n} aria-label={t('pageN', { n })}>
+    <section ref={root} class={`mpage printed${fonted ? ' fonted' : ''}`} id={`page-${n}`} data-page={n} aria-label={t('pageN', { n })}>
       <div class="pg" style={{ aspectRatio: `${pg.w} / ${pg.h}` }}>
-        <img class="pg-img" src={mushafImage(meta, n)} alt="" decoding="async" draggable={false} />
+        <img class="pg-img" src={src} alt="" decoding="async" draggable={false} />
+        {fonted ? bands.map((b, i) => <FontLine key={i} tokens={laid![i]!} band={b} box={{ top: 0, bottom: 1000 }} paper={paper.value?.[i]} />) : null}
         {pg.a.map((segs, k) => {
           const id = pg.first + k
           const at = locate(meta, id)
@@ -138,6 +153,8 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   }, [s.script, trKey])
 
   const printed = !!meta.mushaf
+  // the printed page's text in the chosen Quran font (its frame stays the picture)
+  const font = s.pageStyle === 'text'
   const map = useAsync(() => (printed ? loadMushafMap() : Promise.resolve(null)), [printed])
   const ready = !!data.value && (!printed || !!map.value)
 
@@ -631,10 +648,10 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
                   highlight={on ? highlight : undefined} kind={on ? highlightKind : undefined} />
               }
               if (pg && lineTr) {
-                return <InterlinearPage key={n} meta={meta} pg={pg} ar={data.value!.ar} highlight={on ? highlight : undefined} kind={on ? highlightKind : undefined} tr={lineTr} onJump={() => setJumping(true)} />
+                return <InterlinearPage key={n} meta={meta} pg={pg} ar={data.value!.ar} highlight={on ? highlight : undefined} kind={on ? highlightKind : undefined} tr={lineTr} font={font} onJump={() => setJumping(true)} />
               }
               if (pg) {
-                return <PrintedPage key={n} meta={meta} pg={pg} ar={data.value!.ar} highlight={on ? highlight : undefined} kind={on ? highlightKind : undefined} onJump={() => setJumping(true)} />
+                return <PrintedPage key={n} meta={meta} pg={pg} ar={data.value!.ar} highlight={on ? highlight : undefined} kind={on ? highlightKind : undefined} font={font} onJump={() => setJumping(true)} />
               }
               return (
                 <MushafPage key={n} meta={meta} n={n} ar={data.value!.ar} basmala={meta.basmala[s.script]} size={size}

@@ -1441,6 +1441,20 @@ test.describe('The printed mushaf as pictures (private build, made-up pictures h
     await expect(page.locator('#page-2 .il-under .il-mark')).toHaveCount(5)
   })
 
+  test('as printed the page is its picture; another Quran font sets its text in that font, in the same printed frame', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/page/3')
+    await expect(page.locator('#page-3 .pg-img').first()).toBeVisible()
+    await expect(page.locator('#page-3 .fl')).toHaveCount(0)
+    await page.goto('/#/settings')
+    await expect(page.getByLabel('Quran font')).toHaveValue('printed')
+    await page.getByLabel('Quran font').selectOption({ label: 'Amiri Quran' })
+    await page.goto('/#/page/3')
+    await expect(page.locator('#page-3 .pg-img').first()).toBeVisible() // the frame stays the printed one
+    await expect(page.locator('#page-3 .fl').first()).toBeVisible()
+    await expect(page.locator('#page-3 .fl-t').first()).toHaveCSS('font-family', /Zekr Amiri/)
+  })
+
   test('page colour is a filter on the picture only', async ({ page }) => {
     await useSettings(page, { lang: 'en', translationPlace: 'panel', pageColor: 'dark' })
     await page.goto('/#/page/3')

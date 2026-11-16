@@ -586,10 +586,10 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .mpage.printed { content-visibility: visible; contain-intrinsic-size: none; scroll-margin-top: calc(var(--bar-h) + 4px); padding-inline: 0; margin-inline: 0; margin-bottom: 8px; }
 .pg { position: relative; width: 100%; }
 .pg-img { display: block; width: 100%; height: 100%; -webkit-user-select: none; user-select: none; }
-.mushaf-flow[data-color='green'] .pg-img { filter: hue-rotate(-60deg); }
-.mushaf-flow[data-color='purple'] .pg-img { filter: hue-rotate(70deg); }
-.mushaf-flow[data-color='pink'] .pg-img { filter: hue-rotate(130deg); }
-.mushaf-flow[data-color='dark'] .pg-img { filter: invert(1) hue-rotate(180deg); }
+.mushaf-flow[data-color='green'] :is(.pg-img, .fl) { filter: hue-rotate(-60deg); }
+.mushaf-flow[data-color='purple'] :is(.pg-img, .fl) { filter: hue-rotate(70deg); }
+.mushaf-flow[data-color='pink'] :is(.pg-img, .fl) { filter: hue-rotate(130deg); }
+.mushaf-flow[data-color='dark'] :is(.pg-img, .fl) { filter: invert(1) hue-rotate(180deg); }
 .pg .ay { position: absolute; inset: 0; padding: 0; border-radius: 0; pointer-events: none; background: none; }
 .pg .ay.sel, .pg .ay.playing { background: none; }
 .printed .seg { position: absolute; display: block; pointer-events: auto; cursor: pointer; border-radius: 5px; }
@@ -790,3 +790,18 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .goto-list li.on { background: var(--hl); font-weight: 600; }
 .goto-sub { color: var(--muted); font-family: var(--font-quran); font-size: 1.05rem; }
 .goto-none { margin: 0; padding: 16px 18px; }
+
+/* The printed page's text in a font: each line covered in the colour of its paper and set again in the chosen Quran
+   font, its words spread from margin to margin as printed (one size for the page, set by useFontLinesFit) */
+.fl { position: absolute; display: flex; align-items: center; overflow: hidden; pointer-events: none; }
+.fl-t {
+  flex: 1; display: flex; justify-content: space-between; align-items: center; gap: 0.16em; margin: 0; padding-inline: 0.4%;
+  font-family: var(--font-quran); font-size: var(--fl-size, 20px); line-height: 1; color: #161616; white-space: nowrap;
+}
+.fl-t.short { justify-content: center; gap: 0.35em; }
+.fl-t.measuring { flex: none; width: max-content; justify-content: flex-start; }
+/* the ayah's number in a round medallion, as printed */
+.fl-n {
+  display: inline-grid; place-items: center; width: 1.25em; height: 1.25em; border-radius: 50%; flex: none;
+  border: 0.07em solid #3d8ec6; background: radial-gradient(circle, #eef7fd 55%, #cfe6f6); font-size: 0.82em; line-height: 1; color: #1b1b1b;
+}

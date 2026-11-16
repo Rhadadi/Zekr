@@ -1,10 +1,11 @@
 import { Fragment } from 'preact'
 import { memo } from 'preact/compat'
 import { useLayoutEffect, useMemo, useRef } from 'preact/hooks'
-import { type Meta, type MushafPageMap, locate, mushafImage } from '../data'
+import { type Meta, type MushafPageMap, loadPageLines, locate, mushafImage } from '../data'
 import { useAsync } from '../hooks'
 import { num, t } from '../i18n'
-import { type Piece, lineTranslations, pageInk, pageStrips } from '../interlinear'
+import { type Piece, bandPaper, lineTranslations, pageInk, pageStrips } from '../interlinear'
+import { FontLine, hafsReady, layoutLines, textBands, useFontLinesFit } from './FontLines'
 
 interface Props {
   meta: Meta
@@ -14,6 +15,8 @@ interface Props {
   kind?: 'sel' | 'playing'
   /** The translation shown under the lines (the first one chosen in Settings). */
   tr: { texts: string[]; dir: 'rtl' | 'ltr'; lang: string; size: number }
+  /** The text in the chosen Quran font over each line of the picture, instead of the picture's own text. */
+  font?: boolean
   onJump: () => void
 }
 
@@ -59,7 +62,7 @@ function fit(root: HTMLElement, base: number) {
  * basmala between them); under each line is a box inside its frame, where each ayah's share of the
  * translation sits under its Arabic, and where an ayah ends its number comes under the Arabic one. Tap the Arabic or the
  * translation of an ayah to open it. */
-export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, highlight, kind, tr, onJump }: Props) {
+export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, highlight, kind, tr, font = false, onJump }: Props) {
   const n = pg.n
   const src = mushafImage(meta, n)
   const ink = useAsync(() => pageInk(src), [src]).value
@@ -67,6 +70,14 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
   const pieces = useMemo(() => lineTranslations(pg, strips, tr.texts), [pg, strips, tr.texts])
   const root = useRef<HTMLElement>(null)
   const ratio = pg.h / pg.w
+  // in a font: each line's words over that line of the picture (not the opening pages, nor a page whose lines do not match)
+  const bands = useMemo(() => textBands(strips), [strips])
+  const page = useAsync(async () => (font && meta.lines && n > 2 ? (await hafsReady(), loadPageLines(meta, n)) : undefined), [font, n])
+  const laid = useMemo(() => (page.value ? layoutLines(pg, strips, page.value) : undefined), [page.value, pg, strips])
+  const fonted = !!laid && laid.length === bands.length
+  const paper = useAsync(async () => (fonted ? bandPaper(src, bands) : undefined), [fonted, src, bands])
+  useFontLinesFit(root, [fonted, n, bands])
+  let lineNo = -1
   const cls = (id: number) => (highlight === id ? ` ${kind}` : '')
 
   useLayoutEffect(() => {
@@ -111,6 +122,7 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
           <Fragment key={s.top}>
             <div class="il-strip" style={{ paddingTop: `${(h / 1000) * ratio * 100}%` }}>
               <i class="pg-img il-pic" style={slice(s.top, h)} />
+              {fonted && s.line?.length ? (lineNo++, <FontLine tokens={laid![lineNo]!} band={bands[lineNo]!} box={s} paper={paper.value?.[lineNo]} />) : null}
               {(s.line ?? []).map((seg) => {
                 const first = !seen.has(seg.id)
                 seen.add(seg.id)

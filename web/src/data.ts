@@ -47,6 +47,8 @@ export interface Meta {
   mushaf?: { v: string; w: number; h: number }
   /** Word-by-word meanings in data/wbw/<surah>.json (tools/wbw.py). */
   wbw?: 'fa'
+  /** Each printed page's text lines in data/lines/NNN.json (assets/mushaf-lines.json), to set the page in a font. */
+  lines?: boolean
 }
 
 /** One printed page: its image size and, per ayah (from `first`), the line rectangles it covers, in thousandths of the page. */
@@ -117,6 +119,19 @@ export const loadTranslation = (id: string, refresh = false) => loadArray(`tr/${
 const wbwCache = new Map<number, Promise<[string, string][][]>>()
 
 /** A surah's words with their Persian meanings: for each ayah, [arabic, persian] per word. */
+/** A printed page's text lines: words, with the number of an ayah where it ends. */
+export type PageLine = (string | number)[]
+const linesCache = new Map<number, Promise<PageLine[]>>()
+export function loadPageLines(meta: Meta, n: number): Promise<PageLine[]> {
+  let p = linesCache.get(n)
+  if (!p) {
+    p = getJson<PageLine[]>(`lines/${String(n).padStart(3, '0')}.json?v=${meta.version}`)
+    p.catch(() => linesCache.delete(n))
+    linesCache.set(n, p)
+  }
+  return p
+}
+
 export function loadWbw(surah: number): Promise<[string, string][][]> {
   let p = wbwCache.get(surah)
   if (!p) {

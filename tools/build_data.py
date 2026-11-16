@@ -40,6 +40,8 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+# The 15-line Madani layout: which words are on each line of each page (tools/mushaf_lines.py). Not private.
+MUSHAF_LINES = ROOT / "assets" / "mushaf-lines.json"
 RAW_DIR = ROOT / "data" / "raw"
 
 TANZIL_TEXT_URL = "https://tanzil.net/pub/download/index.php?quranType={kind}&outType=txt-2&agree=true"
@@ -463,6 +465,11 @@ def build_web(out: Path, *, surahs, marks, texts, translations, pools, version: 
     for tid, info in translations.items():
         write_json(out / "tr" / f"{tid}.json", [info["texts"][k] for k in order])
     write_json(out / "pools.json", {"fit": WIDGET_FIT, "pools": pools})
+    # the words of each line of the 604 printed pages, so the printed page can show its text in a font
+    lines = MUSHAF_LINES.exists()
+    if lines:
+        for n, page in enumerate(json.loads(MUSHAF_LINES.read_text(encoding="utf-8"))["pages"], start=1):
+            write_json(out / "lines" / f"{n:03}.json", page)
     write_json(
         out / "meta.json",
         {
@@ -485,6 +492,8 @@ def build_web(out: Path, *, surahs, marks, texts, translations, pools, version: 
             "tafsir": tafsir or [],
             # word-by-word Persian meanings in data/wbw/<surah>.json (tools/wbw.py)
             **({"wbw": "fa"} if wbw else {}),
+            # data/lines/NNN.json: each printed page's text lines (assets/mushaf-lines.json)
+            **({"lines": True} if lines else {}),
         },
     )
 

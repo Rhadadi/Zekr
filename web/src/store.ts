@@ -18,6 +18,9 @@ export interface DailySettings {
  * the ayah, inline under every ayah in the text, or not on the page at all. */
 export type TranslationPlace = 'panel' | 'card' | 'inline' | 'words' | 'off'
 
+/** The printed page's text as in the picture, or set in the chosen Quran font inside the same printed frame. */
+export type PageStyle = 'printed' | 'text'
+
 /** The printed pages are recoloured with a filter; 'blue' is the edition as printed. */
 export type PageColor = 'blue' | 'green' | 'purple' | 'pink' | 'dark'
 
@@ -28,6 +31,7 @@ export interface Settings {
   /** Arabic font for the Quran text. */
   quranFont: QuranFont
   translationPlace: TranslationPlace
+  pageStyle: PageStyle
   pageColor: PageColor
   arabicSize: number
   trSize: number
@@ -52,6 +56,7 @@ export const defaultSettings: Settings = {
   script: 'uthmani',
   quranFont: DEFAULT_QURAN_FONT,
   translationPlace: 'inline',
+  pageStyle: 'printed',
   pageColor: 'blue',
   arabicSize: 30,
   trSize: 17,
@@ -109,6 +114,11 @@ export const settings = signal<Settings>(loadSettings())
 export function updateSettings(patch: Partial<Settings>) {
   settings.value = { ...settings.value, ...patch }
   write('zekr.settings', settings.value)
+}
+
+/** The Quran font: "as printed" keeps the printed page's picture; any font sets the page's text in it, in the same frame. */
+export function pickFont(v: string) {
+  updateSettings(v === 'printed' ? { pageStyle: 'printed' } : { pageStyle: 'text', quranFont: v as QuranFont })
 }
 
 export function updateDaily(patch: Partial<DailySettings>) {

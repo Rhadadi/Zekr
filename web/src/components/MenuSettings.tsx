@@ -1,11 +1,11 @@
 import type { ComponentChildren } from 'preact'
 import { useState } from 'preact/hooks'
 import { type Meta, type Script } from '../data'
-import { QURAN_FONTS, type QuranFont } from '../fonts'
+import { QURAN_FONTS } from '../fonts'
 import { useWide } from '../hooks'
 import { num, t } from '../i18n'
 import { href } from '../router'
-import { type PageColor, type Settings, type TranslationPlace, settings, updateSettings } from '../store'
+import { type PageColor, type Settings, type TranslationPlace, pickFont, settings, updateSettings } from '../store'
 import { OfflineDownload, TranslationChecks } from '../views/Settings'
 import { Icon, type IconName } from './Icon'
 import { PlaybackOptions } from './PlaybackOptions'
@@ -109,7 +109,8 @@ export function MenuSettings({ meta }: { meta: Meta }) {
         </label>
         <label class="mrow">
           <span>{t('quranFont')}</span>
-          <select value={s.quranFont} onChange={(e) => updateSettings({ quranFont: e.currentTarget.value as QuranFont })}>
+          <select value={meta.mushaf && s.pageStyle !== 'text' ? 'printed' : s.quranFont} onChange={(e) => pickFont(e.currentTarget.value)}>
+            {meta.mushaf ? <option value="printed">{t('fontPrinted')}</option> : null}
             {QURAN_FONTS.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
           </select>
         </label>

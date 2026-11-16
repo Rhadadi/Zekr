@@ -2,11 +2,11 @@ import { useState } from 'preact/hooks'
 import { TR_MAX, TR_MIN } from '../components/PageOptions'
 import { PlaybackOptions } from '../components/PlaybackOptions'
 import { type Meta, type Script, downloadAll } from '../data'
-import { QURAN_FONTS, type QuranFont } from '../fonts'
+import { QURAN_FONTS } from '../fonts'
 import { useWide } from '../hooks'
 import { lang, t } from '../i18n'
 import { href } from '../router'
-import { type PageColor, type TranslationPlace, settings, updateSettings } from '../store'
+import { type PageColor, type TranslationPlace, pickFont, settings, updateSettings } from '../store'
 
 /** The translations to show, Persian then English, each a checkbox. */
 export function TranslationChecks({ meta }: { meta: Meta }) {
@@ -105,7 +105,8 @@ export function SettingsView({ meta }: { meta: Meta }) {
         </label>
         <label class="field">
           <span>{t('quranFont')}</span>
-          <select value={s.quranFont} onChange={(e) => updateSettings({ quranFont: e.currentTarget.value as QuranFont })}>
+          <select value={meta.mushaf && s.pageStyle !== 'text' ? 'printed' : s.quranFont} onChange={(e) => pickFont(e.currentTarget.value)}>
+            {meta.mushaf ? <option value="printed">{t('fontPrinted')}</option> : null}
             {QURAN_FONTS.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
           </select>
         </label>

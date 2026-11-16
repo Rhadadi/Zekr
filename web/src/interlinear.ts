@@ -155,3 +155,43 @@ export function pageInk(src: string): Promise<Float32Array | undefined> {
   }
   return ink
 }
+
+/** The colour of the paper in each band of a page's picture (thousandths), for the cover a line in a font sits on:
+ * the lighter half of the band's pixels (the ink is the rest), averaged. */
+const papers = new Map<string, Promise<string[] | undefined>>()
+export function bandPaper(src: string, bands: { top: number; bottom: number; left: number; right: number }[]): Promise<string[] | undefined> {
+  const key = `${src}#${bands.map((b) => b.top).join(',')}`
+  let p = papers.get(key)
+  if (!p) {
+    p = new Promise((resolve) => {
+      const img = new Image()
+      img.onload = () => {
+        const w = img.naturalWidth
+        const h = img.naturalHeight
+        const g = document.createElement('canvas').getContext('2d', { willReadFrequently: true })
+        if (!g || !w || !h) return resolve(undefined)
+        g.canvas.width = w
+        g.canvas.height = h
+        g.drawImage(img, 0, 0)
+        const d = g.getImageData(0, 0, w, h).data
+        resolve(bands.map((b) => {
+          const px: [number, number, number][] = []
+          for (let y = Math.round((b.top / 1000) * h) + 1; y < (b.bottom / 1000) * h - 1; y += 3) {
+            for (let x = Math.round((b.left / 1000) * w) + 2; x < (b.right / 1000) * w - 2; x += 5) {
+              const i = (y * w + x) * 4
+              px.push([d[i]!, d[i + 1]!, d[i + 2]!])
+            }
+          }
+          px.sort((a, c) => c[0] + c[1] + c[2] - (a[0] + a[1] + a[2]))
+          const light = px.slice(Math.floor(px.length * 0.1), Math.max(1, Math.floor(px.length * 0.5)))
+          const avg = [0, 1, 2].map((k) => Math.round(light.reduce((t, q) => t + q[k]!, 0) / Math.max(1, light.length)))
+          return `rgb(${avg[0]} ${avg[1]} ${avg[2]})`
+        }))
+      }
+      img.onerror = () => resolve(undefined)
+      img.src = src
+    })
+    papers.set(key, p)
+  }
+  return p
+}
