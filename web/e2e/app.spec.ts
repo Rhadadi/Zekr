@@ -386,7 +386,7 @@ test.describe('mushaf page view', () => {
         const flow = (await page.locator('#page-305').boundingBox())!
         expect(Math.abs(flow.x + flow.width / 2 - width / 2), `${lang} ${width}`).toBeLessThanOrEqual(1)
         // the name at the right and the menu at the left, whatever the language
-        const logo = (await page.getByRole('img', { name: lang === 'fa' ? 'ذکر' : 'Zekr' }).boundingBox())!
+        const logo = (await page.getByRole('img', { name: lang === 'fa' ? 'آیه شنو' : 'Ayesheno' }).boundingBox())!
         expect(logo.x + logo.width, `${lang} ${width}`).toBeGreaterThan(width - 40)
         expect((await page.getByRole('button', { name: lang === 'fa' ? 'منو' : 'Menu' }).last().boundingBox())!.x).toBeLessThan(40)
       }

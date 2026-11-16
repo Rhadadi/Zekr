@@ -25,8 +25,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/*.png', 'icons/*.svg'],
       manifest: {
-        name: 'ذکر · Zekr',
-        short_name: 'Zekr',
+        name: 'آیه شنو · Ayesheno',
+        short_name: 'Ayesheno',
         description: 'Quran with translations, recitation and an ayah of the day',
         lang: 'fa',
         dir: 'rtl',

@@ -12,7 +12,7 @@ export const lang = computed<Lang>(() => {
 
 const strings = {
   en: {
-    appName: 'Zekr',
+    appName: 'Ayesheno',
     navToday: 'Today',
     menu: 'Menu',
     pageTranslationBottom: 'In a sheet at the bottom',
@@ -172,7 +172,7 @@ const strings = {
     pool: 'pool',
     poolSize: '{n} ayahs in the pool',
     aboutText:
-      'Zekr is a personal Quran app. It has no account, no ads and no tracking; your settings and saved ayahs stay in this browser.',
+      'Ayesheno is a personal Quran app. It has no account, no ads and no tracking; your settings and saved ayahs stay in this browser.',
     creditsText:
       'Quran text and translations: Tanzil Project (tanzil.net). The text is unchanged; translations are for non-commercial use. Recitation: EveryAyah.com. Fonts: KFGQPC Hafs and Naskh (King Fahd Complex), Me-Quran (Meor Ridzuan), Scheherazade New, Amiri Quran and Vazirmatn (SIL Open Font License).',
     now: 'now',
@@ -200,7 +200,7 @@ const strings = {
     allSettings: 'All settings',
   },
   fa: {
-    appName: 'ذکر',
+    appName: 'آیه شنو',
     navToday: 'امروز',
     menu: 'منو',
     pageTranslationBottom: 'در برگه‌ای در پایین',
@@ -359,7 +359,7 @@ const strings = {
     pool: 'مجموعه',
     poolSize: '{n} آیه در مجموعه',
     aboutText:
-      'ذکر یک برنامهٔ شخصی قرآن است. حساب کاربری، تبلیغ و ردیابی ندارد؛ تنظیمات و آیه‌های نشان‌شده فقط در همین مرورگر می‌مانند.',
+      'آیه شنو یک برنامهٔ شخصی قرآن است. حساب کاربری، تبلیغ و ردیابی ندارد؛ تنظیمات و آیه‌های نشان‌شده فقط در همین مرورگر می‌مانند.',
     creditsText:
       'متن قرآن و ترجمه‌ها: پروژهٔ تنزیل (tanzil.net). متن بدون تغییر است و ترجمه‌ها برای استفادهٔ غیرتجاری‌اند. قرائت: EveryAyah.com. قلم‌ها: حفص و نسخ مجمع ملک فهد، می‌قرآن (معیر رضوان)، شهرزاد، امیری قرآن و وزیرمتن (مجوز SIL Open Font License).',
     now: 'اکنون',

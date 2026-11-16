@@ -595,16 +595,15 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .appbar-start { display: flex; justify-content: flex-end; }
 :root[dir='rtl'] .appbar-in > .burger { justify-self: end; }
 :root[dir='rtl'] .appbar-start { justify-content: flex-start; }
-/* the name in nastaliq (src/assets/zekr-logo.png, from the owner), as a mask so it takes the theme's colour. The
-   picture's strokes are thin: a second copy a fraction of a pixel across gives them weight. */
+/* the name, آیه شنو in El Messiri (SIL Open Font License), with the madda of آ drawn as sound waves: two masks
+   (src/assets/ayesheno-logo.png and ayesheno-waves.png) so the name takes the theme's colour and the waves its gold */
 :root { --brand: color-mix(in srgb, var(--accent) 62%, var(--ink)); }
-.logo {
-  position: relative; display: block; width: 48px; height: 42px; background: var(--brand);
-  -webkit-mask: url('./assets/zekr-logo.png') center / contain no-repeat; mask: url('./assets/zekr-logo.png') center / contain no-repeat;
-}
-.logo::after { content: ''; position: absolute; inset: 0; background: inherit; -webkit-mask: inherit; mask: inherit; translate: 0.7px 0.35px; }
-@media (min-width: 1000px) { .appbar .logo { width: 60px; height: 50px; } }
-@media (forced-colors: active) { .logo, .logo::after { forced-color-adjust: none; background: CanvasText; } }
+.logo { position: relative; display: block; width: 79px; height: 42px; }
+.logo::before, .logo::after { content: ''; position: absolute; inset: 0; }
+.logo::before { background: var(--brand); -webkit-mask: url('./assets/ayesheno-logo.png') center / contain no-repeat; mask: url('./assets/ayesheno-logo.png') center / contain no-repeat; }
+.logo::after { background: var(--gold); -webkit-mask: url('./assets/ayesheno-waves.png') center / contain no-repeat; mask: url('./assets/ayesheno-waves.png') center / contain no-repeat; }
+@media (min-width: 1000px) { .appbar .logo { width: 94px; height: 50px; } }
+@media (forced-colors: active) { .logo::before, .logo::after { forced-color-adjust: none; background: CanvasText; } }
 .appbar-title { text-align: center; min-width: 0; }
 .appbar-title h1 { font-size: 1.05rem; font-weight: 700; line-height: 1.35; }
 .appbar-title p { font-size: 0.78rem; color: var(--muted); line-height: 1.3; }

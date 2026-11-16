@@ -25,7 +25,7 @@ export function AppBar({ start, centre, sticky = false }: { start?: ComponentChi
   )
 }
 
-/** Zekr's name in nastaliq, in the colour of the theme. */
+/** The app's name with gold sound waves for the madda, in the colours of the theme. */
 export function Logo() {
   return <span class="logo" role="img" aria-label={t('appName')} />
 }
