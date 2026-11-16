@@ -15,7 +15,7 @@ permissions:
 jobs:
   # The macOS job costs 10x the minutes of a Linux job on private repos, so it only runs when the iPhone app can be affected.
   changes:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # ubuntu-latest became 26.04, which Playwright and setup-swift do not support yet
     outputs:
       ios: ${{ steps.filter.outputs.ios }}
     steps:
@@ -35,7 +35,7 @@ jobs:
           fi
 
   data-and-web:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # ubuntu-latest became 26.04, which Playwright and setup-swift do not support yet
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -74,7 +74,7 @@ jobs:
           if-no-files-found: ignore
 
   swift-linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # ubuntu-latest became 26.04, which Playwright and setup-swift do not support yet
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
