@@ -599,6 +599,9 @@ def main(argv=None) -> int:
     pools = build_pools(surahs, texts["simple"], translations)
     if args.almizan_web:
         hashes["almizan-web"] = "1"  # a build with the tafsir gets its own data version
+    if MUSHAF_LINES.exists():
+        # the line files are data too: a new version makes installed copies fetch meta.json (and them) again
+        hashes["mushaf-lines"] = hashlib.sha256(MUSHAF_LINES.read_bytes()).hexdigest()
     version = hashlib.sha256(json.dumps(hashes, sort_keys=True).encode()).hexdigest()[:12]
     print(f"ok: {len(surahs)} surahs, {AYAH_COUNT} ayahs, {len(translations)} translations, data version {version}")
     for name in ("all", "fits.fa.safavi", "fits.fa.fooladvand", "fits.en.sahih"):
