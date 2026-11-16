@@ -1,4 +1,5 @@
 import sys
+import json
 import unittest
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -104,6 +105,21 @@ class Pools(unittest.TestCase):
         pools = bd.build_pools(surahs, ar, tr)
         self.assertEqual(pools["all"], [1, 2, 3, 4])
         self.assertEqual(pools["fits.x.y"], [1])
+
+    def test_pools_keep_only_the_chosen_ayahs(self):
+        surahs = [surah(1, 4, 0)]
+        ar = {(1, n): "ب" * 10 for n in range(1, 5)}
+        tr = {"x.y": {"texts": {(1, n): "short" for n in range(1, 5)}}}
+        pools = bd.build_pools(surahs, ar, tr, {(1, 2), (1, 4)})
+        self.assertEqual(pools["all"], [2, 4])
+        self.assertEqual(pools["fits.x.y"], [2, 4])
+        with self.assertRaises(SystemExit):
+            bd.build_pools(surahs, ar, tr, {(1, 9)})
+
+    def test_the_daily_selection_is_real_ayahs(self):
+        doc = json.loads(bd.DAILY_AYAHS.read_text(encoding="utf-8"))
+        self.assertIn(255, doc["ayahs"]["2"])  # Ayat al-Kursi
+        self.assertEqual(doc["ayahs"]["112"], [1, 2, 3, 4])
 
 
 if __name__ == "__main__":

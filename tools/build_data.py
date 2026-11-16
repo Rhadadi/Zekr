@@ -42,6 +42,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 # The 15-line Madani layout: which words are on each line of each page (tools/mushaf_lines.py). Not private.
 MUSHAF_LINES = ROOT / "assets" / "mushaf-lines.json"
+# The ayahs the ayah of the day is drawn from: Ghazali's selection in Jawahir al-Qur'an.
+DAILY_AYAHS = ROOT / "assets" / "daily-ayahs.json"
 RAW_DIR = ROOT / "data" / "raw"
 
 TANZIL_TEXT_URL = "https://tanzil.net/pub/download/index.php?quranType={kind}&outType=txt-2&agree=true"
@@ -337,10 +339,15 @@ def check_surah_names(surahs, report: Report):
 # ------------------------------------------------------------------------- pools
 
 
-def build_pools(surahs, arabic_simple, translations) -> dict[str, list[int]]:
-    """Ayah id lists the widget / daily-ayah page can draw from (ascending ids)."""
+def build_pools(surahs, arabic_simple, translations, chosen: set[tuple[int, int]] | None = None) -> dict[str, list[int]]:
+    """Ayah id lists the widget / daily-ayah page can draw from (ascending ids); only `chosen` ones when given."""
     ids = {(s.id, n): ayah_id(s, n) for s in surahs for n in range(1, s.ayahs + 1)}
     ordered = sorted(ids, key=ids.get)
+    if chosen is not None:
+        missing = chosen - ids.keys()
+        if missing:
+            raise SystemExit(f"daily ayahs: no such ayahs {sorted(missing)[:5]}")
+        ordered = [k for k in ordered if k in chosen]
     pools: dict[str, list[int]] = {"all": [ids[k] for k in ordered]}
     ar_len = {k: len(letters_only(arabic_simple[k])) for k in ordered}
     for tid, info in translations.items():
@@ -596,12 +603,16 @@ def main(argv=None) -> int:
         return 1
 
     BASMALA.update(uthmani=texts["uthmani"][(1, 1)], simple=texts["simple"][(1, 1)])
-    pools = build_pools(surahs, texts["simple"], translations)
+    # the ayah of the day comes from Ghazali's selection (assets/daily-ayahs.json)
+    chosen = {(int(su), n) for su, ns in json.loads(DAILY_AYAHS.read_text(encoding="utf-8"))["ayahs"].items() for n in ns} if DAILY_AYAHS.exists() else None
+    pools = build_pools(surahs, texts["simple"], translations, chosen)
     if args.almizan_web:
         hashes["almizan-web"] = "1"  # a build with the tafsir gets its own data version
     if MUSHAF_LINES.exists():
         # the line files are data too: a new version makes installed copies fetch meta.json (and them) again
         hashes["mushaf-lines"] = hashlib.sha256(MUSHAF_LINES.read_bytes()).hexdigest()
+    if DAILY_AYAHS.exists():
+        hashes["daily-ayahs"] = hashlib.sha256(DAILY_AYAHS.read_bytes()).hexdigest()
     version = hashlib.sha256(json.dumps(hashes, sort_keys=True).encode()).hexdigest()[:12]
     print(f"ok: {len(surahs)} surahs, {AYAH_COUNT} ayahs, {len(translations)} translations, data version {version}")
     for name in ("all", "fits.fa.safavi", "fits.fa.fooladvand", "fits.en.sahih"):
