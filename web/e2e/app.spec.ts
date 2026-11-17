@@ -1150,7 +1150,7 @@ test.describe('page view on a phone', () => {
     await menuPanel.getByPlaceholder('Your email').fill('reader@example.com')
     await menuPanel.getByRole('button', { name: 'Weekly' }).click()
     await menuPanel.getByRole('button', { name: 'Subscribe' }).click()
-    await expect(menuPanel.getByRole('status')).toHaveText('Almost done: confirm from the email we just sent.')
+    await expect(menuPanel.locator('.nl-msg')).toHaveText('Almost done: confirm from the email we just sent.')
     expect(sent).toMatchObject({ email: 'reader@example.com', freq: 'weekly', lang: 'en' })
     // where the server cannot be reached (duckdns.org in Iran), joining by email still works
     await expect(menuPanel.getByRole('link', { name: 'rhadadi+ayah@gmail.com' })).toHaveAttribute('href', /^mailto:rhadadi\+ayah@gmail\.com\?subject=Weekly$/)
