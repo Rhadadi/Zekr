@@ -43,6 +43,9 @@ jobs:
           python-version: "3.12"
       - name: Data pipeline tests
         run: python3 -m unittest discover -s tools/tests -v
+      - name: Ayah by email tests
+        working-directory: server/newsletter
+        run: pip install pillow==11.3.0 && python3 -m unittest -v
       - name: Build the data (downloads from Tanzil)
         run: python3 tools/build_data.py
       - name: The public data build has no private book text

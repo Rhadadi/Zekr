@@ -9,6 +9,7 @@ Zekr is a personal Quran app: an iPhone app (with a Lock Screen widget) and a we
 | `tools/build_data.py` | Downloads the Quran text and translations (Tanzil) and builds the databases and web data. Run it first. Python standard library only. |
 | `tools/almizan.py`, `tools/import_study_quran.py`, `tools/study_quran.py`, `tools/mushaf_pages.py` | Optional **private** content (Al-Mizan, The Study Quran, the printed mushaf pages as images). |
 | `tools/tests/` | Python tests, including a made-up Study Quran fixture (`study_fixture.py`). |
+| `server/newsletter/` | The ayah by email: sign-up endpoints and the daily/weekly sending, run on the home server (see its README). Python, with Pillow. |
 | `shared/` | The ayah-of-the-day rotation spec and golden test vectors used by Python, TypeScript and Swift. |
 | `web/` | Vite + Preact + signals + TypeScript PWA. Unit tests: vitest. End to end: Playwright. |
 | `ios/` | SwiftUI app and widget (`ios/Zekr`, `ios/ZekrWidgets`), XcodeGen project, and the `ZekrKit` Swift package (testable on Linux). |

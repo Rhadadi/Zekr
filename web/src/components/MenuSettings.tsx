@@ -8,6 +8,7 @@ import { href } from '../router'
 import { type PageColor, type Settings, type TranslationPlace, pickFont, settings, updateSettings } from '../store'
 import { OfflineDownload, TranslationChecks } from '../views/Settings'
 import { Icon, type IconName } from './Icon'
+import { NEWSLETTER, NewsletterSignup } from './NewsletterSignup'
 import { PlaybackOptions } from './PlaybackOptions'
 import { TR_MAX, TR_MIN } from './PageOptions'
 
@@ -119,6 +120,7 @@ export function MenuSettings({ meta }: { meta: Meta }) {
       <Section id="translations" title={t('translations')}><TranslationChecks meta={meta} /></Section>
       <Section id="recitation" title={t('recitation')}><PlaybackOptions /></Section>
       <Section id="offline" title={t('offline')}><OfflineDownload /></Section>
+      {NEWSLETTER.address ? <Section id="newsletter" title={t('nlTitle')}><NewsletterSignup /></Section> : null}
       <a class="menu-about" href={href.about}>{t('about')}</a>
     </div>
   )

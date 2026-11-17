@@ -1,0 +1,11 @@
+# On the home server (the Lenovo): docker compose up -d --build
+# Settings, not in git: .env next to this file with SMTP_USER and SMTP_PASS (a Gmail address and its app password).
+services:
+  newsletter:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    ports: ["127.0.0.1:9020:8090"]
+    volumes: [newsletter-data:/data]
+volumes:
+  newsletter-data:

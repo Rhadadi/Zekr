@@ -687,6 +687,20 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .stepper button { width: 32px; height: 32px; border: 0; border-radius: 50%; background: color-mix(in srgb, var(--ink) 6%, transparent); color: var(--ink); font: inherit; font-size: 1.05rem; cursor: pointer; }
 .stepper button:disabled { opacity: 0.4; cursor: default; }
 .stepper output { min-width: 30px; text-align: center; font-variant-numeric: tabular-nums; color: var(--muted); }
+/* the ayah by email, folded at the bottom of the menu */
+.seg-text button { width: auto; padding: 0 12px; font: inherit; font-size: 0.82rem; }
+.nl-intro, .nl-mail, .nl-msg { margin: 4px 0 8px; color: var(--muted); font-size: 0.8rem; line-height: 1.7; }
+.nl-msg:empty { display: none; }
+.nl-msg { color: var(--accent); }
+.nl-mail a { color: var(--accent); word-break: break-all; }
+.nl-email input {
+  box-sizing: border-box; width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px;
+  background: var(--surface); color: var(--ink); font: inherit;
+}
+.nl-email input::placeholder { color: var(--muted); }
+.nl-email input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.nl-go { width: 100%; min-height: 44px; margin-top: 4px; border: 0; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font: inherit; font-weight: 600; cursor: pointer; }
+.nl-go:disabled { opacity: 0.6; cursor: default; }
 /* the long lists fold away */
 .msec { border-top: 1px solid var(--line); }
 .msec:last-of-type { border-bottom: 1px solid var(--line); }
