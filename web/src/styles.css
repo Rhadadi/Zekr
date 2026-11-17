@@ -421,14 +421,11 @@ a.player-info { color: var(--ink); text-decoration: none; }
 @media (min-width: 1000px) {
   /* The page's width and its margins are set on the root, so the menu at the left (outside the page's layout) and the
      ayah's panel at the right can share one width: what the margin beside the page holds, so the page stays where it is */
-  :root { --page-w: clamp(560px, 100vw - 640px, 720px); --m: calc((100vw - var(--page-w)) / 2); --side-w: clamp(264px, var(--m) - 56px, 320px); }
-  :root:has(.mushaf-layout.fitted) { --page-w: min(calc((100dvh - var(--bar-h) - 28px) * 654 / 935), 820px, calc(100vw - 48px)); }
-  /* where the margin is too narrow for the recitation card, the page makes room under it */
-  @media (max-width: 1279px) { :root:has(.mushaf-layout.fitted) { --page-w: min(calc((100dvh - var(--bar-h) - 28px - var(--player-h)) * 654 / 935), 820px, calc(100vw - 48px)); } }
+  /* As wide as the window allows once each side keeps room for its panel (12px + 320px + 28px), so a long line reads
+     at a good size; the page scrolls down rather than shrinking to the window's height. */
+  :root { --page-w: clamp(560px, 100vw - 720px, 1100px); --m: calc((100vw - var(--page-w)) / 2); --side-w: clamp(264px, var(--m) - 56px, 320px); }
   body:has(.mushaf-host:not([inert])) { background: var(--stage) radial-gradient(ellipse 52% 78% at 50% 50%, var(--spot), var(--stage)) fixed; }
   .mushaf-host .appbar { background: var(--stage); }
-  /* one whole page and nothing scrolling under the bar: it lets the lit stage show through */
-  body:has(.mushaf-layout.fitted) .mushaf-host .appbar { background: transparent; border-bottom-color: transparent; }
   .app { max-width: none; }
   .appbar .appbar-in { max-width: none; padding-inline: 16px; }
   .mushaf-layout { --lpush: 0px; --rpush: 0px; --tx: calc(var(--lpush) - var(--rpush)); }
@@ -735,7 +732,12 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .turn-prev svg { transform: none; }
 .turn .icon-btn:disabled { opacity: 0.35; cursor: default; }
 .mushaf-flow.printed { display: grid; justify-items: center; }
-.mushaf-flow.printed .mpage { width: 100%; max-width: calc((100dvh - var(--bar-h) - 20px) * 654 / 935); }
+.mushaf-flow.printed .mpage { width: 100%; }
+/* A phone on its side: the page across the whole screen (clear of the notch), not shrunk to the short height */
+@media (max-width: 999px) and (orientation: landscape) {
+  .app { max-width: none; padding-left: max(8px, env(safe-area-inset-left)); padding-right: max(8px, env(safe-area-inset-right)); }
+  .appbar-in { max-width: none; padding-left: max(4px, env(safe-area-inset-left)); padding-right: max(4px, env(safe-area-inset-right)); }
+}
 
 /* The ayah panel's one row: the reference (unless the recitation bar already shows it), the actions, close at the end.
    In the phone sheet the grab handle sits in the middle of this row, so there is no separate row for it. */

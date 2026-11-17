@@ -1384,7 +1384,7 @@ test.describe('The printed mushaf as pictures (private build, made-up pictures h
     await settle(page)
     const pg = (await page.locator('#page-3 .pg').boundingBox())!
     expect(Math.abs(pg.x + pg.width / 2 - 720)).toBeLessThanOrEqual(1)
-    expect(pg.y + pg.height).toBeLessThanOrEqual(900) // the whole page is on the screen
+    expect(pg.width).toBeGreaterThanOrEqual(700) // as wide as the panels' room allows, not shrunk to the window's height
     await page.keyboard.press('ArrowLeft') // the book is right to left: left is on to the next page
     await expect(page.locator('#page-4 .pg-img')).toBeVisible()
     await page.keyboard.press('ArrowRight')
@@ -1412,6 +1412,18 @@ test.describe('The printed mushaf as pictures (private build, made-up pictures h
     await expect(page.locator('.mushaf-flow')).toHaveAttribute('data-turn', 'next')
     await page.keyboard.press('ArrowRight')
     await expect(page.locator('.mushaf-flow')).toHaveAttribute('data-turn', 'prev')
+  })
+
+  test('a phone on its side shows the printed page across the whole screen', async ({ page }) => {
+    await page.setViewportSize({ width: 932, height: 430 })
+    await useSettings(page, { lang: 'fa', translationPlace: 'panel' })
+    await page.goto('/#/page/3')
+    await expect(page.locator('#page-3 .pg-img')).toBeVisible()
+    const pg = (await page.locator('#page-3 .pg').boundingBox())!
+    expect(pg.width).toBeGreaterThanOrEqual(900)
+    expect(Math.abs(pg.x + pg.width / 2 - 466)).toBeLessThanOrEqual(1)
+    await page.setViewportSize({ width: 390, height: 844 }) // and upright, the width of the phone as before
+    expect((await page.locator('#page-3 .pg').boundingBox())!.width).toBeGreaterThanOrEqual(358)
   })
 
   test('a sideways swipe turns the page: to the right for the next (the book is right to left), to the left for the previous', async ({ page }) => {
