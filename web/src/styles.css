@@ -583,6 +583,12 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .mpage.printed { content-visibility: visible; contain-intrinsic-size: none; scroll-margin-top: calc(var(--bar-h) + 4px); padding-inline: 0; margin-inline: 0; margin-bottom: 8px; }
 .pg { position: relative; width: 100%; }
 .pg-img { display: block; width: 100%; height: 100%; -webkit-user-select: none; user-select: none; }
+/* the picture is wider than the page by its two outer margins (--trim of its width each side, set with the page), which
+   overflow and are cut off; everything on the picture is placed in the wider box, so it stays where it was */
+.pg { overflow: hidden; }
+.pg-in { position: absolute; top: 0; bottom: 0; left: calc(-100% * var(--trim, 0) / (1 - 2 * var(--trim, 0))); right: calc(-100% * var(--trim, 0) / (1 - 2 * var(--trim, 0))); }
+.mpage.il { overflow: hidden; }
+.il-in { margin-inline: calc(-100% * var(--trim, 0) / (1 - 2 * var(--trim, 0))); }
 .mushaf-flow[data-color='green'] :is(.pg-img, .fl) { filter: hue-rotate(-60deg); }
 .mushaf-flow[data-color='purple'] :is(.pg-img, .fl) { filter: hue-rotate(70deg); }
 .mushaf-flow[data-color='pink'] :is(.pg-img, .fl) { filter: hue-rotate(130deg); }

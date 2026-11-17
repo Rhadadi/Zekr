@@ -12,7 +12,7 @@ import { PageOptions } from '../components/PageOptions'
 import { WordsPage } from '../components/WordsPage'
 import { Sheet } from '../components/Sheet'
 import { SurahBanner } from '../components/SurahBanner'
-import { type Meta, type MushafPageMap, type TranslationInfo, juzOf, loadMushafMap, loadPageLines, loadText, loadTranslation, locate, mushafImage, pageOf, pageRange } from '../data'
+import { type Meta, type MushafPageMap, type TranslationInfo, juzOf, loadMushafMap, loadPageLines, loadText, loadTranslation, locate, mushafImage, pageOf, pageRange, PAGE_TRIM } from '../data'
 import { useAsync, useWide } from '../hooks'
 import { bandPaper, pageStrips } from '../interlinear'
 import { ayahRef, num, surahName, t } from '../i18n'
@@ -120,7 +120,9 @@ const PrintedPage = memo(function PrintedPage({ meta, pg, ar, highlight, kind, f
   useFontLinesFit(root, [fonted, n])
   return (
     <section ref={root} class={`mpage printed${fonted ? ' fonted' : ''}`} id={`page-${n}`} data-page={n} aria-label={t('pageN', { n })}>
-      <div class="pg" style={{ aspectRatio: `${pg.w} / ${pg.h}` }}>
+      {/* the picture is a little wider than its box: the margins outside the frame are cut off (see --trim) */}
+      <div class="pg" style={{ aspectRatio: `${pg.w * (1 - 2 * PAGE_TRIM)} / ${pg.h}`, '--trim': PAGE_TRIM }}>
+        <div class="pg-in">
         <img class="pg-img" src={src} alt="" decoding="async" draggable={false} />
         {fonted ? bands.map((b, i) => <FontLine key={i} tokens={laid![i]!} band={b} box={{ top: 0, bottom: 1000 }} paper={paper.value?.[i]} />) : null}
         {pg.a.map((segs, k) => {
@@ -136,6 +138,7 @@ const PrintedPage = memo(function PrintedPage({ meta, pg, ar, highlight, kind, f
           )
         })}
         {n > 2 ? <button class="pg-no" aria-hidden="true" tabIndex={-1} onClick={(e) => { e.stopPropagation(); onJump() }} /> : null}
+        </div>
       </div>
     </section>
   )
