@@ -11,9 +11,10 @@ final class DailyTests: XCTestCase {
     private let noon = Date(timeIntervalSince1970: 1_760_270_400) // 2025-10-12 12:00:00 UTC
 
     func testDailyEntriesFollowTheSharedRule() throws {
-        let entries = try provider().entries(config: DailyConfig(), from: noon, count: 3, timeZone: utc)
+        let p = try provider()
+        let entries = try p.entries(config: DailyConfig(), from: noon, count: 3, timeZone: utc)
         XCTAssertEqual(entries.map(\.slot), [20373, 20374, 20375])
-        let all = Array(1...totalAyahs)
+        let all = try p.store.pool(named: "all") // Ghazali's selection, not every ayah
         for e in entries { XCTAssertEqual(e.ayahID, Rotation.ayah(pool: all, slot: e.slot)) }
         // daily slots start at local midnight
         XCTAssertEqual(entries[0].start, Date(timeIntervalSince1970: 1_760_227_200)) // 2025-10-12 00:00 UTC
