@@ -265,6 +265,18 @@ input[type='checkbox'] { width: 20px; height: 20px; flex-shrink: 0; accent-color
   box-shadow: 0 -4px 14px rgb(0 0 0 / 0.08); z-index: 8;
 }
 .player[data-status='error'] { border-top-color: #c0392b; }
+/* A phone on its side (hooks.ts IN_BAR_QUERY): no panel over the page, just play and pause with the next and previous
+   ayah in the top bar, beside the menu button; the rest (repeat, reciter, stop) is behind its "more" button */
+.player.in-bar {
+  top: env(safe-area-inset-top); bottom: auto; left: calc(max(4px, env(safe-area-inset-left)) + 48px); right: auto; margin: 0; max-width: none;
+  height: 52px; padding: 0; gap: 0; background: none; border: 0; box-shadow: none; flex-wrap: nowrap; translate: none; scale: none;
+}
+.player.in-bar .player-info { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.player.in-bar :is(.player-repeat, .commentary-seek) { display: none; }
+.player.in-bar .player-controls .icon-btn { width: 44px; height: 44px; color: var(--ink); }
+.player.in-bar .icon-btn.big { width: 40px; height: 40px; margin: 2px; color: var(--accent-ink); }
+/* a narrow phone on its side has room for play and "more" only, beside the surah and page in the bar's middle */
+@media (orientation: landscape) and (max-height: 600px) and (max-width: 799px) { .player.in-bar .player-step { display: none; } }
 .player-info { display: flex; flex-direction: column; min-width: 0; line-height: 1.4; font-size: 0.9rem; }
 .player-info strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .player-controls { display: flex; align-items: center; }

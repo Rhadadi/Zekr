@@ -1414,6 +1414,27 @@ test.describe('The printed mushaf as pictures (private build, made-up pictures h
     await expect(page.locator('.mushaf-flow')).toHaveAttribute('data-turn', 'prev')
   })
 
+  test('a phone on its side: the recitation is a few buttons in the top bar, and the page follows it down', async ({ page }) => {
+    await trackAudio(page)
+    await page.setViewportSize({ width: 932, height: 430 })
+    await useSettings(page, { lang: 'fa', translationPlace: 'off' })
+    await page.goto('/#/page/3')
+    await expect(page.locator('#page-3 .pg-img')).toBeVisible()
+    // the made-up map spreads 11 ayahs down the page; the page is far taller than the screen
+    await page.locator('#page-3 .ay').nth(1).locator('.seg').click()
+    await page.getByTestId('ayah-panel').getByRole('button', { name: /پخش/ }).first().click()
+    const bar = page.locator('.player')
+    await expect(bar).toHaveClass(/in-bar/)
+    const b = (await bar.boundingBox())!
+    expect(b.y + b.height).toBeLessThanOrEqual(56) // in the top bar, not over the page
+    expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--player-h').trim())).toBe('0px')
+    await page.keyboard.press('Escape') // close the ayah's panel; the recitation goes on
+    for (let i = 0; i < 8; i++) await finishRecording(page)
+    const playing = page.locator('#page-3 .ay.playing .seg').first()
+    await expect(playing).toBeInViewport()
+    expect(await page.evaluate(() => scrollY)).toBeGreaterThan(200)
+  })
+
   test('a phone on its side shows the printed page across the whole screen', async ({ page }) => {
     await page.setViewportSize({ width: 932, height: 430 })
     await useSettings(page, { lang: 'fa', translationPlace: 'panel' })
