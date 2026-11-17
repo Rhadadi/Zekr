@@ -131,8 +131,24 @@ class IssueTest(Base):
         self.assertGreater(pic.height, 3 * 56)  # three lines, framed
         self.assertIn("Translation 262 &lt;b&gt;", issue.html)  # escaped
         self.assertIn("#/ayah/2/255", issue.html)
-        self.assertIn("Husary_128kbps/002255.mp3", issue.html)
         self.assertEqual([n for n, _ in issue.files], ["002-255 Al-Baqara 255 (recitation).mp3", "002-255 Al-Baqara 255 (translation).mp3"])
+        # said once: the recitation is attached, so no Listen link; the translator and reciter share one line
+        self.assertNotIn("Husary_128kbps/002255.mp3", issue.html)
+        self.assertIn("Translation: Saheeh International · Recitation by Al-Husary and the recorded translation attached", issue.html)
+        self.assertEqual(issue.html.count("The Cow"), 1)
+        self.assertNotIn("Ayah of the day", issue.html)  # it is in the subject
+        self.assertNotIn("Ghazali", issue.html)  # only in the welcome
+
+    def test_without_the_attachment_the_recitation_is_a_link(self):
+        def no_audio(url):
+            if url.endswith(".mp3"):
+                raise OSError("unreachable")
+            return fake_get(url)
+        issue = app.build_issue(self.lib, 262, "en", "en.sahih", "husary", "daily", datetime(2026, 11, 17), get=no_audio)
+        self.assertEqual(issue.files, [])
+        self.assertIn("Husary_128kbps/002255.mp3", issue.html)
+        self.assertIn("Husary_128kbps/002255.mp3", issue.text)
+        self.assertNotIn("attached", issue.html)
 
     def test_persian_issue(self):
         issue = app.build_issue(self.lib, 1, "fa", "fa.safavi", "nobody", "weekly", datetime(2026, 11, 20), get=fake_get)
@@ -140,6 +156,10 @@ class IssueTest(Base):
         self.assertIn('dir="rtl"', issue.html)
         self.assertIn("جمعه ۲۹ آبان ۱۴۰۵", issue.html)
         self.assertIn("منشاوی", issue.html)  # an unknown reciter falls back to the default
+        self.assertEqual(issue.html.count("فاتحه"), 1)  # one heading, no second name in Arabic
+        self.assertNotIn("﴿۱﴾", issue.html.split("cid:ayah")[-1])  # the number is in the picture, not after the translation
+        welcome = app.build_issue(self.lib, 1, "fa", "fa.safavi", "", "daily", datetime(2026, 11, 20), welcome=True, get=fake_get)
+        self.assertIn("جواهر القرآن", welcome.html)
 
 
 class FlowTest(Base):

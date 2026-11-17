@@ -126,12 +126,11 @@ T = {
     "fa": {
         "daily": "آیهٔ روز", "weekly": "آیهٔ هفته", "surah": "سورهٔ", "ayah": "آیهٔ",
         "read": "خواندن در آیه شنو", "study": "تفسیر و شرح", "listen": "شنیدن تلاوت",
-        "attached": "تلاوت {reciter} پیوست این ایمیل است.", "attached2": "تلاوت {reciter} و ترجمهٔ گویا پیوست این ایمیل است.",
-        "ghazali": "از گزیدهٔ امام محمد غزالی در «جواهر القرآن»",
+        "attached": "تلاوت {reciter} در پیوست", "attached2": "تلاوت {reciter} و ترجمهٔ گویا در پیوست",
         "footer_daily": "شما آیهٔ روز را هر بامداد دریافت می‌کنید.", "footer_weekly": "شما آیهٔ هفته را هر جمعه دریافت می‌کنید.",
         "to_weekly": "هفته‌ای یک بار", "to_daily": "هر روز", "unsub": "لغو اشتراک",
-        "reply": "یا به همین ایمیل پاسخ دهید: «هفتگی»، «روزانه» یا «لغو».",
-        "welcome": "خوش آمدید. این آیهٔ امروز است؛ از این پس {when} آیه‌ای تازه می‌رسد.",
+        "reply": "یا پاسخ دهید: «هفتگی»، «روزانه» یا «لغو»",
+        "welcome": "خوش آمدید. از این پس {when} آیه‌ای از گزیدهٔ امام محمد غزالی در «جواهر القرآن» می‌رسد.",
         "when_daily": "هر بامداد", "when_weekly": "هر جمعه",
         "confirm_subject": "تأیید اشتراک آیه شنو", "confirm_title": "یک گام مانده است",
         "confirm_body": "برای دریافت {what} با ایمیل، اشتراک خود را تأیید کنید.", "confirm_button": "تأیید اشتراک",
@@ -145,12 +144,11 @@ T = {
     "en": {
         "daily": "Ayah of the day", "weekly": "Ayah of the week", "surah": "Surah", "ayah": "Ayah",
         "read": "Read in Ayesheno", "study": "Commentary", "listen": "Listen",
-        "attached": "The recitation by {reciter} is attached.", "attached2": "The recitation by {reciter} and the recorded translation are attached.",
-        "ghazali": "From Imam al-Ghazali's selection in Jawahir al-Qur'an",
+        "attached": "Recitation by {reciter} attached", "attached2": "Recitation by {reciter} and the recorded translation attached",
         "footer_daily": "You receive the ayah of the day each morning.", "footer_weekly": "You receive the ayah of the week each Friday.",
         "to_weekly": "Weekly instead", "to_daily": "Daily instead", "unsub": "Unsubscribe",
-        "reply": "Or reply to this email with “weekly”, “daily” or “unsubscribe”.",
-        "welcome": "Welcome. This is today's ayah; a new one will come {when}.",
+        "reply": "or reply “weekly”, “daily” or “unsubscribe”",
+        "welcome": "Welcome. From now on an ayah from Imam al-Ghazali's selection in Jawahir al-Qur'an comes {when}.",
         "when_daily": "each morning", "when_weekly": "each Friday",
         "confirm_subject": "Confirm your Ayesheno subscription", "confirm_title": "One step left",
         "confirm_body": "Confirm your subscription to receive the {what} by email.", "confirm_button": "Confirm",
@@ -428,7 +426,6 @@ def page_shell(inner: str, lang: str, preheader="") -> str:
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#fffdf7;border:1px solid #e2d6bb;border-radius:20px;font-family:{font};color:#24302b">
 {inner}
 </table>
-<div style="font-family:{font};font-size:11px;color:#8b8068;padding:14px 8px 0">آیه شنو · Ayesheno</div>
 </td></tr></table></body></html>"""
 
 
@@ -474,51 +471,39 @@ def build_issue(lib: Library, id_: int, lang: str, tr: str, reciter: str, freq: 
     has_both = has_rec and any("(translation)" in f for f, _ in issue.files)
 
     tr_name = meta_tr["name"] if lang == "fa" else meta_tr.get("translator", meta_tr["name"])
-    marker = f"﴿{fa_num(n)}﴾" if rtl_tr else f"({n})"
     tr_font = "Vazirmatn,'Segoe UI',Tahoma,sans-serif" if rtl_tr else "Georgia,'Iowan Old Style',serif"
     read = f"{SITE_URL}#/ayah/{surah['id']}/{n}"
     study = f"{SITE_URL}#/verse/{surah['id']}/{n}"
     listen = audio_url(folder, surah["id"], n)
-    note = w["attached2" if has_both else "attached"].format(reciter=rec_name) if has_rec else ""
-    welcome_html = (f'<tr><td style="padding:0 36px 8px"><div style="background:#f3ecdc;border-radius:12px;padding:12px 16px;'
+    # Each thing is said once: the subject has the kind of issue, the heading the surah and ayah, the picture the
+    # Arabic with its number; the translator and the reciter share one line, and the recitation is a button only when it
+    # could not be attached.
+    credits = " · ".join([w["translation"].format(name=tr_name), *([w["attached2" if has_both else "attached"].format(reciter=rec_name)] if has_rec else [])])
+    welcome_html = (f'<tr><td style="padding:12px 36px 0"><div style="background:#f3ecdc;border-radius:12px;padding:12px 16px;'
                     f'font-size:14px;line-height:1.8;color:#4a4232;text-align:center">'
                     f'{esc(w["welcome"].format(when=w["when_" + freq]))}</div></td></tr>') if welcome else ""
-    footer = w["footer_weekly" if freq == "weekly" else "footer_daily"]
+    buttons = button(read, w["read"], primary=True) + ("" if has_rec else button(listen, "▶ " + w["listen"])) + button(study, w["study"])
     inner = f"""
-<tr><td style="padding:26px 32px 4px;text-align:center">
+<tr><td style="padding:24px 32px 0;text-align:center">
   <a href="{esc(SITE_URL)}"><img src="cid:logo" width="94" height="50" alt="آیه شنو · Ayesheno" style="display:inline-block;border:0"></a>
-</td></tr>
-<tr><td style="padding:2px 32px 0;text-align:center">
-  <div style="font-size:12px;letter-spacing:{'0' if lang == 'fa' else '.16em'};text-transform:uppercase;color:#8a6a2c;font-weight:600">{esc(kind)}</div>
-  <div style="font-size:13px;color:#7b7462;padding-top:4px">{esc(date_line(day, lang))}</div>
+  <div style="font-size:12px;color:#8b8068;padding-top:2px">{esc(date_line(day, lang))}</div>
 </td></tr>
 {welcome_html}
-<tr><td style="padding:18px 32px 6px;text-align:center">
-  <div style="font-size:21px;color:#1e5044;font-weight:600">{esc(ref)}</div>
-  <div dir="rtl" lang="ar" style="font-size:15px;color:#8a6a2c;padding-top:2px">سورة {esc(surah['ar'])}</div>
-</td></tr>
-<tr><td style="padding:10px 22px 4px">{arabic_html}</td></tr>
-<tr><td style="padding:10px 32px 0;text-align:center;color:#b08a42;font-size:18px">۞</td></tr>
-<tr><td dir="{'rtl' if rtl_tr else 'ltr'}" lang="{esc(meta_tr['lang'])}" style="padding:8px 40px 4px;font-family:{tr_font};font-size:{17 if rtl_tr else 18}px;line-height:{2 if rtl_tr else 1.75};color:#26302c;text-align:justify">
-  {esc(text)} <span style="color:#8a6a2c;white-space:nowrap">{marker}</span>
-</td></tr>
-<tr><td style="padding:2px 40px 0;font-size:12px;color:#8b8068;text-align:{'left' if rtl_tr else 'right'}">{esc(w['translation'].format(name=tr_name))}</td></tr>
-<tr><td style="padding:22px 24px 6px;text-align:center">
-  {button(read, w['read'], primary=True)}{button(listen, '▶ ' + w['listen'])}{button(study, w['study'])}
-</td></tr>
-{f'<tr><td style="padding:6px 32px 0;text-align:center;font-size:13px;color:#6f6754">🎧 {esc(note)}</td></tr>' if note else ''}
-<tr><td style="padding:22px 32px 0"><div style="border-top:1px solid #e8dfca"></div></td></tr>
-<tr><td style="padding:14px 32px 0;text-align:center;font-size:12px;color:#8a6a2c">{esc(w['ghazali'])}</td></tr>
-<tr><td style="padding:10px 32px 26px;text-align:center;font-size:12px;line-height:1.9;color:#8b8068">
-  {esc(footer)}<br>
-  <a href="@@switch@@" style="color:#1e5044">@@switch_label@@</a> · <a href="@@unsub@@" style="color:#1e5044">{esc(w['unsub'])}</a><br>
-  {esc(w['reply'])}
+<tr><td style="padding:18px 32px 8px;text-align:center;font-size:19px;color:#1e5044;font-weight:600">{esc(ref)}</td></tr>
+<tr><td style="padding:4px 22px 4px">{arabic_html}</td></tr>
+<tr><td dir="{'rtl' if rtl_tr else 'ltr'}" lang="{esc(meta_tr['lang'])}" style="padding:16px 40px 4px;font-family:{tr_font};font-size:{17 if rtl_tr else 18}px;line-height:{2 if rtl_tr else 1.75};color:#26302c;text-align:justify">{esc(text)}</td></tr>
+<tr><td style="padding:4px 40px 0;font-size:12px;color:#8b8068;text-align:center">{esc(credits)}</td></tr>
+<tr><td style="padding:20px 24px 4px;text-align:center">{buttons}</td></tr>
+<tr><td style="padding:18px 32px 24px;text-align:center;font-size:12px;line-height:1.9;color:#8b8068">
+  <div style="border-top:1px solid #e8dfca;padding-top:14px">
+  <a href="@@switch@@" style="color:#1e5044">@@switch_label@@</a> · <a href="@@unsub@@" style="color:#1e5044">{esc(w['unsub'])}</a><br>{esc(w['reply'])}
+  </div>
 </td></tr>"""
     issue.html = page_shell(inner, lang, preheader=text[:140])
     issue.text = "\n\n".join([
-        f"{kind} · {date_line(day, lang)}", ref, arabic, f"{text} {marker}", w["translation"].format(name=tr_name),
-        f"{w['read']}: {read}", f"{w['listen']}: {listen}", w["ghazali"],
-        f"{footer}\n{w['unsub']}: @@unsub@@\n{w['reply']}",
+        date_line(day, lang), *([w["welcome"].format(when=w["when_" + freq])] if welcome else []), ref, arabic, text, credits,
+        f"{w['read']}: {read}", *([] if has_rec else [f"{w['listen']}: {listen}"]),
+        f"{w['unsub']}: @@unsub@@ · {w['reply']}",
     ])
     return issue
 
