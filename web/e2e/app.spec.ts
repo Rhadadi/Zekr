@@ -172,7 +172,9 @@ test.describe('search, saved, settings', () => {
     await page.getByRole('searchbox').fill('الرحمن الرحيم')
     await expect(page.locator('article.ayah').first()).toBeVisible()
     await expect(page.locator('mark').first()).toBeVisible()
-    await expect(page.locator('article.ayah').first().locator('a.ref')).toContainText('1:1')
+    // The shorter literal phrase ranks first; the basmala remains among the direct matches.
+    await expect(page.locator('article.ayah').first().locator('a.ref')).toContainText('1:3')
+    await expect(page.locator('article.ayah a.ref[href="#/ayah/1/1"]')).toBeVisible()
   })
 
   test('search matches Persian written with Arabic letters', async ({ page }) => {

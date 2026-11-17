@@ -9,8 +9,9 @@ import { VitePWA } from 'vite-plugin-pwa'
 function dataPrecache() {
   const meta = 'public/data/meta.json'
   if (!existsSync(meta)) return []
-  const { version } = JSON.parse(readFileSync(meta, 'utf8')) as { version: string }
+  const { version, morphology } = JSON.parse(readFileSync(meta, 'utf8')) as { version: string; morphology?: unknown }
   const files = ['text/uthmani.json', 'text/simple.json', 'text/clean.json', 'tr/fa.safavi.json', 'tr/en.sahih.json', 'pools.json']
+  if (morphology) files.push('search/morphology.json')
   return [
     { url: 'data/meta.json', revision: version },
     ...files.map((f) => ({ url: `data/${f}?v=${version}`, revision: null })),

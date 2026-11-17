@@ -28,6 +28,7 @@ interface Props {
   showRef?: boolean
   /** Highlight matches of this query. */
   query?: string
+  arQuery?: string
 }
 
 function Marked({ text, query }: { text: string; query?: string }) {
@@ -39,7 +40,7 @@ function Marked({ text, query }: { text: string; query?: string }) {
   )
 }
 
-function AyahCardView({ meta, id, ar, translations, playing, focused, showRef, query }: Props) {
+function AyahCardView({ meta, id, ar, translations, playing, focused, showRef, query, arQuery }: Props) {
   const { surah, ayah } = locate(meta, id)
   const s = settings.value
   const saved = isBookmarked(id)
@@ -90,7 +91,7 @@ function AyahCardView({ meta, id, ar, translations, playing, focused, showRef, q
         </div>
       </div>
       <p class="ar" lang="ar" dir="rtl" style={{ fontSize: `${s.arabicSize}px` }}>
-        <Marked text={ar} query={query} />
+        <Marked text={ar} query={arQuery ?? query} />
       </p>
       {translations.map((x, i) => (
         <div class="tr-block" key={x.info.id}>

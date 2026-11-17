@@ -659,7 +659,7 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .drawer-wrap { position: fixed; inset: 0; z-index: 20; }
 .drawer-backdrop { position: absolute; inset: 0; background: rgb(0 0 0 / 0.4); animation: fade-in 0.15s ease-out; }
 .drawer {
-  position: absolute; inset-block: 0; left: 0; width: min(400px, 92vw); padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  position: absolute; inset-block: 0; left: 0; width: min(360px, calc(100vw - 40px)); padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
   background: var(--surface); box-shadow: 0 0 30px rgb(0 0 0 / 0.25); display: flex; flex-direction: column; animation: drawer-in 0.18s ease-out;
 }
 .drawer-head { display: flex; align-items: center; justify-content: space-between; height: 52px; padding-inline: 20px 12px; border-bottom: 1px solid var(--line); }
@@ -692,14 +692,14 @@ a.player-info { color: var(--ink); text-decoration: none; }
 }
 .menu-settings select:hover, .menu-settings select:focus-visible { color: var(--ink); }
 .segctl { display: inline-flex; gap: 2px; padding: 2px; border-radius: 10px; background: color-mix(in srgb, var(--ink) 6%, transparent); }
-.segctl button { display: grid; place-items: center; width: 36px; height: 32px; border: 0; border-radius: 8px; background: none; color: var(--muted); cursor: pointer; }
+.segctl button { display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 8px; background: none; color: var(--muted); cursor: pointer; }
 .segctl button[aria-pressed='true'] { background: var(--surface); color: var(--accent); box-shadow: 0 1px 2px rgb(0 0 0 / 0.12); }
 .swatches { display: inline-flex; gap: 2px; }
-.swatches button { width: 30px; height: 32px; border: 0; border-radius: 50%; background: none; cursor: pointer; position: relative; }
+.swatches button { width: 44px; height: 44px; border: 0; border-radius: 50%; background: none; cursor: pointer; position: relative; }
 .swatches button::before { content: ''; position: absolute; inset: 7px; border-radius: 50%; background: var(--sw); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 28%, transparent); }
 .swatches button[aria-pressed='true']::after { content: ''; position: absolute; inset: 3px; border-radius: 50%; box-shadow: 0 0 0 2px var(--accent); }
 .stepper { display: inline-flex; align-items: center; gap: 2px; }
-.stepper button { width: 32px; height: 32px; border: 0; border-radius: 50%; background: color-mix(in srgb, var(--ink) 6%, transparent); color: var(--ink); font: inherit; font-size: 1.05rem; cursor: pointer; }
+.stepper button { width: 44px; height: 44px; border: 0; border-radius: 50%; background: color-mix(in srgb, var(--ink) 6%, transparent); color: var(--ink); font: inherit; font-size: 1.05rem; cursor: pointer; }
 .stepper button:disabled { opacity: 0.4; cursor: default; }
 .stepper output { min-width: 30px; text-align: center; font-variant-numeric: tabular-nums; color: var(--muted); }
 /* the ayah by email, folded at the bottom of the menu */
@@ -775,17 +775,20 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .il .seg.ay:not(.sel):not(.playing) { background: none; }
 /* The box under a line: the frame stretched down its sides, a plain light box inside it */
 .il-tr { position: relative; overflow: hidden; padding: 1px 11.5% 3px; color: #262624; font-family: var(--font-ui); }
-.il-paper { position: absolute; inset: 0 10.4%; background: #fbfaf5; border-block: 1px solid #ece8da; }
-.il-under { padding: 10px 6% 12px; background: #fbfaf5; }
+.mushaf-flow { --il-paper: #eaf7fc; --il-rule: #d8e8ef; }
+.mushaf-flow[data-color='green'] { --il-paper: #edf9ee; --il-rule: #dbeadd; }
+.mushaf-flow[data-color='purple'] { --il-paper: #f1edfc; --il-rule: #e2dcef; }
+.mushaf-flow[data-color='pink'] { --il-paper: #fcecf3; --il-rule: #eedce5; }
+.il-paper { position: absolute; inset: 0 10.4%; background: var(--il-paper); border-block: 1px solid var(--il-rule); }
+.il-under { padding: 8px 6% 10px; background: var(--il-paper); }
 .il-under .il-p { font-size: inherit; }
-.il-p { position: relative; margin: 0; font-size: 14px; font-weight: 600; line-height: 1.6; text-align: justify; overflow-wrap: anywhere; }
-.il-p.fills { text-align-last: justify; } /* sized to fill its lines: the last one ends at the margin too */
+.il-p { position: relative; margin: 0; font-size: 14px; font-weight: 500; line-height: 1.45; text-align: justify; text-align-last: start; overflow-wrap: anywhere; }
 .il-p.measuring .il-t { white-space: nowrap; }
 .il-p .ay { cursor: pointer; background: none; } /* the Arabic above shows which ayah is chosen or recited */
 .il-mark { color: #8a6d1d; font-size: 0.85em; white-space: nowrap; }
 .mushaf-flow[data-color='dark'] .mpage.il { background: #111; }
 .mushaf-flow[data-color='dark'] .il-tr { color: #e8e6df; }
-.mushaf-flow[data-color='dark'] :is(.il-paper, .il-under) { background: #1b1b19; border-color: #2a2a26; }
+.mushaf-flow[data-color='dark'] :is(.il-paper, .il-under) { background: #102029; border-color: #23363d; }
 
 /* A page turn: the new page slides in a little from the side the book advances from (the next page from the left) */
 .mushaf-flow[data-turn='next'] .mpage { animation: page-in-next 0.28s cubic-bezier(0.05, 0.7, 0.1, 1); }
@@ -941,8 +944,8 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .study-companion { position: relative; max-width: 740px; margin: 34px 0 0 auto; padding: 24px 0 0; scroll-margin: 0; }
 .study-companion::before { content: ''; position: absolute; top: 0; right: 0; width: 36px; height: 1px; background: var(--study-accent); }
 .study-companion:focus-visible { outline-offset: 10px; }
-.study-companion .tr { color: var(--study-muted); }
-.study-translation { font-size: calc(var(--study-tr-size, 17px) * 1.05); line-height: 2; text-align: start; overflow-wrap: break-word; text-wrap: pretty; }
+.study-companion .tr { color: var(--study-muted); line-height: 1.7; }
+.study-translation { font-size: calc(var(--study-tr-size, 17px) * 1.05); line-height: 1.7; text-align: start; overflow-wrap: break-word; text-wrap: pretty; }
 .study-translation + .study-translation { margin-top: 24px; }
 .study-translation .tr-label { margin-bottom: 10px; color: var(--study-muted); font-size: .74rem; font-weight: 400; }
 .study-companion-body { color: var(--study-ink); font-size: calc(var(--study-tr-size, 17px) * 1.05); line-height: 1.95; }
@@ -1013,6 +1016,13 @@ a.player-info { color: var(--ink); text-decoration: none; }
   .app.study-active .commentary-seek { grid-column: 1 / -1; }
 }
 @media (max-width: 699px) {
+  .drawer { width: min(340px, calc(100vw - 40px)); border-radius: 0 16px 16px 0; }
+  .drawer-head { flex-shrink: 0; padding-inline: 16px 10px; }
+  .drawer-body { padding: 12px 12px 20px; }
+  .drawer-modes { margin-bottom: 12px; }
+  .menu-settings { font-size: .82rem; }
+  .menu-settings .mrow:has(.swatches) { flex-wrap: wrap; }
+  .msec-body .checks .field.row { min-height: 44px; margin: 0; }
   .study-layer { --study-header: 116px; }
   .study-toolbar { grid-template-rows: 64px 48px; gap: 0 6px; padding-inline: 16px; }
   .study-toolbar-start { grid-column: 1; grid-row: 1; gap: 0; }
@@ -1033,7 +1043,7 @@ a.player-info { color: var(--ink); text-decoration: none; }
   .study-marker { font-size: 12px; margin-inline-start: 6px; }
   .study-marker::before { inset: 9px; }
   .study-companion { margin-top: 28px; padding-top: 22px; }
-  .study-translation, .study-companion-body { font-size: var(--study-tr-size, 17px); line-height: 1.95; }
+  .study-translation, .study-companion-body { font-size: var(--study-tr-size, 17px); line-height: 1.7; }
   .study-wbw { gap: 20px 24px; }
   .study-word-ar { font-size: 1.65rem; }
   .study-tabs { gap: 2px; }

@@ -9,7 +9,7 @@ import { href } from '../router'
 import { type PageColor, type TranslationPlace, pickFont, settings, updateSettings } from '../store'
 
 /** The translations to show, Persian then English, each a checkbox. */
-export function TranslationChecks({ meta }: { meta: Meta }) {
+export function TranslationChecks({ meta, compact = false }: { meta: Meta; compact?: boolean }) {
   const s = settings.value
   const toggle = (id: string, on: boolean) => updateSettings({ translations: on ? [...s.translations, id] : s.translations.filter((x) => x !== id) })
   const group = (code: 'fa' | 'en', title: string) => (
@@ -18,7 +18,7 @@ export function TranslationChecks({ meta }: { meta: Meta }) {
       {meta.translations.filter((x) => x.lang === code).map((x) => (
         <label class="field row" key={x.id}>
           <input type="checkbox" checked={s.translations.includes(x.id)} onChange={(e) => toggle(x.id, e.currentTarget.checked)} />
-          <span>{x.name}{x.translator && x.translator !== x.name ? <span class="muted small"> · {x.translator}</span> : null}</span>
+          <span>{x.name}{!compact && x.translator && x.translator !== x.name ? <span class="muted small"> · {x.translator}</span> : null}</span>
         </label>
       ))}
     </fieldset>

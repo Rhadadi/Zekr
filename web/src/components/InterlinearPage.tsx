@@ -51,7 +51,7 @@ function fit(root: HTMLElement, base: number) {
     row.classList.toggle('fills', fills)
     // word wrapping can push a word onto an extra line: shrink a touch until it is back
     const lines = Math.max(1, Math.round((n * base) / size))
-    for (let k = 0; fills && k < 4 && row.getBoundingClientRect().height > lines * size * 1.6 + size * 0.6; k++) {
+    for (let k = 0; fills && k < 4 && row.getBoundingClientRect().height > lines * size * 1.45 + size * 0.6; k++) {
       size *= 0.98
       row.style.fontSize = `${size.toFixed(2)}px`
     }

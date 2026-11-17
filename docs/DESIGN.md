@@ -243,3 +243,11 @@ Translation, Tafsir and Words sit in the margin on desktop and in a bottom bar o
 Focus shows one complete ayah and its companion material at a time. The header arrows navigate between ayahs; F toggles Focus. Reading and Study appear together at the top of the menu, before search, with the current mode marked. Switching modes keeps the current passage. Keyboard focus returns to the button that opened the menu or settings.
 
 Listening uses the same document and the existing recordings. Progress and seeking apply to the current recording. Following moves at ayah boundaries; the available audio has no word timings. Scrolling, navigating to another ayah or opening a companion tab suspends following without pausing audio. Return to recitation restores following. The printed reader and the native iPhone Study screen are separate views and keep their existing design.
+
+## 14. Reading density and search
+
+Translation strips inside the printed frame use the page's blue, green, purple, pink or dark palette with a faint separator. Translation leading is 1.45, with no forced spacing on the last line. Study translations use 1.7. On phones the menu is at most 340px wide; reading settings use shorter translation labels and retain 44px button targets.
+
+Search accepts Persian and Arabic keyboard variants, quoted phrases, ayah references and Arabic roots. Its local inverted index ranks literal matches before annotated word-family matches, using BM25 within each group. Root relationships come from Quranic Arabic Corpus 0.4, including its annotated prefixes and suffixes. Related words are highlighted in the original Quran text and labelled as root matches. Exact phrase mode disables root expansion; a surah filter narrows the results. Spelling corrections are offered as choices when no result matches. Results can be expanded in batches of 60.
+
+The morphology source is bundled unchanged with its notices, checked by SHA-256 and validated against every ayah before export. Its derived index is versioned with the data and precached for offline search. See `assets/quran-morphology/README.md` for provenance.

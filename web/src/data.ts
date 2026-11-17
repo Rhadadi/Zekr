@@ -1,5 +1,6 @@
 // Loads the Quran data that tools/build_data.py generates into public/data/.
 import { loadStudyIntroduction, loadStudyTafsir } from './studyQuran'
+import type { MorphologyData } from './smartSearch'
 
 export interface Surah {
   id: number
@@ -49,6 +50,7 @@ export interface Meta {
   wbw?: 'fa'
   /** Each printed page's text lines in data/lines/NNN.json (assets/mushaf-lines.json), to set the page in a font. */
   lines?: boolean
+  morphology?: { version: string; source: string }
 }
 
 /** How much of each side of a printed page's picture is left out: the margin outside its frame (the frame starts at 35px
@@ -120,6 +122,16 @@ export const loadText = (kind: TextKind, refresh = false) => loadArray(`text/${k
 
 /** A translation, one string per ayah (index = ayah id - 1). May be '' where the translator merged two ayahs. */
 export const loadTranslation = (id: string, refresh = false) => loadArray(`tr/${id}.json`, refresh)
+
+let morphologyPromise: Promise<MorphologyData> | null = null
+export function loadMorphology(refresh = false): Promise<MorphologyData> {
+  if (refresh) morphologyPromise = null
+  morphologyPromise ??= loadMeta().then(m => getJson<MorphologyData>(`search/morphology.json?v=${m.version}`)).catch(error => {
+    morphologyPromise = null
+    throw error
+  })
+  return morphologyPromise
+}
 
 const wbwCache = new Map<number, Promise<[string, string][][]>>()
 
@@ -209,6 +221,7 @@ export async function downloadAll(onProgress: (done: number, total: number) => v
     ...(['uthmani', 'simple', 'clean'] as const).map((k) => () => loadText(k, true)),
     ...meta.translations.map((t) => () => loadTranslation(t.id, true)),
   ]
+  if (meta.morphology) jobs.push(() => loadMorphology(true))
   if (meta.studyQuran) {
     for (const surah of meta.surahs) {
       jobs.push(() => loadStudyIntroduction(meta, surah.id, true), () => loadStudyTafsir(meta, surah.id, true))

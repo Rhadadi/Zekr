@@ -582,6 +582,14 @@ def main(argv=None) -> int:
         except (ValueError, RuntimeError, OSError, KeyError) as e:
             report.error(f"word by word: {e}")
 
+    import morphology
+    morphology_data = None
+    try:
+        morphology_data = morphology.load([s.ayahs for s in surahs])
+        hashes["morphology"] = morphology_data["version"]
+    except (ValueError, OSError) as e:
+        report.error(f"morphology: {e}")
+
     audio_assets = {}
     if args.study_quran:
         from study_quran import load_translation, checksum, TRANSLATION
@@ -627,6 +635,8 @@ def main(argv=None) -> int:
     if words is not None:
         import wbw
         wbw.build_web(args.web_dir, words, [s.ayahs for s in surahs])
+    if morphology_data is not None:
+        morphology.build_web(args.web_dir, morphology_data)
     if args.study_quran:
         from study_quran import install_sqlite, export_web
         install_sqlite(args.study_quran, args.ios_db)
