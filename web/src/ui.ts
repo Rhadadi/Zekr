@@ -2,6 +2,16 @@ import { signal } from '@preact/signals'
 
 /** Whether the navigation drawer is open. */
 export const drawerOpen = signal(false)
+let drawerOpener: HTMLElement | null = null
+export function openDrawer(from: HTMLElement) {
+  drawerOpener = from
+  drawerOpen.value = true
+}
+export function takeDrawerOpener() {
+  const from = drawerOpener
+  drawerOpener = null
+  return from?.isConnected ? from : null
+}
 
 /** Whether the menu is docked open at the left of the page (a wide window; it then is not a modal). Remembered, so a
  * reader who likes it open finds it open. */

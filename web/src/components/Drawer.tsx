@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'preact/hooks'
-import type { Meta } from '../data'
+import { type Meta, locate } from '../data'
 import { t } from '../i18n'
-import { type LayerName, href } from '../router'
+import { type LayerName, href, mushafAt } from '../router'
+import { lastRead } from '../store'
 import { useDocked } from '../hooks'
-import { dockOpen, drawerOpen, gotoOpen, pageOptionsAsked, setDock } from '../ui'
+import { dockOpen, drawerOpen, gotoOpen, pageOptionsAsked, setDock, takeDrawerOpener } from '../ui'
 import { Logo } from './AppBar'
 import { Icon } from './Icon'
 import { MenuSettings } from './MenuSettings'
@@ -14,6 +15,14 @@ import { MenuSettings } from './MenuSettings'
  * a choice and on Back. */
 export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active: LayerName; onMushaf?: boolean }) {
   const open = drawerOpen.value
+  const base = mushafAt.value
+  const remembered = lastRead.value ?? { surah: 1, ayah: 1 }
+  const rememberedId = meta ? (meta.surahs[remembered.surah - 1]?.first ?? 1) + remembered.ayah - 1 : 1
+  const onRememberedPage = meta && base && 'page' in base && rememberedId >= (meta.pages[base.page - 1] ?? 1) && rememberedId < (meta.pages[base.page] ?? 6237)
+  const at = meta && base && 'page' in base ? onRememberedPage ? remembered : locate(meta, meta.pages[base.page - 1] ?? 1)
+    : base && 'surah' in base ? { surah: base.surah, ayah: base.ayah ?? 1 } : remembered
+  const studyAt = active === 'study' ? remembered : at
+  const studyHref = href.verse(studyAt.surah, studyAt.ayah)
   // in a wide window the menu is a panel docked beside the page instead: not modal, the page stays in use beside it
   const docked = useDocked()
   const dockShown = docked && dockOpen.value
@@ -28,7 +37,7 @@ export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active
 
   useEffect(() => {
     if (!open) return
-    opener.current = document.activeElement
+    opener.current = takeDrawerOpener() ?? document.activeElement
     history.pushState(history.state, '')
     pushed.current = true
     panel.current?.querySelector<HTMLElement>('a')?.focus()
@@ -107,6 +116,11 @@ export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active
           <button type="submit" class="icon-btn" aria-label={t('navSearch')}><Icon name="search" size={20} /></button>
         </form>
         <nav class="drawer-links" aria-label="Main">
+          <a class={`drawer-study${active === 'study' ? ' on' : ''}`} href={studyHref} aria-label={t('navStudy')} aria-describedby="study-menu-hint" aria-current={active === 'study' ? 'page' : undefined} onClick={nav ? e => nav(e, studyHref) : undefined}>
+            <Icon name="book" size={22} />
+            <span><strong>{t('navStudy')}</strong><small id="study-menu-hint">{t('studyMenuHint')}</small></span>
+            <Icon name="chevron" size={18} />
+          </a>
           <button class="drawer-item" onClick={() => { if (closeAfter) close(); gotoOpen.value = true }}>
             <Icon name="goto" size={20} />
             <span>{t('goTo')}</span>

@@ -236,8 +236,10 @@ Things that must **stay** true: no `.bottom-nav`, no `main .tile`, no "Next page
 
 ## 13. Study reading canvas
 
-The Study layer (`#/verse/…`) uses the approved typographic and listening design. Arabic has the largest type; the translation follows in the same document. A single translation has no repeated source heading. Multiple translations retain their labels so readers can distinguish them. Long ayahs flow at the chosen size without clipping or shrinking.
+The Study layer (`#/verse/…`) uses a reading column with a quiet rail in the desktop margin. The site's original wordmark and sound-wave artwork form the masthead. Arabic has the largest type; the translation follows at a narrower measure. A single translation has no repeated source heading. Multiple translations retain their labels so readers can distinguish them. Long ayahs flow at the chosen size without clipping or shrinking.
 
-Translation, Tafsir and Words share one quiet strip near the bottom. Each tab opens the current ayah's material beneath its Arabic. The strip remains available when an ayah spans several screens. Opened material stays in place as the reader browses or the recitation advances. Note links, introductions and secondary audio options are behind More. Settings opens the existing drawer with reading controls expanded; printed-page controls stay on the mushaf.
+Translation, Tafsir and Words sit in the margin on desktop and in a bottom bar on smaller screens. Each tab opens the current ayah's material beneath its Arabic. These controls remain available when an ayah spans several screens. Opened material stays in place as the reader browses or the recitation advances. The ayah-number button opens its actions. Settings opens the existing drawer with reading controls expanded; printed-page controls stay on the mushaf.
+
+Focus shows one complete ayah and its companion material at a time. The header arrows navigate between ayahs; F toggles Focus. The menu has a direct Study entry that opens the current passage, and keyboard focus returns to the button that opened the menu or settings.
 
 Listening uses the same document and the existing recordings. Progress and seeking apply to the current recording. Following moves at ayah boundaries; the available audio has no word timings. Scrolling, navigating to another ayah or opening a companion tab suspends following without pausing audio. Return to recitation restores following. The printed reader and the native iPhone Study screen are separate views and keep their existing design.

@@ -70,6 +70,7 @@ test('shared notes play once, skip unrecorded notes, and recitation replaces com
   await bar.getByRole('button', { name: 'Play', exact: true }).click()
   await expect(bar).toHaveAttribute('data-status', 'playing')
   await page.goto('/#/verse/2/1')
+  await page.locator('article#a-1').getByRole('button', { name: 'More', exact: true }).click()
   await page.locator('article#a-1').getByRole('button', { name: 'Play', exact: true }).click()
   await expect(bar).not.toHaveClass(/has-commentary/)
   expect((await played()).at(-1)).toContain('002001.mp3')

@@ -18,6 +18,7 @@ const stroked = {
   sun: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4',
   goto: 'M5 12h13M13 6l6 6-6 6M3 5v14',
   book: 'M4 4h6a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4zM20 4h-6a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h6z',
+  focus: 'M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5M8 12h8',
 } as const
 
 const filled = {

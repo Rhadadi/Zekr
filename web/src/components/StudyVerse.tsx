@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks'
 import { loopAyah, looping, toggleAyah } from '../audio'
 import { type Meta, type TranslationInfo, loadWbw } from '../data'
 import { useAsync } from '../hooks'
-import { num, t } from '../i18n'
+import { lang, num, t } from '../i18n'
 import { href } from '../router'
 import { ayahLink, ayahText, copyText, shareText } from '../share'
 import { isBookmarked, toggleBookmark } from '../store'
@@ -22,15 +22,10 @@ export function StudyVerse({ meta, surah, n, ar, translations, active, tab, play
   const sounding = playing && !paused
   const words = useAsync(async () => mode === 'words' && meta.wbw ? (await loadWbw(surah))[n - 1] ?? [] : null, [mode, surah, n])
   const text = () => ayahText(meta, id, ar, translations.map(x => x.text))
-  return <article class={`ayah study-ayah${playing ? ' playing' : ''}${focused ? ' focused' : ''}`} id={`a-${n}`} data-ayah={n} data-id={id} onClick={onSelect}>
-    <div class="study-ayah-meta">
-      <span class="num" aria-label={t('ayahN', { n })}>{num(n)}</span>
-      <div class="study-actions">
-        <button class="icon-btn" aria-label={t('more')} aria-expanded={more} onClick={() => setMore(!more)}><Icon name="more" size={18} /></button>
-        <button class="icon-btn" aria-label={sounding ? t('pause') : t('play')} aria-pressed={sounding} onClick={() => toggleAyah(id)}><Icon name={sounding ? 'pause' : 'play'} size={18} /></button>
-      </div>
-    </div>
+  return <article class={`ayah study-ayah${playing ? ' playing' : ''}${focused ? ' focused' : ''}`} aria-label={t('ayahN', { n })} id={`a-${n}`} data-ayah={n} data-id={id} onClick={onSelect}>
+    <p class="ar study-ar" lang="ar" dir="rtl">{ar}<button class="study-marker" lang={lang.value} aria-label={t('more')} title={t('more')} aria-expanded={more} onClick={() => setMore(!more)}>{num(n)}</button></p>
     {more ? <div class="study-more">
+      <button aria-label={sounding ? t('pause') : t('play')} aria-pressed={sounding} onClick={() => toggleAyah(id)}><Icon name={sounding ? 'pause' : 'play'} size={17} />{sounding ? t('pause') : t('playThisAyah')}</button>
       <button onClick={() => toggleBookmark(id)} aria-pressed={saved}>{saved ? t('unbookmark') : t('bookmark')}</button>
       <button onClick={() => loopAyah(id, !looping.value)} aria-pressed={playing && looping.value}>{t('repeatAyah')}</button>
       <button onClick={() => copyText(text())}>{t('copy')}</button>
@@ -38,7 +33,6 @@ export function StudyVerse({ meta, surah, n, ar, translations, active, tab, play
       {tafsirIndex.value ? <a href={href.tafsir(surah, n)}>{t('tafsir')}: {t('almizan')}</a> : null}
       {meta.studyQuran ? <StudyChips meta={meta} ayahID={id} /> : null}
     </div> : null}
-    <p class="ar study-ar" lang="ar" dir="rtl">{ar}<span class="study-marker"> ﴿{num(n)}﴾</span></p>
     <div class="study-companion" id={`companion-${n}`} role={active ? 'tabpanel' : undefined} aria-labelledby={active ? `study-tab-${mode}` : undefined} tabIndex={active ? 0 : undefined}>
       {mode === 'translation' ? <>
         {translations.length ? translations.map(x => <div class="study-translation" key={x.info.id}>

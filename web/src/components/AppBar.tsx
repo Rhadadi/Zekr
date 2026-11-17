@@ -1,7 +1,7 @@
 import type { ComponentChildren } from 'preact'
 import { useDocked } from '../hooks'
 import { lang, t } from '../i18n'
-import { dockOpen, drawerOpen, setDock } from '../ui'
+import { dockOpen, drawerOpen, openDrawer, setDock } from '../ui'
 import { Icon } from './Icon'
 
 /** The one bar for the mushaf and every layer. It is the same way round in both languages: the burger that opens the
@@ -11,7 +11,7 @@ export function AppBar({ start, centre, sticky = false }: { start?: ComponentChi
   const docked = useDocked()
   const burger = (
     <button class="icon-btn burger" aria-label={t('menu')} aria-haspopup={docked ? undefined : 'dialog'} aria-controls={docked ? 'dock' : undefined}
-      aria-expanded={docked ? dockOpen.value : drawerOpen.value} onClick={() => (docked ? setDock(!dockOpen.value) : (drawerOpen.value = true))}>
+      aria-expanded={docked ? dockOpen.value : drawerOpen.value} onClick={e => (docked ? setDock(!dockOpen.value) : openDrawer(e.currentTarget))}>
       <Icon name="list" size={22} />
     </button>
   )
