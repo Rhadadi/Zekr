@@ -952,7 +952,7 @@ a.player-info { color: var(--ink); text-decoration: none; }
 /* The transport remains one compact instrument below the reading column. */
 .app.study-active .player {
   --bg: var(--study-bg); --surface: var(--study-surface); --ink: var(--study-ink); --muted: var(--study-muted); --accent: var(--study-accent); --line: var(--study-line);
-  left: max(228px, calc((100vw - 980px) / 2 + 60px)); right: 0; bottom: calc(20px + env(safe-area-inset-bottom));
+  left: max(228px, calc((100vw - 980px) / 2 + 60px)); right: auto; bottom: calc(20px + env(safe-area-inset-bottom));
   width: min(980px, calc(100vw - 356px)); max-width: none; margin: 0;
   display: grid; grid-template-columns: minmax(90px, 1fr) auto minmax(160px, 1.5fr); align-items: center; gap: 16px; padding: 12px 20px;
   border: 1px solid var(--study-line); border-radius: 12px; color: var(--study-ink); background: color-mix(in srgb, var(--study-surface) 96%, transparent); backdrop-filter: blur(24px); box-shadow: 0 12px 36px -20px rgb(0 0 0 / .28);

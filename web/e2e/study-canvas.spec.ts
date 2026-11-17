@@ -287,3 +287,20 @@ test('recitation progress can be sought and resets for the next ayah', async ({ 
     (window as unknown as { canvasPlayed: string[] }).canvasPlayed.at(-1),
   )).toContain('112002.mp3')
 })
+
+for (const language of ['en', 'fa']) test(`recitation controls stay beneath the reading column: ${language}`, async ({ page }) => {
+  await fixture(page, language, 'dark')
+  await page.goto('/#/verse/112/1')
+  await page.locator('.study-listen').click()
+  const transport = page.locator('.player')
+  await expect(transport).toHaveAttribute('data-status', 'playing')
+  await page.setViewportSize({ width: 1280, height: 800 })
+  const column = (await page.locator('.study-content').boundingBox())!
+  const desktop = (await transport.boundingBox())!
+  expect(Math.abs(desktop.x - column.x)).toBeLessThanOrEqual(1)
+  expect(Math.abs(desktop.width - column.width)).toBeLessThanOrEqual(1)
+  await page.setViewportSize({ width: 390, height: 844 })
+  const mobile = (await transport.boundingBox())!
+  expect(mobile.x).toBeGreaterThanOrEqual(12)
+  expect(mobile.x + mobile.width).toBeLessThanOrEqual(378)
+})
