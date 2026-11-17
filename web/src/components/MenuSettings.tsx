@@ -71,7 +71,7 @@ export function MenuSettings({ meta }: { meta: Meta }) {
       </label>
       <div class="mrow" role="group" aria-label={t('theme')}>
         <span>{t('theme')}</span>
-        <span class="seg">
+        <span class="segctl">
           {THEMES.map(([v, icon, k]) => (
             <button type="button" key={v} aria-pressed={s.theme === v} aria-label={t(k)} title={t(k)} onClick={() => updateSettings({ theme: v })}>
               <Icon name={icon} size={17} />

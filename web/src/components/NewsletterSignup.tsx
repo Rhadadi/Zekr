@@ -54,7 +54,7 @@ export function NewsletterSignup() {
         </label>
         <div class="mrow" role="group" aria-label={t('nlHowOften')}>
           <span>{t('nlHowOften')}</span>
-          <span class="seg seg-text">
+          <span class="segctl segctl-text">
             {(['daily', 'weekly'] as Freq[]).map((f) => (
               <button type="button" key={f} aria-pressed={freq === f} onClick={() => setFreq(f)}>{t(f === 'daily' ? 'nlDaily' : 'nlWeekly')}</button>
             ))}
