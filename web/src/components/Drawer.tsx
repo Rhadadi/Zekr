@@ -61,7 +61,7 @@ export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active
       document.removeEventListener('keydown', onKey)
       // after the page behind has become reachable again; inert already dropped focus to <body> when it opened
       const o = opener.current as HTMLElement | null
-      const back = o && o !== document.body ? o : document.querySelector<HTMLElement>('.burger')
+      const back = o && o !== document.body ? o : document.querySelector<HTMLElement>('.study-settings') ?? document.querySelector<HTMLElement>('.burger')
       setTimeout(() => back?.focus?.(), 0)
     }
   }, [open])

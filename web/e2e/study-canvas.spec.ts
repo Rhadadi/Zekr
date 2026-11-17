@@ -144,6 +144,7 @@ test('closing Study returns to the underlying Quran page and settings stays acce
   await expect(page.getByLabel('Quran font')).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(page.locator('.drawer')).toHaveCount(0)
+  await expect(reader.getByRole('button', { name: 'Settings', exact: true })).toBeFocused()
   await reader.getByRole('button', { name: 'Close', exact: true }).click()
   await expect(page).toHaveURL(/#\/page\/235$/)
   await expect(page.locator('#page-235')).toBeVisible()
