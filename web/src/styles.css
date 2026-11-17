@@ -782,7 +782,7 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .il-p.fills { text-align-last: justify; } /* sized to fill its lines: the last one ends at the margin too */
 .il-p.measuring .il-t { white-space: nowrap; }
 .il-p .ay { cursor: pointer; background: none; } /* the Arabic above shows which ayah is chosen or recited */
-.il-mark { color: #8a6d1d; font-size: 0.85em; white-space: nowrap; }
+.il-mark { white-space: nowrap; }
 .mushaf-flow[data-color='dark'] .mpage.il { background: #111; }
 .mushaf-flow[data-color='dark'] .il-tr { color: #e8e6df; }
 .mushaf-flow[data-color='dark'] :is(.il-paper, .il-under) { background: #1b1b19; border-color: #2a2a26; }
@@ -834,9 +834,22 @@ a.player-info { color: var(--ink); text-decoration: none; }
 }
 .fl-t.short { justify-content: center; gap: 0.35em; }
 .fl-t.measuring { flex: none; width: max-content; justify-content: flex-start; }
-/* the ayah's number in a round medallion, as printed */
-.fl-n {
-  display: inline-block; flex: none; box-sizing: border-box; min-width: 1.4em; height: 1.4em; padding: 0 0.12em; border-radius: 0.7em;
-  border: 0.07em solid #3d8ec6; background: radial-gradient(circle, #eef7fd 55%, #cfe6f6);
-  font-family: var(--font-ui); font-size: 0.62em; line-height: 1.3em; text-align: center; color: #1b1b1b; unicode-bidi: isolate;
+/* the ayah's number in its frame (VerseNo), at the size of the printed medallion */
+.fl-n { display: inline-flex; flex: none; font-size: 0.95em; line-height: 1; }
+/* An ayah's number in the owner's ornamental frame (components/VerseNo.tsx): a gold ring with a crest above and below,
+   the number in the middle. It sits in a line of text and takes its size from it. */
+.vno {
+  --vno-fill: #d8d65e; --vno-line: #1f1f1d;
+  position: relative; display: inline-grid; place-items: center; width: 1.3em; height: 1.69em; vertical-align: middle;
+  unicode-bidi: isolate; line-height: 1;
 }
+.vno svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.vno-frame { fill: var(--vno-fill); stroke: var(--vno-line); stroke-width: 2.6; stroke-linejoin: round; }
+.vno-ink { fill: var(--vno-line); stroke: var(--vno-line); stroke-width: 3.2; stroke-linecap: round; }
+.vno-n { position: relative; font-family: var(--font-ui); font-size: 0.56em; font-weight: 700; color: #1b1b1b; font-variant-numeric: tabular-nums; }
+/* the UI font leaves more room above its digits than below, so their ink sits above the middle of the line: moved down
+   by what it measures (Vazirmatn, bold), so the number is in the middle of the ring */
+.vno-n { translate: 0 0.08em; }
+.vno-n.latin { translate: 0 0.115em; }
+.mushaf-flow[data-color='dark'] .vno { --vno-fill: #8f8d3a; --vno-line: #e8e6df; }
+.mushaf-flow[data-color='dark'] .vno-n { color: #f4f2ea; }

@@ -1474,8 +1474,11 @@ test.describe('The printed mushaf as pictures (private build, made-up pictures h
     await expect(pg.locator('.il-strip').first()).toBeVisible()
     // the made-up map puts each of the 11 ayahs on a line of its own: 11 translation lines, each ending with its number
     await expect(pg.locator('.il-tr')).toHaveCount(11)
-    await expect(pg.locator('.il-tr').nth(1)).toContainText('﴿۷﴾')
+    // each ayah's number in its ornamental frame, not in brackets
+    await expect(pg.locator('.il-tr').nth(1).locator('.vno-n')).toHaveText('۷')
+    await expect(pg.locator('.il-tr').nth(1)).not.toContainText('﴿')
     await expect(pg.locator('.il-mark')).toHaveCount(11)
+    await expect(pg.locator('.il-mark .vno svg')).toHaveCount(11)
     // it stays one framed page: each box sits right under its line, the frame running on down its sides
     await expect(pg.locator('.il-tr .il-frame')).toHaveCount(11)
     const edges = await pg.locator('.il-strip, .il-tr').evaluateAll((els) => els.map((e) => [e.getBoundingClientRect().top, e.getBoundingClientRect().bottom]))

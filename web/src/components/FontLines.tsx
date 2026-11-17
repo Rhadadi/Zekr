@@ -1,6 +1,7 @@
 import { useLayoutEffect } from 'preact/hooks'
 import type { MushafPageMap, PageLine } from '../data'
 import type { Strip } from '../interlinear'
+import { VerseNo } from './VerseNo'
 
 const ARABIC_INDIC = '٠١٢٣٤٥٦٧٨٩'
 const arabicNum = (n: number) => String(n).replace(/\d/g, (d) => ARABIC_INDIC[Number(d)] as string)
@@ -78,7 +79,7 @@ export function FontLine({ tokens, band, box, paper }: { tokens: PageLine; band:
       top: `${((band.top - 7 - box.top) / h) * 100}%`, height: `${((band.bottom - band.top + 10) / h) * 100}%`, background: paper,
     }}>
       <p class="fl-t" lang="ar" dir="rtl">
-        {tokens.map((t, i) => (typeof t === 'number' ? <span key={i} class="fl-n">{arabicNum(t)}</span> : <span key={i}>{t}</span>))}
+        {tokens.map((t, i) => (typeof t === 'number' ? <span key={i} class="fl-n"><VerseNo n={arabicNum(t)} /></span> : <span key={i}>{t}</span>))}
       </p>
     </div>
   )

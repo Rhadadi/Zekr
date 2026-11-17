@@ -4,6 +4,7 @@ import { useLayoutEffect, useMemo, useRef } from 'preact/hooks'
 import { type Meta, type MushafPageMap, loadPageLines, locate, mushafImage, PAGE_TRIM } from '../data'
 import { useAsync } from '../hooks'
 import { num, t } from '../i18n'
+import { VerseNo } from './VerseNo'
 import { type Piece, bandPaper, lineTranslations, pageInk, pageStrips } from '../interlinear'
 import { FontLine, hafsReady, layoutLines, textBands, useFontLinesFit } from './FontLines'
 
@@ -20,7 +21,7 @@ interface Props {
   onJump: () => void
 }
 
-const marker = (n: number) => `﴿${num(n)}﴾`
+const marker = (n: number) => <VerseNo n={num(n)} />
 
 /** Make the translation under each line end at the margin, like the Arabic line above it: at the preferred size,
  * condensed or expanded by a few percent (too little to notice, so a page reads at one size) when that makes its last
@@ -99,7 +100,7 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
       <span class="il-t">
         {row.map((p, i) => (
           <span key={`${p.id}-${i}`} class="ay" data-id={p.id} aria-hidden="true">
-            {p.text}{p.ends ? <span class="il-mark"> {marker(locate(meta, p.id).ayah)}</span> : null}{' '}
+            {p.text}{p.ends ? <span class="il-mark">{' '}{marker(locate(meta, p.id).ayah)}</span> : null}{' '}
           </span>
         ))}
       </span>
