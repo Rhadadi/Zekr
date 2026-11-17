@@ -41,11 +41,16 @@ final class StoreTests: XCTestCase {
 
     func testPools() throws {
         let store = try QuranStore(databaseURL: try Repo.database(Repo.widgetDB))
+        // the ayah of the day comes from Ghazali's selection (assets/daily-ayahs.json), not every ayah
         let all = try store.pool(named: "all")
-        XCTAssertEqual(all, Array(1...totalAyahs))
+        XCTAssertTrue((500..<totalAyahs).contains(all.count), "\(all.count)")
+        XCTAssertEqual(all, Array(Set(all)).sorted())
+        XCTAssertTrue(all.allSatisfy { (1...totalAyahs).contains($0) })
+        XCTAssertTrue(all.contains(store.ayahID(surah: 2, ayah: 255)))
         let fits = try store.pool(named: "fits.fa.safavi")
-        XCTAssertTrue((1000..<3000).contains(fits.count), "\(fits.count)")
+        XCTAssertTrue((50..<all.count).contains(fits.count), "\(fits.count)")
         XCTAssertEqual(fits, fits.sorted())
+        XCTAssertTrue(Set(fits).isSubset(of: Set(all)))
         for id in fits.prefix(200) {
             XCTAssertLessThanOrEqual(try store.translation(ayahID: id, translationID: "fa.safavi").count, 80)
         }
