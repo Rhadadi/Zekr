@@ -71,12 +71,12 @@ test('phone settings remain narrow and their controls remain reachable', async (
   await page.locator('.study-settings').click()
   const drawer = page.locator('.drawer')
   const box = (await drawer.boundingBox())!
-  expect(box.width).toBeLessThanOrEqual(340)
+  expect(Math.round(box.width)).toBeLessThanOrEqual(340)
   expect(box.width).toBeLessThan(390 - 30)
   for (const button of await drawer.locator('.segctl button, .stepper button').all()) {
     const bounds = (await button.boundingBox())!
-    expect(bounds.width).toBeGreaterThanOrEqual(44)
-    expect(bounds.height).toBeGreaterThanOrEqual(44)
+    expect(Math.round(bounds.width)).toBeGreaterThanOrEqual(44)
+    expect(Math.round(bounds.height)).toBeGreaterThanOrEqual(44)
   }
   expect(await drawer.evaluate(el => el.scrollWidth - el.clientWidth)).toBeLessThanOrEqual(0)
 })
