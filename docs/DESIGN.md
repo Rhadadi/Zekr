@@ -233,3 +233,11 @@ Things that must **stay** true: no `.bottom-nav`, no `main .tile`, no "Next page
 - `cd ios/ZekrKit && swift test`; CI builds the iPhone app on macOS (`gh workflow run ci.yml --ref <branch>` runs it on any branch).
 - Look at it: build, serve with `npx vite preview`, take screenshots at 390×844 and 1280×800 in English and Persian, light and dark. Tests do not catch "ugly".
 - Nothing has been tried on a real iPhone yet. Say so honestly in every report.
+
+## 13. Study reading canvas
+
+The Study layer (`#/verse/…`) uses the approved typographic and listening design. Arabic has the largest type; the translation follows in the same document. A single translation has no repeated source heading. Multiple translations retain their labels so readers can distinguish them. Long ayahs flow at the chosen size without clipping or shrinking.
+
+Translation, Tafsir and Words share one quiet strip near the bottom. Each tab opens the current ayah's material beneath its Arabic. The strip remains available when an ayah spans several screens. Opened material stays in place as the reader browses or the recitation advances. Note links, introductions and secondary audio options are behind More. Settings opens the existing drawer with reading controls expanded; printed-page controls stay on the mushaf.
+
+Listening uses the same document and the existing recordings. Progress and seeking apply to the current recording. Following moves at ayah boundaries; the available audio has no word timings. Scrolling, navigating to another ayah or opening a companion tab suspends following without pausing audio. Return to recitation restores following. The printed reader and the native iPhone Study screen are separate views and keep their existing design.

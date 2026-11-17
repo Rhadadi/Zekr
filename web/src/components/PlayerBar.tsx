@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks'
-import { audioProgress, loopAyah, looping, next, player, previous, seekCommentary, stop, toggle } from '../audio'
+import { audioProgress, loopAyah, looping, next, player, previous, seek, stop, toggle } from '../audio'
 import { type Meta, locate } from '../data'
 import { ayahRef, num, surahName, t } from '../i18n'
 import { href } from '../router'
@@ -8,7 +8,7 @@ import { PlaybackOptions, PlaybackSpeed } from './PlaybackOptions'
 import { sheetOpen } from '../ui'
 import { TranslationAudioToggle } from './TranslationAudioToggle'
 
-export function PlayerBar({ meta }: { meta: Meta }) {
+export function PlayerBar({ meta, study = false }: { meta: Meta; study?: boolean }) {
   const p = player.value
   const [open, setOpen] = useState(false)
   const bar = useRef<HTMLDivElement>(null)
@@ -43,7 +43,7 @@ export function PlayerBar({ meta }: { meta: Meta }) {
   return (
     <>
       <div class={`player${entry ? ' has-commentary' : ''}`} ref={bar} role="region" aria-label={label} data-status={p.status}>
-        <a class="player-info" href={entry ? href.commentary(surah, ayah) : href.ayah(surah, ayah)} aria-label={`${entry ? label : t('nowReciting')}: ${ayahRef(meta.surahs[surah - 1]!, ayah)}`}>
+        <a class="player-info" href={entry ? href.commentary(surah, ayah) : study ? href.verse(surah, ayah) : href.ayah(surah, ayah)} aria-label={`${entry ? label : t('nowReciting')}: ${ayahRef(meta.surahs[surah - 1]!, ayah)}`}>
           <strong>{surahName(meta.surahs[surah - 1]!)} {num(surah)}:{num(ayah)}</strong>
           {p.status === 'error' || p.phase !== 'ayah' || entry ? (
             <span class="muted small">{p.status === 'error' ? t('audioError') : entry ? `${label} · ${entry.audio!.voice}` : p.phase === 'translation' ? t('audioTranslation') : 'بسم الله'}</span>
@@ -59,10 +59,11 @@ export function PlayerBar({ meta }: { meta: Meta }) {
           {/* the less frequent ones (translation audio, reciter, speed, stopping) are in one place */}
           <button class="icon-btn" onClick={() => setOpen(true)} aria-label={label} aria-haspopup="dialog"><Icon name="more" size={20} /></button>
         </div>
-        {entry ? <div class="commentary-seek" dir="ltr">
+        {entry || study ? <div class="commentary-seek" dir="ltr">
           <span>{time(audioProgress.value.elapsed)}</span>
           <input type="range" aria-label={t('playbackPosition')} min="0" max={Math.max(1, audioProgress.value.duration)} step="0.1"
-            value={Math.min(audioProgress.value.elapsed, audioProgress.value.duration)} onInput={(e) => seekCommentary(Number(e.currentTarget.value))} />
+            disabled={audioProgress.value.duration <= 0}
+            value={Math.min(audioProgress.value.elapsed, audioProgress.value.duration)} onInput={(e) => seek(Number(e.currentTarget.value))} />
           <span>{time(audioProgress.value.duration)}</span>
         </div> : null}
       </div>

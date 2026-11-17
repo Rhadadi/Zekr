@@ -25,8 +25,8 @@ function readOpen(): string[] {
   try { return JSON.parse(localStorage.getItem(OPEN_KEY) ?? '[]') as string[] } catch { return [] }
 }
 
-function Section({ id, title, children }: { id: string; title: string; children: ComponentChildren }) {
-  const [open, setOpen] = useState(() => readOpen().includes(id))
+function Section({ id, title, children, initiallyOpen = false }: { id: string; title: string; children: ComponentChildren; initiallyOpen?: boolean }) {
+  const [open, setOpen] = useState(() => initiallyOpen || readOpen().includes(id))
   return (
     <details class="msec" open={open} onToggle={(e) => {
       const now = e.currentTarget.open
@@ -55,7 +55,7 @@ function Stepper({ label, value, min, max, set }: { label: string; value: number
 /** The settings as the menu shows them: the four used most a tap away (language, the theme and the page colour as
  * buttons, the translation's size as − and +), everything else folded by subject until asked for.
  * The Settings screen keeps the full form with its explanations. */
-export function MenuSettings({ meta }: { meta: Meta }) {
+export function MenuSettings({ meta, study = false }: { meta: Meta; study?: boolean }) {
   const wide = useWide()
   const s = settings.value
   return (
@@ -78,7 +78,7 @@ export function MenuSettings({ meta }: { meta: Meta }) {
           ))}
         </span>
       </div>
-      {meta.mushaf ? (
+      {meta.mushaf && !study ? (
         <div class="mrow" role="group" aria-label={t('pageColor')}>
           <span>{t('pageColor')}</span>
           <span class="swatches">
@@ -89,8 +89,8 @@ export function MenuSettings({ meta }: { meta: Meta }) {
         </div>
       ) : null}
       <Stepper label={t('trSize')} value={s.trSize} min={TR_MIN} max={TR_MAX} set={(v) => updateSettings({ trSize: v })} />
-      <Section id="reading" title={t('reading')}>
-        <label class="mrow">
+      <Section id="reading" title={t('reading')} initiallyOpen={study}>
+        {!study ? <label class="mrow">
           <span>{t('pageTranslation')}</span>
           <select value={s.translationPlace} onChange={(e) => updateSettings({ translationPlace: e.currentTarget.value as TranslationPlace })}>
             <option value="panel">{wide ? t('pageTranslationPanel') : t('pageTranslationBottom')}</option>
@@ -99,7 +99,7 @@ export function MenuSettings({ meta }: { meta: Meta }) {
             {meta.wbw ? <option value="words">{t('pageTranslationWords')}</option> : null}
             <option value="off">{t('pageTranslationOff')}</option>
           </select>
-        </label>
+        </label> : null}
         <label class="mrow">
           <span>{t('script')}</span>
           <select value={s.script} onChange={(e) => updateSettings({ script: e.currentTarget.value as Script })}>
@@ -109,8 +109,8 @@ export function MenuSettings({ meta }: { meta: Meta }) {
         </label>
         <label class="mrow">
           <span>{t('quranFont')}</span>
-          <select value={meta.mushaf && s.pageStyle !== 'text' ? 'printed' : s.quranFont} onChange={(e) => pickFont(e.currentTarget.value)}>
-            {meta.mushaf ? <option value="printed">{t('fontPrinted')}</option> : null}
+          <select value={!study && meta.mushaf && s.pageStyle !== 'text' ? 'printed' : s.quranFont} onChange={(e) => study ? updateSettings({ quranFont: e.currentTarget.value as Settings['quranFont'] }) : pickFont(e.currentTarget.value)}>
+            {!study && meta.mushaf ? <option value="printed">{t('fontPrinted')}</option> : null}
             {QURAN_FONTS.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
           </select>
         </label>

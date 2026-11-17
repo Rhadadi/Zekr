@@ -120,7 +120,7 @@ export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active
             </button>
           ) : null}
         </nav>
-        {meta ? <MenuSettings meta={meta} /> : null}
+        {meta ? <MenuSettings meta={meta} study={active === 'study'} /> : null}
       </div>
     )
   }

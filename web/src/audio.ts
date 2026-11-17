@@ -70,6 +70,7 @@ function load(c: Cursor) {
   cursor = c
   const url = urlFor(c)
   const speed = settings.value.speed
+  audioProgress.value = { elapsed: 0, duration: audio.src === url && Number.isFinite(audio.duration) ? audio.duration : 0 }
   setView('loading')
   if (audio.src === url) {
     audio.currentTime = 0
@@ -112,12 +113,15 @@ audio.addEventListener('ended', () => {
   }
 })
 
-audio.addEventListener('timeupdate', () => {
-  if (commentaryQueue.length) audioProgress.value = {
+function updateProgress() {
+  if (cursor) audioProgress.value = {
     elapsed: audio.currentTime,
-    duration: Number.isFinite(audio.duration) ? audio.duration : commentaryQueue[commentaryIndex]!.audio!.duration,
+    duration: Number.isFinite(audio.duration) ? audio.duration : (commentaryQueue[commentaryIndex]?.audio?.duration ?? 0),
   }
-})
+}
+audio.addEventListener('timeupdate', updateProgress)
+audio.addEventListener('loadedmetadata', updateProgress)
+audio.addEventListener('durationchange', updateProgress)
 
 export function commentaryAudioUrl(entry: StudyEntry): string {
   if (!entry.audio) throw new Error('Commentary recording is not installed')
@@ -158,8 +162,15 @@ function loadCommentary(index: number) {
 }
 
 export function seekCommentary(seconds: number) {
-  if (!commentaryQueue.length || !Number.isFinite(seconds)) return
-  audio.currentTime = Math.max(0, Math.min(audioProgress.peek().duration, seconds))
+  if (commentaryQueue.length) seek(seconds)
+}
+
+/** The active recording can be a recitation, translation or commentary. */
+export function seek(seconds: number) {
+  const duration = audioProgress.peek().duration
+  if (!cursor || !Number.isFinite(seconds) || duration <= 0) return
+  audio.currentTime = Math.max(0, Math.min(duration, seconds))
+  updateProgress()
 }
 
 /** Start playing at `ayahId` and keep going until the end of `scope`. */

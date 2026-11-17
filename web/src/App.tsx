@@ -12,7 +12,7 @@ import { ayahRef, surahName, surahSubtitle, t } from './i18n'
 import { type Base, type Layer, type LayerName, closeLayer, mushafAt, route } from './router'
 import { lastRead } from './store'
 import { toast } from './toast'
-import { drawerOpen } from './ui'
+import { drawerOpen, gotoOpen } from './ui'
 import { About } from './views/About'
 import { Daily } from './views/Daily'
 import { Home } from './views/Home'
@@ -70,22 +70,26 @@ function layerTitle(m: Meta, l: Layer): { title: string; sub?: string } {
 }
 
 /** Every screen but the mushaf: fixed over it, with its own scrolling, closing back to the same place. */
-function LayerFrame({ title, sub, children }: { title: string; sub?: string; children: preact.ComponentChildren }) {
+function LayerFrame({ title, sub, study = false, children }: { title: string; sub?: string; study?: boolean; children: preact.ComponentChildren }) {
   const root = useRef<HTMLDivElement>(null)
   useEffect(() => {
     root.current?.focus({ preventScroll: true })
-    const key = (e: KeyboardEvent) => e.key === 'Escape' && !e.defaultPrevented && closeLayer()
+    const key = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented || drawerOpen.peek() || gotoOpen.peek()) return
+      if (document.querySelector('[role="dialog"][aria-modal="true"], dialog[open]')) return
+      closeLayer()
+    }
     document.addEventListener('keydown', key)
     return () => document.removeEventListener('keydown', key)
   }, [])
   return (
-    <div class="layer" ref={root} tabIndex={-1}>
-      <AppBar
+    <div class={`layer${study ? ' study-layer' : ''}`} ref={root} tabIndex={-1}>
+      {!study ? <AppBar
         sticky
         start={<button class="icon-btn layer-close" onClick={closeLayer} aria-label={t('close')}><Icon name="close" size={22} /></button>}
         centre={<div class="appbar-title"><h1>{title}</h1>{sub ? <p>{sub}</p> : null}</div>}
-      />
-      <div class="layer-inner">{children}</div>
+      /> : null}
+      <div class={study ? 'layer-inner study-layer-inner' : 'layer-inner'}>{children}</div>
     </div>
   )
 }
@@ -119,15 +123,15 @@ export function App() {
         <div class="mushaf-host" {...(layer ? { inert: true } : {})}>
           <PageReader key="mushaf" meta={m} pageNo={place.pageNo} focusId={place.focusId} paused={!!layer} />
         </div>
-        {layer ? <LayerFrame key={layer.name} {...layerTitle(m, layer)}>{layerView(m, layer, r.query)}</LayerFrame> : null}
+        {layer ? <LayerFrame key={layer.name} study={layer.name === 'study'} {...layerTitle(m, layer)}>{layerView(m, layer, r.query)}</LayerFrame> : null}
       </>
     )
   }
 
   return (
-    <div class="app">
+    <div class={`app${layer?.name === 'study' ? ' study-active' : ''}`}>
       <main id="main" {...(drawerOpen.value ? { inert: true } : {})}>{content}</main>
-      {meta.value ? <PlayerBar meta={meta.value} /> : null}
+      {meta.value ? <PlayerBar meta={meta.value} study={layer?.name === 'study'} /> : null}
       <Drawer meta={meta.value} active={active} onMushaf={!layer} />
       {meta.value ? <GoTo meta={meta.value} /> : null}
       {toast.value ? <div class="toast" role="status">{toast.value}</div> : null}

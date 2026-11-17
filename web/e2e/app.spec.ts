@@ -158,6 +158,7 @@ test.describe('reader', () => {
     const played = await trackAudio(page)
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/verse/112')
+    await page.locator('.study-intro button[aria-expanded]').click()
     await page.getByRole('button', { name: 'Play surah' }).click()
     await expect.poll(async () => (await played())[0]).toBe('https://everyayah.com/data/Minshawy_Murattal_128kbps/001001.mp3')
   })
@@ -634,6 +635,7 @@ test.describe('translation audio after each ayah', () => {
     const played = await trackAudio(page)
     await useSettings(page, { lang: 'fa' })
     await page.goto('/#/verse/17')
+    await page.locator('.study-intro button[aria-expanded]').click()
     const chip = page.getByRole('button', { name: /ترجمهٔ گویا/ })
     await expect(chip).toHaveAttribute('aria-pressed', 'false')
     await chip.click()
@@ -652,6 +654,7 @@ test.describe('translation audio after each ayah', () => {
     const played = await trackAudio(page)
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/verse/112')
+    await page.locator('.study-intro button[aria-expanded]').click()
     await page.getByRole('button', { name: /Translation audio/ }).click()
     await expect(page.getByRole('button', { name: /Translation audio/ }).first()).toContainText('Saheeh')
     await page.locator('article#a-1').getByRole('button', { name: 'Play' }).click()
@@ -1172,9 +1175,11 @@ test.describe('The Study Quran (private content, made-up text here)', () => {
   })
   test.use({ serviceWorkers: 'block' })
 
-  test('Study view: one chip where a note starts, none repeated under the ayahs it also covers', async ({ page }) => {
+  test('Study view: note links are behind More and appear only where a note starts', async ({ page }) => {
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/verse/2')
+    await expect(page.locator('.study-reader .study-chip')).toHaveCount(0)
+    for (const n of [1, 6, 11]) await page.locator(`article#a-${n}`).getByRole('button', { name: 'More' }).click()
     await expect(page.locator('article#a-1 .study-chip')).toHaveText(/Commentary on 2:1–5/)
     for (const n of [2, 3, 4, 5]) await expect(page.locator(`article#a-${n} .study-chip`)).toHaveCount(0)
     await expect(page.locator('article#a-6 .study-chip')).toHaveText(/2:6–10/)
@@ -1187,6 +1192,7 @@ test.describe('The Study Quran (private content, made-up text here)', () => {
   test('the chip opens the commentary screen: the notes, the ayahs they explain, and neighbouring notes', async ({ page }) => {
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/verse/2')
+    await page.locator('article#a-6').getByRole('button', { name: 'More' }).click()
     await page.locator('article#a-6 .study-chip').click()
     await expect(page).toHaveURL(/#\/commentary\/2\/6$/)
     const c = page.locator('article.commentary')
@@ -1213,6 +1219,7 @@ test.describe('The Study Quran (private content, made-up text here)', () => {
   test('the introduction has its own row and screen', async ({ page }) => {
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/verse/2')
+    await page.locator('.study-intro button[aria-expanded]').click()
     await page.getByRole('link', { name: /About this surah/ }).click()
     await expect(page).toHaveURL(/#\/intro\/2$/)
     await expect(page.locator('article.commentary')).toContainText('[Made-up introduction.]')
