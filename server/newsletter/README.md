@@ -8,6 +8,6 @@ can). Replies "weekly", "daily" or "unsubscribe" do what they say.
 
     python3 -m unittest -v              tests (needs Pillow)
     python3 app.py preview 2:255 fa     one issue as preview.html, from the live site's data
-    docker compose up -d --build        on the server; .env holds SMTP_USER and SMTP_PASS (a Gmail app password)
+    docker compose up -d --build        on the server; .env holds SMTP_USER, SMTP_PASS (a Gmail app password) and LIST_ADDRESS
 
 The subscribers are in the `newsletter-data` volume (SQLite). Nothing else is kept: no opens or clicks are tracked.

@@ -215,8 +215,22 @@ class FlowTest(Base):
         bounce = app.EmailMessage()
         bounce["From"], bounce["X-Failed-Recipients"], bounce["Subject"] = "mailer-daemon@googlemail.com", "b@example.com", "Delivery failure"
         bounce.set_content("x")
-        self.svc.handle_mail(message_from_bytes(bounce.as_bytes(), policy=policy.default))
+        self.assertTrue(self.svc.handle_mail(message_from_bytes(bounce.as_bytes(), policy=policy.default)))
         self.assertEqual(self.svc.store.by_email("b@example.com")["status"], "bounced")
+
+        # what is not the newsletter's stays unread in a personal inbox
+        del bounce["X-Failed-Recipients"]
+        bounce["X-Failed-Recipients"] = "stranger@example.com"
+        self.assertFalse(self.svc.handle_mail(message_from_bytes(bounce.as_bytes(), policy=policy.default)))
+        self.assertFalse(self.svc.handle_mail(mail("ayah@example.org", "Ayah of the day")))
+        self.assertTrue(self.svc.handle_mail(mail("c@example.com", "hello")))
+
+    def test_replies_go_to_the_list_address(self):
+        with mock.patch.object(app, "LIST_ADDRESS", "ayah+list@example.org"):
+            msg = app.message("a@example.com", "s", "<p>x</p>", "x", {}, unsub="https://example.org/u")
+            self.assertEqual(msg["Reply-To"], "ayah+list@example.org")
+            self.assertIn("mailto:ayah+list@example.org", msg["List-Unsubscribe"])
+        self.assertIsNone(app.message("a@example.com", "s", "<p>x</p>", "x", {})["Reply-To"])
 
     def test_commands(self):
         self.assertEqual(app.mail_command("Re: Ayah of the day", "please stop"), "unsubscribe")

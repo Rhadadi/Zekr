@@ -1135,6 +1135,27 @@ test.describe('page view on a phone', () => {
     await expect(nav).toHaveCount(0) // closes after a choice
   })
 
+  test('the ayah by email is folded away in the menu and signs up with the app\'s language and choices', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    let sent: Record<string, string> | undefined
+    await page.route('**/newsletter/subscribe', async (route) => {
+      sent = route.request().postDataJSON()
+      await route.fulfill({ json: { state: 'pending' } })
+    })
+    await page.goto('/#/page/1')
+    await menu(page).click()
+    const menuPanel = page.getByRole('dialog', { name: 'Menu' })
+    await expect(menuPanel.getByPlaceholder('Your email')).toHaveCount(0)
+    await menuPanel.locator('summary', { hasText: 'Ayah by email' }).click()
+    await menuPanel.getByPlaceholder('Your email').fill('reader@example.com')
+    await menuPanel.getByRole('button', { name: 'Weekly' }).click()
+    await menuPanel.getByRole('button', { name: 'Subscribe' }).click()
+    await expect(menuPanel.getByRole('status')).toHaveText('Almost done: confirm from the email we just sent.')
+    expect(sent).toMatchObject({ email: 'reader@example.com', freq: 'weekly', lang: 'en' })
+    // where the server cannot be reached (duckdns.org in Iran), joining by email still works
+    await expect(menuPanel.getByRole('link', { name: 'rhadadi+ayah@gmail.com' })).toHaveAttribute('href', /^mailto:rhadadi\+ayah@gmail\.com\?subject=Weekly$/)
+  })
+
   test('the end of each line is not clipped: the page has room for the glyphs that overhang', async ({ page }) => {
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/page/3')

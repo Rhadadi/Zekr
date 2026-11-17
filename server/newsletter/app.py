@@ -12,6 +12,8 @@ is not), and every issue can be left by a link, by Gmail's own unsubscribe butto
 
 Settings come from the environment: SMTP_USER and SMTP_PASS (a Gmail address and an app password) are required to send;
 IMAP reads the replies with the same account. Without them the service starts but does not accept sign-ups.
+LIST_ADDRESS (say name+ayah@gmail.com) is where replies and sign-ups go; with it, a personal inbox can send the
+newsletter, since only mail to that address and bounces are read.
 """
 import email
 import email.policy
@@ -48,6 +50,7 @@ STATE = Path(ENV("STATE_DIR", "/data"))
 SMTP_HOST, SMTP_PORT = ENV("SMTP_HOST", "smtp.gmail.com"), int(ENV("SMTP_PORT", "465"))
 IMAP_HOST = ENV("IMAP_HOST", "imap.gmail.com")
 SMTP_USER, SMTP_PASS = ENV("SMTP_USER", ""), ENV("SMTP_PASS", "")
+LIST_ADDRESS = ENV("LIST_ADDRESS", "")
 SEND_HOUR = int(ENV("SEND_HOUR", "6"))  # local time of the subscriber
 FRIDAY = 4
 HERE = Path(__file__).resolve().parent
@@ -608,15 +611,21 @@ class Mailer:
             s.send_message(msg)
 
 
+def list_address() -> str:
+    return LIST_ADDRESS or SMTP_USER
+
+
 def message(to: str, subject: str, html_body: str, text: str, images: dict[str, bytes], files=(), unsub: str | None = None) -> EmailMessage:
     msg = EmailMessage()
     msg["From"] = email.utils.formataddr(("آیه شنو · Ayesheno", SMTP_USER or "ayesheno@example.org"))
     msg["To"] = to
+    if list_address() != SMTP_USER:
+        msg["Reply-To"] = list_address()
     msg["Subject"] = subject
     msg["Date"] = email.utils.formatdate(localtime=False)
     msg["Message-ID"] = email.utils.make_msgid(domain="ayesheno")
     if unsub:
-        msg["List-Unsubscribe"] = f"<{unsub}>, <mailto:{SMTP_USER}?subject=unsubscribe>"
+        msg["List-Unsubscribe"] = f"<{unsub}>, <mailto:{list_address()}?subject=unsubscribe>"
         msg["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click"
         msg["List-Id"] = "Ayesheno ayah <ayah.ayesheno>"
     msg.set_content(text)
@@ -746,26 +755,36 @@ class Service:
         with imaplib.IMAP4_SSL(IMAP_HOST) as m:
             m.login(SMTP_USER, SMTP_PASS)
             m.select("INBOX")
-            _, ids = m.search(None, "UNSEEN")
+            if list_address() == SMTP_USER:
+                _, ids = m.search(None, "UNSEEN")
+            else:  # the rest of the inbox is someone's own mail
+                _, ids = m.search(None, "X-GM-RAW", f'"is:unread {{deliveredto:{list_address()} from:mailer-daemon}}"')
             for num in ids[0].split()[:50]:
-                _, data = m.fetch(num, "(RFC822)")
+                _, data = m.fetch(num, "(BODY.PEEK[])")
                 try:
-                    self.handle_mail(email.message_from_bytes(data[0][1], policy=email.policy.default))
+                    ours = self.handle_mail(email.message_from_bytes(data[0][1], policy=email.policy.default))
                 except Exception:
                     traceback.print_exc()
-                m.store(num, "+FLAGS", "\\Seen")
+                    ours = True
+                if ours:
+                    m.store(num, "+FLAGS", "\\Seen")
 
-    def handle_mail(self, msg):
+    def handle_mail(self, msg) -> bool:
+        """Acts on one email; False when it was not the newsletter's, so it stays unread."""
         failed = msg.get("X-Failed-Recipients")
         if failed:  # a bounce
+            ours = False
             for addr in re.split(r"[,\s]+", failed.strip()):
                 if self.store.by_email(addr):
                     self.store.q("update subscribers set status='bounced' where email=?", addr.lower())
-            return
+                    ours = True
+            return ours
         addr = email.utils.parseaddr(msg.get("From", ""))[1].lower()
         auto = msg.get("Auto-Submitted", "no").lower() != "no" or msg.get("Precedence", "").lower() in ("bulk", "junk", "list")
-        if not EMAIL_RE.match(addr) or addr == SMTP_USER.lower() or "mailer-daemon" in addr or auto:
-            return
+        if addr in (SMTP_USER.lower(), list_address().lower()) or "mailer-daemon" in addr:
+            return False
+        if not EMAIL_RE.match(addr) or auto:
+            return True
         subject = str(msg.get("Subject", ""))
         part = msg.get_body(preferencelist=("plain", "html"))
         body = part.get_content() if part else ""
@@ -776,18 +795,19 @@ class Service:
         if cmd == "unsubscribe":
             if sub:
                 self.unsubscribe(sub)
-            return
+            return True
         if ref and sub and sub["token"] == ref.group(1) and cmd is None:
             self.confirm(sub)
-            return
+            return True
         if cmd in ("daily", "weekly"):
             if sub and sub["status"] == "active":
                 self.switch(sub, cmd)
-                return
+                return True
             lang = "fa" if re.search(r"[؀-ۿ]", subject + body) else "en"
             # Gmail and most providers vouch for the sender: then the email itself is the confirmation
             verified = "dmarc=pass" in str(msg.get("Authentication-Results", "")).lower()
             self.subscribe(addr, cmd, lang, source="email", verified=verified)
+        return True
 
 
 WORDS = {
@@ -951,6 +971,14 @@ def main(argv):
         print(f"preview.html: {issue.subject}; {len(issue.files)} audio file(s), {sum(len(d) for _, d in issue.files) // 1024} KB")
         return 0
     service = Service(Store(STATE / "newsletter.db"), lib, Mailer())
+    if argv[:1] == ["send"]:  # today's issue to one address, as a sample: python3 app.py send to@example.com fa
+        lang = argv[2] if len(argv) > 2 else "fa"
+        sub = {"email": argv[1], "lang": lang, "tr": "fa.safavi" if lang == "fa" else "en.sahih", "reciter": DEFAULT_RECITER,
+               "freq": "daily", "token": "sample", "tz": "Asia/Tehran"}
+        lib.refresh()
+        service.send_issue(sub, *service.today(sub, datetime.now(timezone.utc)), welcome="--welcome" in argv)
+        print(f"sent to {argv[1]}")
+        return 0
     Handler.service = service
     threading.Thread(target=loop, args=(service,), daemon=True).start()
     port = int(ENV("PORT", "8090"))
