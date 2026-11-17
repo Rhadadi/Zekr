@@ -21,7 +21,7 @@ export function VerseNo({ n }: { n: string }) {
           <path d="M23 28L35 25M65 25L77 28M23 102L35 105M65 105L77 102" />
         </g>
       </svg>
-      <span class="vno-n">{n}</span>
+      <span class={`vno-n${/^[0-9]+$/.test(n) ? ' latin' : ''}`}>{n}</span>
     </span>
   )
 }

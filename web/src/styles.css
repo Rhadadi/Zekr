@@ -847,5 +847,9 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .vno-frame { fill: var(--vno-fill); stroke: var(--vno-line); stroke-width: 2.6; stroke-linejoin: round; }
 .vno-ink { fill: var(--vno-line); stroke: var(--vno-line); stroke-width: 3.2; stroke-linecap: round; }
 .vno-n { position: relative; font-family: var(--font-ui); font-size: 0.56em; font-weight: 700; color: #1b1b1b; font-variant-numeric: tabular-nums; }
+/* the UI font leaves more room above its digits than below, so their ink sits above the middle of the line: moved down
+   by what it measures (Vazirmatn, bold), so the number is in the middle of the ring */
+.vno-n { translate: 0 0.08em; }
+.vno-n.latin { translate: 0 0.115em; }
 .mushaf-flow[data-color='dark'] .vno { --vno-fill: #8f8d3a; --vno-line: #e8e6df; }
 .mushaf-flow[data-color='dark'] .vno-n { color: #f4f2ea; }
