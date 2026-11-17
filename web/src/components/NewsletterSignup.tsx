@@ -4,7 +4,7 @@ import { settings } from '../store'
 
 /** The ayah by email (server/newsletter, on the home server). Sign-up also works by an email to `address`, which
  * matters in Iran: duckdns.org cannot be reached there, Gmail can. The menu shows the section once `address` is set. */
-export const NEWSLETTER = { api: 'https://ayesheno.duckdns.org/newsletter/', address: '' }
+export const NEWSLETTER = { api: 'https://ayesheno.duckdns.org/newsletter/', address: 'rhadadi+ayah@gmail.com' }
 
 type Freq = 'daily' | 'weekly'
 type State = 'idle' | 'sending' | 'pending' | 'active' | 'invalid' | 'later' | 'unreachable'
