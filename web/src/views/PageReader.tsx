@@ -12,7 +12,7 @@ import { PageOptions } from '../components/PageOptions'
 import { WordsPage } from '../components/WordsPage'
 import { Sheet } from '../components/Sheet'
 import { SurahBanner } from '../components/SurahBanner'
-import { type Meta, type MushafPageMap, type TranslationInfo, juzOf, loadMushafMap, loadPageLines, loadText, loadTranslation, locate, mushafImage, pageOf, pageRange } from '../data'
+import { type Meta, type MushafPageMap, type TranslationInfo, juzOf, loadMushafMap, loadPageLines, loadText, loadTranslation, locate, mushafImage, pageOf, pageRange, PAGE_TRIM } from '../data'
 import { useAsync, useWide } from '../hooks'
 import { bandPaper, pageStrips } from '../interlinear'
 import { ayahRef, num, surahName, t } from '../i18n'
@@ -120,7 +120,9 @@ const PrintedPage = memo(function PrintedPage({ meta, pg, ar, highlight, kind, f
   useFontLinesFit(root, [fonted, n])
   return (
     <section ref={root} class={`mpage printed${fonted ? ' fonted' : ''}`} id={`page-${n}`} data-page={n} aria-label={t('pageN', { n })}>
-      <div class="pg" style={{ aspectRatio: `${pg.w} / ${pg.h}` }}>
+      {/* the picture is a little wider than its box: the margins outside the frame are cut off (see --trim) */}
+      <div class="pg" style={{ aspectRatio: `${pg.w * (1 - 2 * PAGE_TRIM)} / ${pg.h}`, '--trim': PAGE_TRIM }}>
+        <div class="pg-in">
         <img class="pg-img" src={src} alt="" decoding="async" draggable={false} />
         {fonted ? bands.map((b, i) => <FontLine key={i} tokens={laid![i]!} band={b} box={{ top: 0, bottom: 1000 }} paper={paper.value?.[i]} />) : null}
         {pg.a.map((segs, k) => {
@@ -136,6 +138,7 @@ const PrintedPage = memo(function PrintedPage({ meta, pg, ar, highlight, kind, f
           )
         })}
         {n > 2 ? <button class="pg-no" aria-hidden="true" tabIndex={-1} onClick={(e) => { e.stopPropagation(); onJump() }} /> : null}
+        </div>
       </div>
     </section>
   )
@@ -304,8 +307,16 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
     if (panel?.kind === 'ayah') setPanel({ kind: 'ayah', id: playingId })
     if (single && settings.peek().autoScroll) {
       turnTo(pageOf(meta, playingId), true)
-      // a page with translations in it is taller than the screen: keep the ayah being recited in view
-      if (lineTr || words) window.setTimeout(() => ayahEl(playingId)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 60)
+      // the page is often taller than the screen (a phone on its side, translations under the lines): bring the ayah
+      // being recited to the middle when it is off screen or near an edge, and leave the page still while it is in view
+      window.setTimeout(() => {
+        const el = ayahEl(playingId)
+        if (!el) return
+        const r = el.getBoundingClientRect()
+        const top = (document.querySelector<HTMLElement>('.appbar')?.offsetHeight ?? 0) + 12
+        const bottom = window.innerHeight - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--player-h')) || 0) - 12
+        if (r.top < top || r.bottom > bottom) el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      }, 60)
     }
     else if (settings.peek().autoScroll) {
       ayahEl(playingId)?.scrollIntoView({ block: boxBottomRef.current ? 'nearest' : 'center', behavior: 'smooth' })

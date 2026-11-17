@@ -1131,8 +1131,8 @@ test.describe('page view on a phone', () => {
     expect(r.width).toBeLessThanOrEqual(44)
     await btn.click()
     const nav = page.getByRole('navigation', { name: 'Main' })
-    // Study sits above the smaller destinations in the same menu.
-    await expect(nav.getByRole('link')).toHaveText([/^Study/, 'Today', 'Saved'])
+    await expect(page.getByRole('navigation', { name: 'Reader mode' }).getByRole('link')).toHaveText(['Reading', 'Study'])
+    await expect(nav.getByRole('link')).toHaveText(['Today', 'Saved'])
     const menuPanel = page.getByRole('dialog', { name: 'Menu' })
     await expect(menuPanel.getByLabel('Language')).toBeVisible()
     // the long lists fold away in the menu: Recitation opens in place
@@ -1142,6 +1142,27 @@ test.describe('page view on a phone', () => {
     await menuPanel.getByRole('searchbox', { name: 'Search' }).press('Enter')
     await expect(page).toHaveURL(/#\/search\?q=mercy$/)
     await expect(nav).toHaveCount(0) // closes after a choice
+  })
+
+  test('the ayah by email is folded away in the menu and signs up with the app\'s language and choices', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    let sent: Record<string, string> | undefined
+    await page.route('**/newsletter/subscribe', async (route) => {
+      sent = route.request().postDataJSON()
+      await route.fulfill({ json: { state: 'pending' } })
+    })
+    await page.goto('/#/page/1')
+    await menu(page).click()
+    const menuPanel = page.getByRole('dialog', { name: 'Menu' })
+    await expect(menuPanel.getByPlaceholder('Your email')).toHaveCount(0)
+    await menuPanel.locator('summary', { hasText: 'Ayah by email' }).click()
+    await menuPanel.getByPlaceholder('Your email').fill('reader@example.com')
+    await menuPanel.getByRole('button', { name: 'Weekly' }).click()
+    await menuPanel.getByRole('button', { name: 'Subscribe' }).click()
+    await expect(menuPanel.locator('.nl-msg')).toHaveText('Almost done: confirm from the email we just sent.')
+    expect(sent).toMatchObject({ email: 'reader@example.com', freq: 'weekly', lang: 'en' })
+    // where the server cannot be reached (duckdns.org in Iran), joining by email still works
+    await expect(menuPanel.getByRole('link', { name: 'rhadadi+ayah@gmail.com' })).toHaveAttribute('href', /^mailto:rhadadi\+ayah@gmail\.com\?subject=Weekly$/)
   })
 
   test('the end of each line is not clipped: the page has room for the glyphs that overhang', async ({ page }) => {
@@ -1376,7 +1397,7 @@ test.describe('The printed mushaf as pictures (private build, made-up pictures h
     await settle(page)
     const pg = (await page.locator('#page-3 .pg').boundingBox())!
     expect(Math.abs(pg.x + pg.width / 2 - 720)).toBeLessThanOrEqual(1)
-    expect(pg.y + pg.height).toBeLessThanOrEqual(900) // the whole page is on the screen
+    expect(pg.width).toBeGreaterThanOrEqual(700) // as wide as the panels' room allows, not shrunk to the window's height
     await page.keyboard.press('ArrowLeft') // the book is right to left: left is on to the next page
     await expect(page.locator('#page-4 .pg-img')).toBeVisible()
     await page.keyboard.press('ArrowRight')
@@ -1404,6 +1425,39 @@ test.describe('The printed mushaf as pictures (private build, made-up pictures h
     await expect(page.locator('.mushaf-flow')).toHaveAttribute('data-turn', 'next')
     await page.keyboard.press('ArrowRight')
     await expect(page.locator('.mushaf-flow')).toHaveAttribute('data-turn', 'prev')
+  })
+
+  test('a phone on its side: the recitation is a few buttons in the top bar, and the page follows it down', async ({ page }) => {
+    await trackAudio(page)
+    await page.setViewportSize({ width: 932, height: 430 })
+    await useSettings(page, { lang: 'fa', translationPlace: 'off' })
+    await page.goto('/#/page/3')
+    await expect(page.locator('#page-3 .pg-img')).toBeVisible()
+    // the made-up map spreads 11 ayahs down the page; the page is far taller than the screen
+    await page.locator('#page-3 .ay').nth(1).locator('.seg').click()
+    await page.getByTestId('ayah-panel').getByRole('button', { name: /پخش/ }).first().click()
+    const bar = page.locator('.player')
+    await expect(bar).toHaveClass(/in-bar/)
+    const b = (await bar.boundingBox())!
+    expect(b.y + b.height).toBeLessThanOrEqual(56) // in the top bar, not over the page
+    expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--player-h').trim())).toBe('0px')
+    await page.keyboard.press('Escape') // close the ayah's panel; the recitation goes on
+    for (let i = 0; i < 8; i++) await finishRecording(page)
+    const playing = page.locator('#page-3 .ay.playing .seg').first()
+    await expect(playing).toBeInViewport()
+    expect(await page.evaluate(() => scrollY)).toBeGreaterThan(200)
+  })
+
+  test('a phone on its side shows the printed page across the whole screen', async ({ page }) => {
+    await page.setViewportSize({ width: 932, height: 430 })
+    await useSettings(page, { lang: 'fa', translationPlace: 'panel' })
+    await page.goto('/#/page/3')
+    await expect(page.locator('#page-3 .pg-img')).toBeVisible()
+    const pg = (await page.locator('#page-3 .pg').boundingBox())!
+    expect(pg.width).toBeGreaterThanOrEqual(900)
+    expect(Math.abs(pg.x + pg.width / 2 - 466)).toBeLessThanOrEqual(1)
+    await page.setViewportSize({ width: 390, height: 844 }) // and upright, the width of the phone as before
+    expect((await page.locator('#page-3 .pg').boundingBox())!.width).toBeGreaterThanOrEqual(358)
   })
 
   test('a sideways swipe turns the page: to the right for the next (the book is right to left), to the left for the previous', async ({ page }) => {

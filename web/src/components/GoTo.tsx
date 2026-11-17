@@ -56,7 +56,8 @@ function GoToBox({ meta }: { meta: Meta }) {
   }
   const at = Math.min(active, Math.max(0, results.length - 1))
   return (
-    <dialog ref={dialog} class="goto" aria-label={t('goTo')} onClose={close} onClick={(e) => e.target === e.currentTarget && close()}>
+    // a box that has gone ignores its own late "close" event, which would otherwise shut a box opened straight after it
+    <dialog ref={dialog} class="goto" aria-label={t('goTo')} onClose={() => dialog.current && close()} onClick={(e) => e.target === e.currentTarget && close()}>
       <input
         type="text" class="goto-input" dir="auto" autofocus autocomplete="off" autocapitalize="off" spellcheck={false} enterKeyHint="go"
         role="combobox" aria-expanded={results.length > 0} aria-controls="goto-list" aria-autocomplete="list"

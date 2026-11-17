@@ -23,6 +23,7 @@ export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active
     : base && 'surah' in base ? { surah: base.surah, ayah: base.ayah ?? 1 } : remembered
   const studyAt = active === 'study' ? remembered : at
   const studyHref = href.verse(studyAt.surah, studyAt.ayah)
+  const readingHref = onMushaf ? location.hash || href.start : href.ayah(studyAt.surah, studyAt.ayah)
   // in a wide window the menu is a panel docked beside the page instead: not modal, the page stays in use beside it
   const docked = useDocked()
   const dockShown = docked && dockOpen.value
@@ -107,6 +108,14 @@ export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active
     )
     return (
       <div class="drawer-body">
+        <nav class="drawer-modes" aria-label={t('readerMode')}>
+          <a href={readingHref} aria-label={t('navReading')} aria-current={onMushaf ? 'page' : undefined} onClick={nav ? e => nav(e, readingHref) : undefined}>
+            <Icon name="book" size={20} /><strong>{t('navReading')}</strong>
+          </a>
+          <a href={studyHref} aria-label={t('navStudy')} aria-current={active === 'study' ? 'page' : undefined} onClick={nav ? e => nav(e, studyHref) : undefined}>
+            <Icon name="focus" size={20} /><strong>{t('navStudy')}</strong>
+          </a>
+        </nav>
         <form class="drawer-search" role="search" onSubmit={(e) => {
           e.preventDefault()
           const q = new FormData(e.currentTarget).get('q')?.toString().trim() ?? ''
@@ -116,11 +125,6 @@ export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active
           <button type="submit" class="icon-btn" aria-label={t('navSearch')}><Icon name="search" size={20} /></button>
         </form>
         <nav class="drawer-links" aria-label="Main">
-          <a class={`drawer-study${active === 'study' ? ' on' : ''}`} href={studyHref} aria-label={t('navStudy')} aria-describedby="study-menu-hint" aria-current={active === 'study' ? 'page' : undefined} onClick={nav ? e => nav(e, studyHref) : undefined}>
-            <Icon name="book" size={22} />
-            <span><strong>{t('navStudy')}</strong><small id="study-menu-hint">{t('studyMenuHint')}</small></span>
-            <Icon name="chevron" size={18} />
-          </a>
           <button class="drawer-item" onClick={() => { if (closeAfter) close(); gotoOpen.value = true }}>
             <Icon name="goto" size={20} />
             <span>{t('goTo')}</span>
@@ -167,7 +171,7 @@ export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active
         // a link further down (About, in the settings) leaves the menu as the ones above do
         onClick={(e) => {
           const a = (e.target as Element).closest<HTMLAnchorElement>('.drawer-body a[href^="#"]')
-          if (a && !a.closest('.drawer-links')) go(e, a.getAttribute('href')!)
+          if (a && !a.closest('.drawer-links, .drawer-modes')) go(e, a.getAttribute('href')!)
         }}
       >
         <div class="drawer-head">

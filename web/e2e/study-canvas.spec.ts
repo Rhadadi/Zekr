@@ -185,6 +185,12 @@ for (const lang of ['en', 'fa']) for (const width of [390, 1280]) {
     await page.goto('/#/ayah/12/2')
     await expect(page.locator('#page-235')).toBeVisible()
     await page.getByRole('button', { name: lang === 'fa' ? 'منو' : 'Menu', exact: true }).click()
+    const modes = page.locator('.drawer-modes')
+    const reading = modes.getByRole('link', { name: lang === 'fa' ? 'خواندن' : 'Reading', exact: true })
+    await expect(reading).toHaveAttribute('aria-current', 'page')
+    const modeBox = (await modes.boundingBox())!
+    const searchBox = (await page.locator('.drawer-search').boundingBox())!
+    expect(modeBox.y + modeBox.height).toBeLessThanOrEqual(searchBox.y)
     const study = page.locator('.drawer').getByRole('link', { name: lang === 'fa' ? 'مطالعه' : 'Study', exact: true })
     await expect(study).toBeVisible()
     await expect(study).toHaveAttribute('href', '#/verse/12/2')
@@ -195,13 +201,17 @@ for (const lang of ['en', 'fa']) for (const width of [390, 1280]) {
     await expect(logo).toBeVisible()
     const box = await logo.boundingBox()
     expect(box!.width).toBeGreaterThanOrEqual(80)
+    await page.locator('.study-reader').getByRole('button', { name: lang === 'fa' ? 'آیهٔ بعد' : 'Next ayah', exact: true }).click()
     const menu = page.locator('.study-reader').getByRole('button', { name: lang === 'fa' ? 'منو' : 'Menu', exact: true })
     await menu.click()
     await expect(page.locator('.drawer').getByRole('link', { name: lang === 'fa' ? 'مطالعه' : 'Study', exact: true })).toHaveAttribute('aria-current', 'page')
+    await expect(reading).toHaveAttribute('href', '#/ayah/12/3')
     await page.keyboard.press('Escape')
     await expect(menu).toBeFocused()
-    await page.locator('.study-reader').getByRole('button', { name: lang === 'fa' ? 'بستن' : 'Close', exact: true }).click()
-    await expect(page).toHaveURL(/#\/ayah\/12\/2$/)
+    await menu.click()
+    await reading.click()
+    await expect(page).toHaveURL(/#\/ayah\/12\/3$/)
+    await expect(page.locator('.study-reader')).toHaveCount(0)
   })
 }
 

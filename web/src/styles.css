@@ -265,6 +265,18 @@ input[type='checkbox'] { width: 20px; height: 20px; flex-shrink: 0; accent-color
   box-shadow: 0 -4px 14px rgb(0 0 0 / 0.08); z-index: 8;
 }
 .player[data-status='error'] { border-top-color: #c0392b; }
+/* A phone on its side (hooks.ts IN_BAR_QUERY): no panel over the page, just play and pause with the next and previous
+   ayah in the top bar, beside the menu button; the rest (repeat, reciter, stop) is behind its "more" button */
+.player.in-bar {
+  top: env(safe-area-inset-top); bottom: auto; left: calc(max(4px, env(safe-area-inset-left)) + 48px); right: auto; margin: 0; max-width: none;
+  height: 52px; padding: 0; gap: 0; background: none; border: 0; box-shadow: none; flex-wrap: nowrap; translate: none; scale: none;
+}
+.player.in-bar .player-info { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.player.in-bar :is(.player-repeat, .commentary-seek) { display: none; }
+.player.in-bar .player-controls .icon-btn { width: 44px; height: 44px; color: var(--ink); }
+.player.in-bar .icon-btn.big { width: 40px; height: 40px; margin: 2px; color: var(--accent-ink); }
+/* a narrow phone on its side has room for play and "more" only, beside the surah and page in the bar's middle */
+@media (orientation: landscape) and (max-height: 600px) and (max-width: 799px) { .player.in-bar .player-step { display: none; } }
 .player-info { display: flex; flex-direction: column; min-width: 0; line-height: 1.4; font-size: 0.9rem; }
 .player-info strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .player-controls { display: flex; align-items: center; }
@@ -421,14 +433,11 @@ a.player-info { color: var(--ink); text-decoration: none; }
 @media (min-width: 1000px) {
   /* The page's width and its margins are set on the root, so the menu at the left (outside the page's layout) and the
      ayah's panel at the right can share one width: what the margin beside the page holds, so the page stays where it is */
-  :root { --page-w: clamp(560px, 100vw - 640px, 720px); --m: calc((100vw - var(--page-w)) / 2); --side-w: clamp(264px, var(--m) - 56px, 320px); }
-  :root:has(.mushaf-layout.fitted) { --page-w: min(calc((100dvh - var(--bar-h) - 28px) * 654 / 935), 820px, calc(100vw - 48px)); }
-  /* where the margin is too narrow for the recitation card, the page makes room under it */
-  @media (max-width: 1279px) { :root:has(.mushaf-layout.fitted) { --page-w: min(calc((100dvh - var(--bar-h) - 28px - var(--player-h)) * 654 / 935), 820px, calc(100vw - 48px)); } }
+  /* As wide as the window allows once each side keeps room for its panel (12px + 320px + 28px), so a long line reads
+     at a good size; the page scrolls down rather than shrinking to the window's height. */
+  :root { --page-w: clamp(560px, 100vw - 720px, 1100px); --m: calc((100vw - var(--page-w)) / 2); --side-w: clamp(264px, var(--m) - 56px, 320px); }
   body:has(.mushaf-host:not([inert])) { background: var(--stage) radial-gradient(ellipse 52% 78% at 50% 50%, var(--spot), var(--stage)) fixed; }
   .mushaf-host .appbar { background: var(--stage); }
-  /* one whole page and nothing scrolling under the bar: it lets the lit stage show through */
-  body:has(.mushaf-layout.fitted) .mushaf-host .appbar { background: transparent; border-bottom-color: transparent; }
   .app { max-width: none; }
   .appbar .appbar-in { max-width: none; padding-inline: 16px; }
   .mushaf-layout { --lpush: 0px; --rpush: 0px; --tx: calc(var(--lpush) - var(--rpush)); }
@@ -586,6 +595,12 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .mpage.printed { content-visibility: visible; contain-intrinsic-size: none; scroll-margin-top: calc(var(--bar-h) + 4px); padding-inline: 0; margin-inline: 0; margin-bottom: 8px; }
 .pg { position: relative; width: 100%; }
 .pg-img { display: block; width: 100%; height: 100%; -webkit-user-select: none; user-select: none; }
+/* the picture is wider than the page by its two outer margins (--trim of its width each side, set with the page), which
+   overflow and are cut off; everything on the picture is placed in the wider box, so it stays where it was */
+.pg { overflow: hidden; }
+.pg-in { position: absolute; top: 0; bottom: 0; left: calc(-100% * var(--trim, 0) / (1 - 2 * var(--trim, 0))); right: calc(-100% * var(--trim, 0) / (1 - 2 * var(--trim, 0))); }
+.mpage.il { overflow: hidden; }
+.il-in { margin-inline: calc(-100% * var(--trim, 0) / (1 - 2 * var(--trim, 0))); }
 .mushaf-flow[data-color='green'] :is(.pg-img, .fl) { filter: hue-rotate(-60deg); }
 .mushaf-flow[data-color='purple'] :is(.pg-img, .fl) { filter: hue-rotate(70deg); }
 .mushaf-flow[data-color='pink'] :is(.pg-img, .fl) { filter: hue-rotate(130deg); }
@@ -676,9 +691,9 @@ a.player-info { color: var(--ink); text-decoration: none; }
   font: inherit; text-align: end; text-overflow: ellipsis; cursor: pointer;
 }
 .menu-settings select:hover, .menu-settings select:focus-visible { color: var(--ink); }
-.seg { display: inline-flex; gap: 2px; padding: 2px; border-radius: 10px; background: color-mix(in srgb, var(--ink) 6%, transparent); }
-.seg button { display: grid; place-items: center; width: 36px; height: 32px; border: 0; border-radius: 8px; background: none; color: var(--muted); cursor: pointer; }
-.seg button[aria-pressed='true'] { background: var(--surface); color: var(--accent); box-shadow: 0 1px 2px rgb(0 0 0 / 0.12); }
+.segctl { display: inline-flex; gap: 2px; padding: 2px; border-radius: 10px; background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.segctl button { display: grid; place-items: center; width: 36px; height: 32px; border: 0; border-radius: 8px; background: none; color: var(--muted); cursor: pointer; }
+.segctl button[aria-pressed='true'] { background: var(--surface); color: var(--accent); box-shadow: 0 1px 2px rgb(0 0 0 / 0.12); }
 .swatches { display: inline-flex; gap: 2px; }
 .swatches button { width: 30px; height: 32px; border: 0; border-radius: 50%; background: none; cursor: pointer; position: relative; }
 .swatches button::before { content: ''; position: absolute; inset: 7px; border-radius: 50%; background: var(--sw); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 28%, transparent); }
@@ -687,6 +702,20 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .stepper button { width: 32px; height: 32px; border: 0; border-radius: 50%; background: color-mix(in srgb, var(--ink) 6%, transparent); color: var(--ink); font: inherit; font-size: 1.05rem; cursor: pointer; }
 .stepper button:disabled { opacity: 0.4; cursor: default; }
 .stepper output { min-width: 30px; text-align: center; font-variant-numeric: tabular-nums; color: var(--muted); }
+/* the ayah by email, folded at the bottom of the menu */
+.segctl-text button { width: auto; padding: 0 12px; font: inherit; font-size: 0.82rem; }
+.nl-intro, .nl-mail, .nl-msg { margin: 4px 0 8px; color: var(--muted); font-size: 0.8rem; line-height: 1.7; }
+.nl-msg:empty { display: none; }
+.nl-msg { color: var(--accent); }
+.nl-mail a { color: var(--accent); word-break: break-all; }
+.nl-email input {
+  box-sizing: border-box; width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px;
+  background: var(--surface); color: var(--ink); font: inherit;
+}
+.nl-email input::placeholder { color: var(--muted); }
+.nl-email input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.nl-go { width: 100%; min-height: 44px; margin-top: 4px; border: 0; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font: inherit; font-weight: 600; cursor: pointer; }
+.nl-go:disabled { opacity: 0.6; cursor: default; }
 /* the long lists fold away */
 .msec { border-top: 1px solid var(--line); }
 .msec:last-of-type { border-bottom: 1px solid var(--line); }
@@ -721,7 +750,12 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .turn-prev svg { transform: none; }
 .turn .icon-btn:disabled { opacity: 0.35; cursor: default; }
 .mushaf-flow.printed { display: grid; justify-items: center; }
-.mushaf-flow.printed .mpage { width: 100%; max-width: calc((100dvh - var(--bar-h) - 20px) * 654 / 935); }
+.mushaf-flow.printed .mpage { width: 100%; }
+/* A phone on its side: the page across the whole screen (clear of the notch), not shrunk to the short height */
+@media (max-width: 999px) and (orientation: landscape) {
+  .app { max-width: none; padding-left: max(8px, env(safe-area-inset-left)); padding-right: max(8px, env(safe-area-inset-right)); }
+  .appbar-in { max-width: none; padding-left: max(4px, env(safe-area-inset-left)); padding-right: max(4px, env(safe-area-inset-right)); }
+}
 
 /* The ayah panel's one row: the reference (unless the recitation bar already shows it), the actions, close at the end.
    In the phone sheet the grab handle sits in the middle of this row, so there is no separate row for it. */
@@ -943,12 +977,11 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .study-layer :focus-visible, .app.study-active .player :focus-visible { outline: 2px solid var(--study-accent); outline-offset: 4px; }
 .drawer-links { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-columns: auto; }
 .drawer-links:has(> .drawer-item[title]) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.drawer-links .drawer-study { grid-column: 1 / -1; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 14px; min-height: 72px; margin-bottom: 6px; padding: 14px 18px; text-align: start; border: 1px solid var(--line); background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
-.drawer-study > span { display: flex; flex: 1; flex-direction: column; align-items: flex-start; gap: 2px; }
-.drawer-study > svg:last-child { margin-inline-start: auto; }
-:root[dir='rtl'] .drawer-study > svg:last-child { transform: rotate(180deg); }
-.drawer-study strong { font-size: .95rem; font-weight: 600; }
-.drawer-study small { color: var(--muted); font-size: .72rem; font-weight: 400; }
+.drawer-modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 5px; margin-bottom: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); }
+.drawer-modes a { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 10px 12px; border: 1px solid transparent; border-radius: 8px; color: var(--muted); }
+.drawer-modes strong { font-size: 1rem; font-weight: 500; }
+.drawer-modes a:hover { color: var(--ink); background: var(--surface); }
+.drawer-modes a[aria-current='page'] { color: var(--accent); background: var(--surface); border-color: var(--line); box-shadow: 0 2px 6px rgb(0 0 0 / .04); }
 /* The transport remains one compact instrument below the reading column. */
 .app.study-active .player {
   --bg: var(--study-bg); --surface: var(--study-surface); --ink: var(--study-ink); --muted: var(--study-muted); --accent: var(--study-accent); --line: var(--study-line);

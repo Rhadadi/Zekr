@@ -51,6 +51,11 @@ export interface Meta {
   lines?: boolean
 }
 
+/** How much of each side of a printed page's picture is left out: the margin outside its frame (the frame starts at 35px
+ * of 654 on every page), where the juz, hizb and sajdah labels are cut in half by the scan. Leaving it out shows the frame
+ * edge to edge and the lines a little wider. */
+export const PAGE_TRIM = 32 / 654
+
 /** One printed page: its image size and, per ayah (from `first`), the line rectangles it covers, in thousandths of the page. */
 export interface MushafPageMap {
   n: number

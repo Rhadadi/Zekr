@@ -1,7 +1,7 @@
 import { Fragment } from 'preact'
 import { memo } from 'preact/compat'
 import { useLayoutEffect, useMemo, useRef } from 'preact/hooks'
-import { type Meta, type MushafPageMap, loadPageLines, locate, mushafImage } from '../data'
+import { type Meta, type MushafPageMap, loadPageLines, locate, mushafImage, PAGE_TRIM } from '../data'
 import { useAsync } from '../hooks'
 import { num, t } from '../i18n'
 import { type Piece, bandPaper, lineTranslations, pageInk, pageStrips } from '../interlinear'
@@ -114,7 +114,9 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
   })
   const seen = new Set<number>()
   return (
-    <section ref={root} class="mpage printed il" id={`page-${n}`} data-page={n} aria-label={t('pageN', { n })}>
+    <section ref={root} class="mpage printed il" id={`page-${n}`} data-page={n} aria-label={t('pageN', { n })} style={{ '--trim': PAGE_TRIM }}>
+      {/* a little wider than the page: the picture's margins outside the frame are cut off, as on the whole page */}
+      <div class="il-in">
       {strips.map((s, si) => {
         const h = s.bottom - s.top
         const row = pieces.get(s)
@@ -161,6 +163,7 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
           {words(strips.flatMap((s) => pieces.get(s) ?? []))}
         </div>
       ) : null}
+      </div>
     </section>
   )
 })
