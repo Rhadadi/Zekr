@@ -51,6 +51,27 @@ test.describe('Go to…', () => {
     await expect(page.locator('.mb-surah')).toContainText('مريم')
   })
 
+  test('opened again the moment it closes, it stays open (the old box\'s late "close" event does not shut the new one)', async ({ page }) => {
+    await page.addInitScript(([s]) => { localStorage.setItem('zekr.inlineDefault', 'true'); localStorage.setItem('zekr.settings', JSON.stringify(s)) }, settings('en'))
+    await page.goto('/#/page/305')
+    await expect(page.locator('#page-305 .ay').first()).toBeVisible()
+    await page.keyboard.press('Control+k')
+    await page.getByRole('combobox').fill('12')
+    // choose, and press Ctrl-K at the very moment the old box leaves the page, before its "close" event arrives
+    await page.evaluate(() => {
+      const old = document.querySelector('dialog.goto')!
+      new MutationObserver((_, obs) => {
+        if (old.isConnected) return
+        obs.disconnect()
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', code: 'KeyK', ctrlKey: true, bubbles: true }))
+      }).observe(document.body, { childList: true, subtree: true })
+      old.querySelector('input')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    })
+    await expect(page).toHaveURL(/#\/surah\/12$/)
+    await page.waitForTimeout(300)
+    await expect(page.getByRole('combobox')).toBeVisible()
+  })
+
   test('the menu has it too, and it has no accessibility violations open, in dark', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
     await page.addInitScript(([s]) => { localStorage.setItem('zekr.inlineDefault', 'true'); localStorage.setItem('zekr.settings', JSON.stringify(s)) }, settings('en', 'dark'))
