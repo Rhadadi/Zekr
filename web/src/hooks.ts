@@ -40,6 +40,20 @@ export function useWide(): boolean {
   return wide
 }
 
+/** A phone on its side: the screen is short, so the recitation is a few small buttons in the top bar, not a panel. */
+export const IN_BAR_QUERY = '(orientation: landscape) and (max-height: 600px)'
+export function useMedia(query: string): boolean {
+  const [on, setOn] = useState(() => matchMedia(query).matches)
+  useEffect(() => {
+    const q = matchMedia(query)
+    const change = () => setOn(q.matches)
+    change()
+    q.addEventListener('change', change)
+    return () => q.removeEventListener('change', change)
+  }, [query])
+  return on
+}
+
 /** Whether the menu is a panel docked at the left of the page: a window wide enough to hold it beside the page, and
  * the mushaf showing (a layer covers the mushaf, so there the menu stays a drawer over it). */
 export const DOCK_QUERY = '(min-width: 1280px)'

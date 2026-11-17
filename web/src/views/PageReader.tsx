@@ -307,8 +307,16 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
     if (panel?.kind === 'ayah') setPanel({ kind: 'ayah', id: playingId })
     if (single && settings.peek().autoScroll) {
       turnTo(pageOf(meta, playingId), true)
-      // a page with translations in it is taller than the screen: keep the ayah being recited in view
-      if (lineTr || words) window.setTimeout(() => ayahEl(playingId)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 60)
+      // the page is often taller than the screen (a phone on its side, translations under the lines): bring the ayah
+      // being recited to the middle when it is off screen or near an edge, and leave the page still while it is in view
+      window.setTimeout(() => {
+        const el = ayahEl(playingId)
+        if (!el) return
+        const r = el.getBoundingClientRect()
+        const top = (document.querySelector<HTMLElement>('.appbar')?.offsetHeight ?? 0) + 12
+        const bottom = window.innerHeight - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--player-h')) || 0) - 12
+        if (r.top < top || r.bottom > bottom) el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      }, 60)
     }
     else if (settings.peek().autoScroll) {
       ayahEl(playingId)?.scrollIntoView({ block: boxBottomRef.current ? 'nearest' : 'center', behavior: 'smooth' })

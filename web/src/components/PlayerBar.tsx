@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks'
 import { audioProgress, loopAyah, looping, next, player, previous, seekCommentary, stop, toggle } from '../audio'
 import { type Meta, locate } from '../data'
+import { IN_BAR_QUERY, useMedia } from '../hooks'
 import { ayahRef, num, surahName, t } from '../i18n'
 import { href } from '../router'
 import { Icon } from './Icon'
@@ -15,11 +16,13 @@ export function PlayerBar({ meta }: { meta: Meta }) {
   // Everything that sits at the bottom of the screen (the translation box, layers, the toast) leaves room for the bar.
   // While the phone's sheet is open the bar is not shown: the sheet takes its place (one panel at the bottom).
   const showing = !!p && !sheetOpen.value
+  // a phone on its side: the controls sit in the top bar and take nothing from the bottom of the screen
+  const inBar = useMedia(IN_BAR_QUERY)
   useLayoutEffect(() => {
     const el = bar.current
     const root = document.documentElement
     if (!el) return
-    const set = () => root.style.setProperty('--player-h', `${el.offsetHeight}px`)
+    const set = () => root.style.setProperty('--player-h', inBar ? '0px' : `${el.offsetHeight}px`)
     set()
     const observer = new ResizeObserver(set)
     observer.observe(el)
@@ -27,7 +30,7 @@ export function PlayerBar({ meta }: { meta: Meta }) {
       observer.disconnect()
       root.style.removeProperty('--player-h')
     }
-  }, [showing])
+  }, [showing, inBar])
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
@@ -42,7 +45,7 @@ export function PlayerBar({ meta }: { meta: Meta }) {
   const time = (n: number) => `${Math.floor(n / 60)}:${String(Math.floor(n % 60)).padStart(2, '0')}`
   return (
     <>
-      <div class={`player${entry ? ' has-commentary' : ''}`} ref={bar} role="region" aria-label={label} data-status={p.status}>
+      <div class={`player${entry ? ' has-commentary' : ''}${inBar ? ' in-bar' : ''}`} ref={bar} role="region" aria-label={label} data-status={p.status}>
         <a class="player-info" href={entry ? href.commentary(surah, ayah) : href.ayah(surah, ayah)} aria-label={`${entry ? label : t('nowReciting')}: ${ayahRef(meta.surahs[surah - 1]!, ayah)}`}>
           <strong>{surahName(meta.surahs[surah - 1]!)} {num(surah)}:{num(ayah)}</strong>
           {p.status === 'error' || p.phase !== 'ayah' || entry ? (
@@ -50,12 +53,12 @@ export function PlayerBar({ meta }: { meta: Meta }) {
           ) : null}
         </a>
         <div class="player-controls" dir="ltr">
-          <button class="icon-btn" onClick={previous} aria-label={t(entry ? 'prevNote' : 'previous')}><Icon name="prev" size={20} /></button>
+          <button class="icon-btn player-step" onClick={previous} aria-label={t(entry ? 'prevNote' : 'previous')}><Icon name="prev" size={20} /></button>
           <button class="icon-btn big" onClick={toggle} aria-label={playing ? t('pause') : t('play')}>
             <Icon name={playing ? 'pause' : 'play'} size={24} />
           </button>
-          <button class="icon-btn" onClick={next} aria-label={t(entry ? 'nextNote' : 'next')}><Icon name="next" size={20} /></button>
-          {!entry ? <button class="icon-btn" onClick={() => loopAyah(p.ayahId, !looping.value)} aria-pressed={looping.value} aria-label={t('repeatAyah')}><Icon name="repeat" size={20} /></button> : null}
+          <button class="icon-btn player-step" onClick={next} aria-label={t(entry ? 'nextNote' : 'next')}><Icon name="next" size={20} /></button>
+          {!entry ? <button class="icon-btn player-repeat" onClick={() => loopAyah(p.ayahId, !looping.value)} aria-pressed={looping.value} aria-label={t('repeatAyah')}><Icon name="repeat" size={20} /></button> : null}
           {/* the less frequent ones (translation audio, reciter, speed, stopping) are in one place */}
           <button class="icon-btn" onClick={() => setOpen(true)} aria-label={label} aria-haspopup="dialog"><Icon name="more" size={20} /></button>
         </div>
