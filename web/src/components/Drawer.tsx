@@ -71,7 +71,7 @@ export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active
       // after the page behind has become reachable again; inert already dropped focus to <body> when it opened
       const o = opener.current as HTMLElement | null
       const back = o && o !== document.body ? o : document.querySelector<HTMLElement>('.study-settings') ?? document.querySelector<HTMLElement>('.burger')
-      setTimeout(() => back?.focus?.(), 0)
+      setTimeout(() => back?.focus?.({ preventScroll: true }), 0)
     }
   }, [open])
 

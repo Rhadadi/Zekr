@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'preact/hooks'
+import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks'
 import { playFrom, playSurah, player } from '../audio'
 import { Icon } from '../components/Icon'
 import brandMark from '../assets/ayesheno-logo.png'
@@ -26,6 +26,9 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
   const [focusMode, setFocusMode] = useState(false)
   const reader = useRef<HTMLDivElement>(null)
   const anchor = useRef<HTMLElement | null>(null)
+  const layoutEpoch = useRef(0)
+  const positioning = useRef(false)
+  const previousRoute = useRef('')
   const tab = panels[current] ?? 'translation'
   const p = player.value
   const playing = p && !p.commentary && p.ayahId >= surah.first && p.ayahId < surah.first + surah.ayahs ? p.ayahId - surah.first + 1 : undefined
@@ -34,18 +37,42 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
     const [ar, ...trs] = await Promise.all([loadText(s.script), ...ids.map(id => loadTranslation(id))])
     return { ar, trs, ids }
   }, [s.script, s.translations.join(',')])
-  const move = (n: number) => requestAnimationFrame(() => document.getElementById(`a-${n}`)?.scrollIntoView({ block: 'start', behavior: 'auto' }))
+  const moveTo = (id: string) => {
+    const epoch = ++layoutEpoch.current
+    positioning.current = true
+    const restore = () => {
+      const target = document.getElementById(id)
+      if (layoutEpoch.current === epoch && target && reader.current?.contains(target)) target.scrollIntoView({ block: 'start', behavior: 'auto' })
+    }
+    requestAnimationFrame(() => {
+      restore()
+      // Font changes can reflow the whole surah after its first paint.
+      void document.fonts.ready.then(() => {
+        restore()
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          if (layoutEpoch.current === epoch) positioning.current = false
+        }))
+      })
+    })
+  }
+  const move = (n: number) => moveTo(`a-${n}`)
   useEffect(() => setPanels({}), [surahId])
-  useEffect(() => {
-    const start = Math.max(1, Math.min(ayah ?? 1, surah.ayahs))
-    setCurrent(start)
-    setLastRead(surahId, start)
-    if (data.value) move(start)
-  }, [!!data.value, surahId, ayah])
+  useLayoutEffect(() => {
+    const key = `${surahId}:${ayah ?? 1}`
+    const changed = previousRoute.current !== key
+    const n = changed ? Math.max(1, Math.min(ayah ?? 1, surah.ayahs)) : current
+    previousRoute.current = key
+    if (changed) {
+      anchor.current = null
+      setCurrent(n)
+      setLastRead(surahId, n)
+    }
+    if (data.value) moveTo(anchor.current ? `companion-${n}` : `a-${n}`)
+  }, [data.value, surahId, ayah, s.arabicSize, s.trSize, s.quranFont, s.theme, lang.value, drawerOpen.value])
   useEffect(() => {
     const layer = reader.current?.closest<HTMLElement>('.layer')
     if (!layer) return
-    const suspend = () => { anchor.current = null; setCompanionOpen(false); setFollowing(false) }
+    const suspend = () => { layoutEpoch.current++; positioning.current = false; anchor.current = null; setCompanionOpen(false); setFollowing(false) }
     const key = (e: KeyboardEvent) => { if (['PageDown', 'PageUp', 'ArrowDown', 'ArrowUp', 'Home', 'End', ' '].includes(e.key) && !(e.target instanceof Element && e.target.closest('button,input,[role="tab"]'))) suspend() }
     layer.addEventListener('wheel', suspend, { passive: true })
     layer.addEventListener('touchmove', suspend, { passive: true })
@@ -55,7 +82,7 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
       cancelAnimationFrame(frame)
       frame = requestAnimationFrame(() => {
         // Companion navigation intentionally holds its ayah while its full text is read.
-        if (anchor.current) return
+        if (anchor.current || positioning.current || drawerOpen.peek()) return
         const articles = reader.current?.querySelectorAll<HTMLElement>('article.ayah')
         let n = ayah ?? 1
         for (const el of articles ?? []) {
@@ -79,7 +106,7 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
   useEffect(() => {
     const resize = () => {
       const target = anchor.current ? `companion-${current}` : `a-${current}`
-      document.getElementById(target)?.scrollIntoView({ block: 'start', behavior: 'auto' })
+      moveTo(target)
     }
     window.addEventListener('resize', resize)
     return () => window.removeEventListener('resize', resize)
@@ -114,7 +141,7 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
     anchor.current = document.getElementById(`a-${current}`)
     setCompanionOpen(true)
     setPanels(previous => ({ ...previous, [current]: value }))
-    requestAnimationFrame(() => document.getElementById(`companion-${current}`)?.scrollIntoView({ block: 'start' }))
+    moveTo(`companion-${current}`)
   }
   const resume = () => { anchor.current = null; setCompanionOpen(false); setFollowing(true); if (playing !== undefined) { setCurrent(playing); move(playing) } }
   const returnArabic = () => { anchor.current = null; setCompanionOpen(false); move(current) }
@@ -145,7 +172,7 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
           return <StudyVerse key={id} meta={meta} surah={surahId} n={i + 1} ar={data.value!.ar[id - 1]!}
             translations={data.value!.ids.map((idTr, k) => ({ info: meta.translations.find(x => x.id === idTr)!, text: data.value!.trs[k]![id - 1]! }))}
             active={current === i + 1} tab={panels[i + 1] ?? 'translation'} playing={playing === i + 1} paused={p?.status === 'paused' || p?.status === 'error'} focused={current === i + 1}
-            onSelect={() => { if (current !== i + 1) { anchor.current = null; setCompanionOpen(false); setFollowing(false); setCurrent(i + 1); setLastRead(surahId, i + 1) } }} />
+            onSelect={() => { if (current !== i + 1) { layoutEpoch.current++; positioning.current = false; anchor.current = null; setCompanionOpen(false); setFollowing(false); setCurrent(i + 1); setLastRead(surahId, i + 1) } }} />
         })}
       </div>}
       <nav class="study-surah-nav" aria-label={t('surahs')}>

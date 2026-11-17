@@ -1131,8 +1131,8 @@ test.describe('page view on a phone', () => {
     expect(r.width).toBeLessThanOrEqual(44)
     await btn.click()
     const nav = page.getByRole('navigation', { name: 'Main' })
-    // everything is in the one panel: search, Today and Saved, and the settings themselves
-    await expect(nav.getByRole('link')).toHaveText(['Today', 'Saved'])
+    // Study sits above the smaller destinations in the same menu.
+    await expect(nav.getByRole('link')).toHaveText([/^Study/, 'Today', 'Saved'])
     const menuPanel = page.getByRole('dialog', { name: 'Menu' })
     await expect(menuPanel.getByLabel('Language')).toBeVisible()
     // the long lists fold away in the menu: Recitation opens in place

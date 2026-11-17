@@ -239,6 +239,21 @@ test('starting recitation from the keyboard keeps Pause within reach', async ({ 
   await expect(page.locator('.player').getByRole('button', { name: 'Play', exact: true })).toBeFocused()
 })
 
+test('changing language, theme and font keeps the selected ayah in place', async ({ page }) => {
+  await fixture(page)
+  await page.goto('/#/verse/2/282')
+  const reader = page.locator('.study-reader')
+  await expect(reader.locator('#a-282 .ar')).not.toBeEmpty()
+  await reader.getByRole('button', { name: 'Settings', exact: true }).click()
+  await page.locator('.drawer').getByRole('button', { name: 'Sepia', exact: true }).click()
+  await page.locator('.drawer').getByRole('combobox', { name: 'Quran font', exact: true }).selectOption('scheherazade')
+  await page.locator('.drawer').getByRole('combobox', { name: 'Language', exact: true }).selectOption('fa')
+  await page.locator('.drawer').getByRole('button', { name: 'بستن', exact: true }).click()
+  await expect(reader.getByRole('heading', { level: 1 })).toContainText('۲۸۲')
+  await expect.poll(() => reader.locator('#a-282').evaluate(el => el.getBoundingClientRect().top)).toBeGreaterThanOrEqual(110)
+  await expect.poll(() => reader.locator('#a-282').evaluate(el => el.getBoundingClientRect().top)).toBeLessThanOrEqual(185)
+})
+
 test('recitation progress can be sought and resets for the next ayah', async ({ page }) => {
   await fixture(page)
   await page.goto('/#/verse/112/1')
