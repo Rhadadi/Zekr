@@ -2,10 +2,10 @@ import { expect, test, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 
 // The real Quran/translation data exercise long text. Study notes and word meanings here are invented fixtures.
-async function fixture(page: Page, lang = 'en', theme = 'light') {
-  await page.addInitScript(([language, appearance]) => {
+async function fixture(page: Page, lang = 'en', theme = 'light', translations = ['fa.safavi']) {
+  await page.addInitScript(({ language, appearance, selected }) => {
     localStorage.setItem('zekr.settings', JSON.stringify({
-      lang: language, theme: appearance, translations: ['fa.safavi'], autoScroll: true,
+      lang: language, theme: appearance, translations: selected, autoScroll: true,
     }))
     localStorage.setItem('zekr.inlineDefault', 'true')
     const w = window as unknown as { canvasAudio: EventTarget[]; canvasPlayed: string[] }
@@ -26,7 +26,7 @@ async function fixture(page: Page, lang = 'en', theme = 'light') {
       load() { /* media stays local to the test */ }
     }
     window.Audio = FixtureAudio as unknown as typeof Audio
-  }, [lang, theme])
+  }, { language: lang, appearance: theme, selected: translations })
   await page.route('**/everyayah.com/**', (route) => route.abort())
   let first = 0
   await page.route('**/data/meta.json*', async (route) => {
@@ -54,6 +54,55 @@ async function fixture(page: Page, lang = 'en', theme = 'light') {
 }
 
 test.use({ serviceWorkers: 'block' })
+
+for (const language of ['en', 'fa']) for (const theme of ['light', 'sepia', 'dark']) test(`bilingual reading keeps complete translations together: ${language}, ${theme}`, async ({ page }, testInfo) => {
+  await fixture(page, language, theme, ['fa.safavi', 'en.sahih'])
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await page.goto('/#/verse/69/9')
+  const reader = page.locator('.study-reader')
+  const pair = reader.locator('#a-9 .study-translations')
+  const persian = pair.locator('[data-language="fa"]')
+  const english = pair.locator('[data-language="en"]')
+  await expect(english.locator('.tr')).not.toBeEmpty()
+  await page.evaluate(() => document.fonts.ready)
+  const original = await pair.allTextContents()
+  const faBox = (await persian.boundingBox())!
+  const enBox = (await english.boundingBox())!
+  expect(faBox.x).toBeGreaterThan(enBox.x)
+  expect(Math.abs(faBox.y - enBox.y)).toBeLessThan(2)
+  await expect(reader.locator('.study-modes [aria-current="page"]')).toHaveText(language === 'fa' ? 'مطالعه' : 'Study')
+  await expect(reader.locator('.study-modes a')).toHaveAttribute('href', '#/ayah/69/9')
+  await page.screenshot({ path: testInfo.outputPath('reading-desktop.png') })
+  await page.setViewportSize({ width: 390, height: 844 })
+  await expect.poll(async () => (await english.boundingBox())!.y - (await persian.boundingBox())!.y).toBeGreaterThan(20)
+  expect(await pair.allTextContents()).toEqual(original)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0)
+  const toolbar = reader.locator('.study-toolbar')
+  for (const el of await toolbar.locator('a,button').all()) {
+    const box = (await el.boundingBox())!
+    expect(box.x).toBeGreaterThanOrEqual(0)
+    expect(box.x + box.width).toBeLessThanOrEqual(390)
+  }
+  await page.screenshot({ path: testInfo.outputPath('reading-mobile.png') })
+})
+
+test('a short ayah stays visible with its notes and passage tools', async ({ page }) => {
+  await fixture(page)
+  await page.goto('/#/verse/112/1')
+  const reader = page.locator('.study-reader')
+  await reader.getByRole('tab', { name: 'Tafsir', exact: true }).click()
+  await expect(reader.getByRole('tabpanel')).toContainText('An invented note for the Study canvas.')
+  const arabic = (await reader.locator('#a-1 .ar').boundingBox())!
+  const toolbar = (await reader.locator('.study-toolbar').boundingBox())!
+  expect(arabic.y).toBeGreaterThanOrEqual(toolbar.y + toolbar.height)
+  expect(arabic.y + arabic.height).toBeLessThan(500)
+  await reader.locator('.study-edition-toggle').click()
+  await expect(reader.locator('.study-edition')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(reader.locator('.study-edition')).toHaveCount(0)
+  await expect(reader.locator('.study-edition-toggle')).toBeFocused()
+  await expect(page).toHaveURL(/#\/verse\/112\/1$/)
+})
 
 for (const lang of ['en', 'fa']) for (const theme of ['light', 'sepia', 'dark']) {
   test(`a long ayah remains complete and readable: ${lang}, ${theme}`, async ({ page }) => {
@@ -92,7 +141,7 @@ for (const lang of ['en', 'fa']) for (const theme of ['light', 'sepia', 'dark'])
 }
 
 for (const lang of ['en', 'fa']) for (const theme of ['light', 'sepia', 'dark']) {
-  test(`Study companion tabs remain accessible: ${lang}, ${theme}`, async ({ page }) => {
+  test(`Study companion tabs remain accessible: ${lang}, ${theme}`, async ({ page }, testInfo) => {
     test.setTimeout(90_000)
     await fixture(page, lang, theme)
     await page.goto('/#/verse/112/1')
@@ -103,6 +152,14 @@ for (const lang of ['en', 'fa']) for (const theme of ['light', 'sepia', 'dark'])
       const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).exclude('.mushaf-host').analyze()
       expect(result.violations.map(v => `${v.id}: ${v.nodes.map(n => n.target.join(' ')).join(', ')}`)).toEqual([])
     }
+    await reader.getByRole('button', { name: lang === 'fa' ? 'تنظیمات' : 'Settings', exact: true }).click()
+    const settingsPanel = page.getByRole('dialog', { name: lang === 'fa' ? 'تنظیمات' : 'Settings', exact: true })
+    await expect(settingsPanel).toBeVisible()
+    await expect(settingsPanel.locator('.drawer-search, .drawer-modes')).toHaveCount(0)
+    expect((await settingsPanel.boundingBox())!.width).toBeLessThanOrEqual(340)
+    const settingsResult = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).exclude('.mushaf-host').analyze()
+    expect(settingsResult.violations).toEqual([])
+    await page.screenshot({ path: testInfo.outputPath('reading-settings.png') })
   })
 }
 
@@ -144,7 +201,12 @@ test('closing Study returns to the underlying Quran page and settings stays acce
   expect(await logo.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0)
   await reader.getByRole('button', { name: 'Settings', exact: true }).click()
   await expect(page.locator('.drawer')).toBeVisible()
+  await expect(page.getByRole('dialog', { name: 'Settings', exact: true })).toBeVisible()
+  await expect(page.locator('.drawer-search')).toHaveCount(0)
+  await expect(page.locator('.drawer-modes')).toHaveCount(0)
   await expect(page.getByLabel('Quran font')).toBeVisible()
+  const settingsA11y = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).exclude('.mushaf-host').analyze()
+  expect(settingsA11y.violations).toEqual([])
   await page.keyboard.press('Escape')
   await expect(page.locator('.drawer')).toHaveCount(0)
   await expect(reader.getByRole('button', { name: 'Settings', exact: true })).toBeFocused()

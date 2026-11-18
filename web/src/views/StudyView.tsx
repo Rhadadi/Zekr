@@ -11,7 +11,7 @@ import { type Meta, loadText, loadTranslation } from '../data'
 import { useAsync } from '../hooks'
 import { lang, num, surahName, t } from '../i18n'
 import { closeLayer, href } from '../router'
-import { setLastRead, settings } from '../store'
+import { isBookmarked, setLastRead, settings, toggleBookmark } from '../store'
 import { drawerOpen, openDrawer, gotoOpen } from '../ui'
 
 /** A continuous edition; listening follows ayahs without changing the text's geometry. */
@@ -26,6 +26,7 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
   const [focusMode, setFocusMode] = useState(false)
   const reader = useRef<HTMLDivElement>(null)
   const anchor = useRef<HTMLElement | null>(null)
+  const companionTarget = useRef(false)
   const layoutEpoch = useRef(0)
   const positioning = useRef(false)
   const browsing = useRef(false)
@@ -69,7 +70,7 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
       setCurrent(n)
       setLastRead(surahId, n)
     }
-    if (data.value) moveTo(anchor.current ? `companion-${n}` : `a-${n}`)
+    if (data.value) moveTo(anchor.current && companionTarget.current ? `companion-${n}` : `a-${n}`)
   }, [data.value, surahId, ayah, s.arabicSize, s.trSize, s.quranFont, s.theme, lang.value, drawerOpen.value])
   useEffect(() => {
     const layer = reader.current?.closest<HTMLElement>('.layer')
@@ -110,7 +111,7 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
   }, [playing, following, s.autoScroll])
   useEffect(() => {
     const resize = () => {
-      const target = anchor.current ? `companion-${current}` : `a-${current}`
+      const target = anchor.current && companionTarget.current ? `companion-${current}` : `a-${current}`
       moveTo(target)
     }
     window.addEventListener('resize', resize)
@@ -144,9 +145,12 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
   const choose = (value: StudyTab) => {
     setFollowing(false)
     anchor.current = document.getElementById(`a-${current}`)
-    setCompanionOpen(true)
+    // A short passage and its explanation can stay together; long ayahs need a return point.
+    const arabic = anchor.current?.querySelector('.study-ar')
+    companionTarget.current = (arabic?.getBoundingClientRect().height ?? 0) > window.innerHeight * .42
+    setCompanionOpen(companionTarget.current)
     setPanels(previous => ({ ...previous, [current]: value }))
-    moveTo(`companion-${current}`)
+    moveTo(companionTarget.current ? `companion-${current}` : `a-${current}`)
   }
   const resume = () => { anchor.current = null; setCompanionOpen(false); setFollowing(true); if (playing !== undefined) { setCurrent(playing); move(playing) } }
   const returnArabic = () => { anchor.current = null; setCompanionOpen(false); move(current) }
@@ -155,21 +159,18 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
     <header class="study-toolbar">
       <div class="study-toolbar-start">
         <button class="study-menu" aria-label={t('menu')} aria-haspopup="dialog" aria-expanded={drawerOpen.value} onClick={e => openDrawer(e.currentTarget)}><Icon name="list" /></button>
-        <button class="study-settings" aria-label={t('settings')} aria-haspopup="dialog" aria-expanded={drawerOpen.value} onClick={e => openDrawer(e.currentTarget)}><Icon name="settings" size={19} /><span>{t('settings')}</span></button>
-        <button class="study-focus" aria-label={focusMode ? t('studyExitFocus') : t('studyFocus')} title={`${focusMode ? t('studyExitFocus') : t('studyFocus')} · F`} aria-keyshortcuts="F" aria-pressed={focusMode} onClick={changeFocus}><Icon name="focus" size={19} /></button>
+        <button class="study-settings" aria-label={t('settings')} aria-haspopup="dialog" aria-expanded={drawerOpen.value} onClick={e => openDrawer(e.currentTarget, 'settings')}><Icon name="settings" size={19} /><span>{t('settings')}</span></button>
+        <button class="study-focus" aria-label={focusMode ? t('studyExitFocus') : t('studyFocus')} title={`${focusMode ? t('studyExitFocus') : t('studyFocus')} · F`} aria-keyshortcuts="F" aria-pressed={focusMode} onClick={changeFocus}><Icon name="focus" size={19} /><span>{t('studyFocusLabel')}</span></button>
       </div>
       <div class="study-location">
         <button class="study-prev" aria-label={t('previous')} disabled={current <= 1} onClick={() => navigate(current - 1)}><Icon name="chevron" size={17} /></button>
         <button class="study-location-pick" onClick={() => { gotoOpen.value = true }} aria-label={t('goTo')}><h1>{surahName(surah)}<span class="study-location-ayah">{num(current)} <small>/ {num(surah.ayahs)}</small></span></h1><span class="study-position-track" aria-hidden="true"><span /></span></button>
         <button aria-label={t('next')} disabled={current >= surah.ayahs} onClick={() => navigate(current + 1)}><Icon name="chevron" size={17} /></button>
       </div>
+      <nav class="study-modes" aria-label={t('readerMode')} dir={lang.value === 'fa' ? 'rtl' : 'ltr'}><a href={href.ayah(surahId, current)}>{t('navReading')}</a><span aria-current="page">{t('navStudy')}</span></nav>
       <div class="study-toolbar-end"><button class="study-brand" aria-label={`${t('appName')} · ${t('navIndex')}`} onClick={closeLayer}><span class="study-brand-symbol"><img class="study-brand-mark" src={brandMark} alt={t('appName')} /><img class="study-brand-waves" src={brandWaves} alt="" /></span><span class="study-brand-caption" lang="en" dir="ltr">AYESHENO</span></button><button class="layer-close" aria-label={t('close')} onClick={closeLayer}><Icon name="close" size={19} /></button></div>
     </header>
     <div class="study-content">
-      <div class="study-intro">
-        <button class="btn" aria-label={t('more')} aria-expanded={options} onClick={() => setOptions(!options)}><Icon name="more" size={16} /></button>
-        {options ? <><button class="btn" onClick={() => playSurah(surahId)}>{t('playSurah')}</button><TranslationAudioToggle /><StudyIntroLink meta={meta} surah={surahId} /></> : null}
-      </div>
       {data.error ? <LoadError retry={data.retry} /> : !data.value ? <Loading /> : <div class="ayahs">
         {surahId !== 1 && surahId !== 9 ? <p class="basmala" lang="ar" dir="rtl">{meta.basmala[s.script]}</p> : null}
         {Array.from({ length: surah.ayahs }, (_, i) => {
@@ -185,8 +186,10 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
         {surahId < 114 ? <a href={href.verse(surahId + 1)}>{num(surahId + 1)}. {surahName(meta.surahs[surahId]!)}</a> : null}
       </nav>
     </div>
-    <div class="study-tools-shell">
-      <span class="study-rail-title">{t('navStudy')}</span>
+    <div class="study-tools-shell" onKeyDown={e => {
+      if (e.key === 'Escape' && options) { e.stopPropagation(); setOptions(false); reader.current?.querySelector<HTMLButtonElement>('.study-edition-toggle')?.focus() }
+    }}>
+      <div class="study-rail-heading"><span>{surahName(surah)}</span><span class="study-rail-position">{num(surahId)}:{num(current)}</span></div>
       {playing !== undefined && !following ? <button class="study-follow" onClick={resume}>{t('studyFollow')}</button> : companionOpen ? <button class="study-follow" onClick={returnArabic}>{t('studyReturnArabic')}</button> : null}
       <div class="study-tabs study-tools" role="tablist" aria-label={t('reading')}>
         {tabs.map(([value, label], i) => <button key={value} id={`study-tab-${value}`} role="tab" aria-selected={tab === value} aria-controls={`companion-${current}`} tabIndex={tab === value ? 0 : -1} onClick={() => choose(value)} onKeyDown={e => {
@@ -201,10 +204,15 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
           e.preventDefault(); choose(tabs[next]![0]); document.getElementById(`study-tab-${tabs[next]![0]}`)?.focus()
         }}>{label}</button>)}
       </div>
+      <div class="study-passage-actions">
       {playing !== current ? <button class="study-listen" aria-label={t('playFromHere')} onClick={e => {
         playFrom(surah.first + current - 1)
         if (e.detail === 0) requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.player-controls .big')?.focus({ preventScroll: true }))
       }}><span><Icon name="play" size={17} /></span><small>{t('studyListen')}</small></button> : null}
+      <button class="study-save" aria-label={isBookmarked(surah.first + current - 1) ? t('unbookmark') : t('bookmark')} title={isBookmarked(surah.first + current - 1) ? t('unbookmark') : t('bookmark')} aria-pressed={isBookmarked(surah.first + current - 1)} onClick={() => toggleBookmark(surah.first + current - 1)}><Icon name="bookmark" size={18} /></button>
+      <button class="study-edition-toggle" aria-label={t('more')} title={t('more')} aria-expanded={options} aria-controls="study-edition" onClick={() => setOptions(!options)}><Icon name="more" size={18} /></button>
+      </div>
+      {options ? <div class="study-edition" id="study-edition"><StudyIntroLink meta={meta} surah={surahId} /><button onClick={() => playSurah(surahId)}><Icon name="play" size={16} />{t('playSurah')}</button><TranslationAudioToggle /></div> : null}
     </div>
   </div>
 }

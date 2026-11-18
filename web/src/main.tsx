@@ -7,6 +7,7 @@ import { quranFontStack } from './fonts'
 import { lang } from './i18n'
 import { settings } from './store'
 import './styles.css'
+import './study.css'
 
 // Keep <html> in step with the settings: theme, Quran font, language and text direction.
 effect(() => {

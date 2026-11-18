@@ -34,12 +34,12 @@ export function StudyVerse({ meta, surah, n, ar, translations, active, tab, play
       {meta.studyQuran ? <StudyChips meta={meta} ayahID={id} /> : null}
     </div> : null}
     <div class="study-companion" id={`companion-${n}`} role={active ? 'tabpanel' : undefined} aria-labelledby={active ? `study-tab-${mode}` : undefined} tabIndex={active ? 0 : undefined}>
-      {mode === 'translation' ? <>
-        {translations.length ? translations.map(x => <div class="study-translation" key={x.info.id}>
-          {translations.length > 1 ? <p class="tr-label">{x.info.name}</p> : null}
+      {mode === 'translation' ? <div class="study-translations" data-count={translations.length}>
+        {translations.length ? translations.map(x => <div class="study-translation" key={x.info.id} data-language={x.info.lang} role="group" aria-label={x.info.name} title={x.info.name}>
+          {translations.filter(y => y.info.lang === x.info.lang).length > 1 ? <p class="tr-label" lang={x.info.lang} dir={x.info.dir}>{x.info.name}</p> : null}
           <p class={`tr${x.text ? '' : ' merged'}`} lang={x.info.lang} dir={x.info.dir}>{x.text || t('mergedTranslation')}</p>
         </div>) : <p class="study-empty">{t('studyNoTranslations')}</p>}
-      </> : mode === 'tafsir' ? <div class="study-companion-body">
+      </div> : mode === 'tafsir' ? <div class="study-companion-body">
         {meta.studyQuran ? <StudyInline meta={meta} ayahID={id} /> : <p>{t('tafsirMissing')}</p>}
         {tafsirIndex.value ? <a class="study-source-link" href={href.tafsir(surah, n)}>{t('almizan')}</a> : null}
       </div> : <div class="study-companion-body">

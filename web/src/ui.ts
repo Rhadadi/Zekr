@@ -2,9 +2,11 @@ import { signal } from '@preact/signals'
 
 /** Whether the navigation drawer is open. */
 export const drawerOpen = signal(false)
+export const drawerSection = signal<'menu' | 'settings'>('menu')
 let drawerOpener: HTMLElement | null = null
-export function openDrawer(from: HTMLElement) {
+export function openDrawer(from: HTMLElement, section: 'menu' | 'settings' = 'menu') {
   drawerOpener = from
+  drawerSection.value = section
   drawerOpen.value = true
 }
 export function takeDrawerOpener() {

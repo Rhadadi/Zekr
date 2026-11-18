@@ -4,7 +4,7 @@ import { t } from '../i18n'
 import { type LayerName, href, mushafAt } from '../router'
 import { lastRead } from '../store'
 import { useDocked } from '../hooks'
-import { dockOpen, drawerOpen, gotoOpen, pageOptionsAsked, setDock, takeDrawerOpener } from '../ui'
+import { dockOpen, drawerOpen, drawerSection, gotoOpen, pageOptionsAsked, setDock, takeDrawerOpener } from '../ui'
 import { Logo } from './AppBar'
 import { Icon } from './Icon'
 import { MenuSettings } from './MenuSettings'
@@ -27,6 +27,7 @@ export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active
   // in a wide window the menu is a panel docked beside the page instead: not modal, the page stays in use beside it
   const docked = useDocked()
   const dockShown = docked && dockOpen.value
+  const settingsOnly = open && !dockShown && drawerSection.value === 'settings'
   useEffect(() => {
     document.documentElement.toggleAttribute('data-dock', dockShown)
     return () => document.documentElement.removeAttribute('data-dock')
@@ -108,6 +109,7 @@ export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active
     )
     return (
       <div class="drawer-body">
+        {settingsOnly ? <h2 class="drawer-section-title">{t('settings')}</h2> : <>
         <nav class="drawer-modes" aria-label={t('readerMode')}>
           <a href={readingHref} aria-label={t('navReading')} aria-current={onMushaf ? 'page' : undefined} onClick={nav ? e => nav(e, readingHref) : undefined}>
             <Icon name="book" size={20} /><strong>{t('navReading')}</strong>
@@ -138,6 +140,7 @@ export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active
             </button>
           ) : null}
         </nav>
+        </>}
         {meta ? <MenuSettings meta={meta} study={active === 'study'} /> : null}
       </div>
     )
@@ -167,7 +170,7 @@ export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active
     <div class="drawer-wrap">
       <div class="drawer-backdrop" onClick={close} />
       <aside
-        class="drawer" ref={panel} role="dialog" aria-modal="true" aria-label={t('menu')}
+        class="drawer" ref={panel} role="dialog" aria-modal="true" aria-label={settingsOnly ? t('settings') : t('menu')}
         // a link further down (About, in the settings) leaves the menu as the ones above do
         onClick={(e) => {
           const a = (e.target as Element).closest<HTMLAnchorElement>('.drawer-body a[href^="#"]')
