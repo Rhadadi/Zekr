@@ -130,6 +130,20 @@ test('saved commentary loading above the passage keeps the selected ayah in plac
   await expect.poll(() => current.evaluate(el => el.getBoundingClientRect().top)).toBeGreaterThanOrEqual(100)
 })
 
+test('the study header keeps controls separate on a small tablet', async ({ page }) => {
+  for (const language of ['en', 'fa']) {
+    await fixture(page, language)
+    await page.setViewportSize({ width: 768, height: 1024 })
+    await page.goto('/#/verse/69/9')
+    const controls = await page.locator('.study-toolbar button, .study-toolbar a').all()
+    const boxes = await Promise.all(controls.map(control => control.boundingBox()))
+    for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+      const a = boxes[i]!, b = boxes[j]!
+      expect(Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x) <= 1 || Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y) <= 1).toBe(true)
+    }
+  }
+})
+
 for (const language of ['en', 'fa']) for (const theme of ['light', 'sepia', 'dark']) test(`bilingual reading keeps complete translations together: ${language}, ${theme}`, async ({ page }, testInfo) => {
   await fixture(page, language, theme, ['fa.safavi', 'en.sahih'])
   await page.setViewportSize({ width: 1280, height: 800 })
