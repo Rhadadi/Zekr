@@ -8,19 +8,22 @@ import { lang, t } from '../i18n'
 import { href } from '../router'
 import { type PageColor, type TranslationPlace, pickFont, settings, updateSettings } from '../store'
 
-/** The translations to show, Persian then English, each a checkbox. */
-export function TranslationChecks({ meta, compact = false }: { meta: Meta; compact?: boolean }) {
+/** The translations to show, Persian then English: a pill for each, on or off (a checkbox inside, for screen readers).
+ * The translator's full name is the pill's tooltip. */
+export function TranslationChecks({ meta }: { meta: Meta }) {
   const s = settings.value
   const toggle = (id: string, on: boolean) => updateSettings({ translations: on ? [...s.translations, id] : s.translations.filter((x) => x !== id) })
   const group = (code: 'fa' | 'en', title: string) => (
     <fieldset class="checks">
       <legend>{title}</legend>
-      {meta.translations.filter((x) => x.lang === code).map((x) => (
-        <label class="field row" key={x.id}>
-          <input type="checkbox" checked={s.translations.includes(x.id)} onChange={(e) => toggle(x.id, e.currentTarget.checked)} />
-          <span>{x.name}{!compact && x.translator && x.translator !== x.name ? <span class="muted small"> · {x.translator}</span> : null}</span>
-        </label>
-      ))}
+      <div class="chips">
+        {meta.translations.filter((x) => x.lang === code).map((x) => (
+          <label class="chip" key={x.id} title={x.translator && x.translator !== x.name ? x.translator : undefined}>
+            <input type="checkbox" checked={s.translations.includes(x.id)} onChange={(e) => toggle(x.id, e.currentTarget.checked)} />
+            <span>{x.name}</span>
+          </label>
+        ))}
+      </div>
     </fieldset>
   )
   return <>{group('fa', t('persian'))}{group('en', t('english'))}</>

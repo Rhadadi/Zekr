@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'preact/hooks'
 import { initAudio } from './audio'
-import { AppBar } from './components/AppBar'
+import { AppBar, Logo } from './components/AppBar'
 import { Drawer } from './components/Drawer'
 import { GoTo } from './components/GoTo'
 import { Icon } from './components/Icon'
@@ -90,7 +90,11 @@ function LayerFrame({ title, sub, study = false, children }: { title: string; su
     <div class={`layer${study ? ' study-layer' : ''}`} ref={root} tabIndex={-1}>
       {!study ? <AppBar
         sticky
-        start={<button class="icon-btn layer-close" onClick={closeLayer} aria-label={t('close')}><Icon name="close" size={22} /></button>}
+        // the name, as on the mushaf and in Study (it, too, goes back to the mushaf), then Close at the outer edge
+        start={<div class="layer-end">
+          <button class="layer-logo" onClick={closeLayer} aria-label={t('appName')}><Logo /></button>
+          <button class="icon-btn layer-close" onClick={closeLayer} aria-label={t('close')}><Icon name="close" size={22} /></button>
+        </div>}
         centre={<div class="appbar-title"><h1>{title}</h1>{sub ? <p>{sub}</p> : null}</div>}
       /> : null}
       <div class={study ? 'layer-inner study-layer-inner' : 'layer-inner'}>{children}</div>

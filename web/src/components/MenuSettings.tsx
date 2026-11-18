@@ -117,7 +117,7 @@ export function MenuSettings({ meta, study = false }: { meta: Meta; study?: bool
         </label>
         <Stepper label={t('arabicSize')} value={s.arabicSize} min={22} max={52} set={(v) => updateSettings({ arabicSize: v })} />
       </Section>
-      <Section id="translations" title={t('translations')}><TranslationChecks meta={meta} compact /></Section>
+      <Section id="translations" title={t('translations')}><TranslationChecks meta={meta} /></Section>
       <Section id="recitation" title={t('recitation')}><PlaybackOptions /></Section>
       <Section id="offline" title={t('offline')}><OfflineDownload /></Section>
       {NEWSLETTER.address ? <Section id="newsletter" title={t('nlTitle')}><NewsletterSignup /></Section> : null}
