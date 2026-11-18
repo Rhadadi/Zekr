@@ -34,8 +34,16 @@ function fit(root: HTMLElement, base: number) {
       natural = text.getBoundingClientRect().width
       if (natural * base / 20 <= width - 1) break
     }
-    const size = natural ? Math.min(base, (width - 1) * 20 / natural) : base
-    row.style.fontSize = `${Math.max(1, Math.floor(size * 100) / 100)}px`
+    let size = natural ? Math.min(base, (width - 2) * 20 / natural) : base
+    const apply = () => { row.style.fontSize = `${Math.max(1, Math.floor(size * 100) / 100)}px` }
+    apply()
+    // Hinting and fallback fonts can change advances nonlinearly at small sizes, especially across platforms.
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const actual = text.getBoundingClientRect().width
+      if (actual <= width - .5) break
+      size *= (width - 2) / actual
+      apply()
+    }
     row.dataset.small = String(size < 12)
   }
 }

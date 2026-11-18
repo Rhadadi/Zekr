@@ -602,16 +602,19 @@ test.describe('what plays, and seeing it', () => {
     await expect(page.locator('.player')).toContainText('17:25')
   })
 
-  test('the player bar takes you to the ayah being recited', async ({ page }) => {
+  for (const width of [390, 1280]) test(`the player takes you to the ayah being recited: ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 })
     await trackAudio(page)
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/today')
     await page.getByTestId('daily-card').getByRole('button', { name: 'Play this ayah' }).click()
     const id = await page.getByTestId('daily-card').getAttribute('data-ayah-id')
-    await page.getByRole('link', { name: /Go to the ayah being recited/ }).click()
+    if (width === 390) await page.locator('.player').getByRole('button', { name: 'Recitation', exact: true }).click()
+    const controls = width === 390 ? page.getByRole('dialog', { name: 'Recitation', exact: true }) : page.locator('.player')
+    await controls.getByRole('link', { name: /Go to the ayah being recited/ }).click()
     await expect(page).toHaveURL(/#\/ayah\/\d+\/\d+$/)
     await expect(page.locator('.layer')).toHaveCount(0) // the Today layer closed: the mushaf is under it, at that ayah
-    await expect(page.locator(`.ay[data-id="${id}"]`)).toHaveClass(/playing|sel/)
+    await expect(page.locator(`.ay[data-id="${id}"]:is(.playing,.sel)`)).toHaveCount(1)
   })
 
   test('home shows only the ayah of the day and where you left off', async ({ page }) => {
@@ -1503,10 +1506,11 @@ test.describe('The printed mushaf as pictures (private build, made-up pictures h
     await expect(pg.locator('.il-mark')).toHaveCount(11)
     await expect(pg.locator('.il-mark svg')).toHaveCount(0)
     await page.evaluate(() => document.fonts.ready)
-    await expect.poll(() => pg.locator('.il-tr:not(.il-under) .il-p').evaluateAll(rows => rows.every(row => {
-      const text = row.querySelector('.il-t')!
-      return text.getBoundingClientRect().width <= row.clientWidth + 1 && getComputedStyle(row).whiteSpace === 'nowrap'
-    }))).toBe(true)
+    await expect(pg.locator('.il-p').first()).toHaveCSS('white-space', 'nowrap')
+    await expect.poll(() => pg.locator('.il-tr:not(.il-under) .il-p').evaluateAll(rows => {
+      const differences = rows.map(row => row.querySelector('.il-t')!.getBoundingClientRect().width - row.clientWidth)
+      return Math.max(...differences)
+    })).toBeLessThanOrEqual(1)
     await page.setViewportSize({ width: 1280, height: 800 })
     await expect.poll(() => pg.locator('.il-tr:not(.il-under) .il-p').evaluateAll(rows => rows.every(row => row.querySelector('.il-t')!.getBoundingClientRect().width <= row.clientWidth + 1))).toBe(true)
     await page.setViewportSize({ width: 390, height: 844 })

@@ -49,11 +49,14 @@ export function PlayerBar({ meta, study = false }: { meta: Meta; study?: boolean
   const playing = p.status === 'playing' || p.status === 'loading'
   const entry = p.commentary
   const label = t(entry ? 'commentaryAudio' : 'recitation')
+  const destination = entry ? href.commentary(surah, ayah) : study ? href.verse(surah, ayah) : href.ayah(surah, ayah)
+  const destinationLabel = `${entry ? label : t('nowReciting')}: ${ayahRef(meta.surahs[surah - 1]!, ayah)}`
+  const compactInfo = (inBar || onTop) && p.status !== 'error'
   const time = (n: number) => `${Math.floor(n / 60)}:${String(Math.floor(n % 60)).padStart(2, '0')}`
   return (
     <>
       <div class={`player${entry ? ' has-commentary' : ''}${inBar ? ' in-bar' : ''}${onTop ? ' on-top' : ''}`} ref={bar} role="region" aria-label={label} data-status={p.status}>
-        <a class="player-info" href={entry ? href.commentary(surah, ayah) : study ? href.verse(surah, ayah) : href.ayah(surah, ayah)} aria-label={`${entry ? label : t('nowReciting')}: ${ayahRef(meta.surahs[surah - 1]!, ayah)}`}>
+        <a class="player-info" href={destination} aria-label={destinationLabel} aria-hidden={compactInfo || undefined} tabIndex={compactInfo ? -1 : undefined}>
           <strong>{surahName(meta.surahs[surah - 1]!)} {num(surah)}:{num(ayah)}</strong>
           {p.status === 'error' || p.phase !== 'ayah' || entry ? (
             <span class="muted small">{p.status === 'error' ? t('audioError') : entry ? `${label} · ${entry.audio!.voice}` : p.phase === 'translation' ? t('audioTranslation') : 'بسم الله'}</span>
@@ -87,6 +90,7 @@ export function PlayerBar({ meta, study = false }: { meta: Meta; study?: boolean
               <button class="icon-btn" onClick={() => setOpen(false)} aria-label={t('close')}><Icon name="close" /></button>
             </div>
             <div class="player-sheet-row">
+              {inBar || onTop ? <a class="btn" href={destination} aria-label={destinationLabel} onClick={() => setOpen(false)}><Icon name="goto" size={18} />{ayahRef(meta.surahs[surah - 1]!, ayah)}</a> : null}
               {!entry ? <TranslationAudioToggle /> : null}
               <button class="btn" onClick={() => { setOpen(false); stop() }}><Icon name="close" size={18} /> {t(entry ? 'stop' : 'stopRecitation')}</button>
             </div>
