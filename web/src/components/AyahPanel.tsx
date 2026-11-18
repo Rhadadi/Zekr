@@ -226,6 +226,11 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
               onOpen={inlineStudy ? (entry) => setStudy(study === entry ? false : entry) : undefined} />
           : null}
         {inlineStudy && study ? <StudyInline meta={meta} ayahID={id} only={typeof study === 'string' ? study : null} /> : null}
+        {classicsIndex.value ? (
+          <div class="study-chips">
+            <a class="study-chip" href={href.classic(surah, ayah)}><Icon name="book" size={16} /> {t('classics')}</a>
+          </div>
+        ) : null}
       </div>
       )}
     </div>

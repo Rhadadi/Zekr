@@ -29,32 +29,32 @@ async function serveClassics(page: Page) {
 }
 
 test.describe('classical tafsirs (made-up books)', () => {
-  test('an ayah has a tab for each book that has something on its surah, and the text, in its own direction', async ({ page }) => {
+  test('an ayah has a list of the books that have something on its surah, and the text, in its own direction', async ({ page }) => {
     await serveClassics(page)
     await page.addInitScript(() => { localStorage.setItem('zekr.settings', JSON.stringify({ lang: 'en' })); localStorage.setItem('zekr.inlineDefault', 'true') })
     await page.goto('/#/classic/1/1')
-    const tabs = page.getByRole('tab')
-    await expect(tabs).toHaveText(['Made-up commentary', 'Made-up English notes'])
-    await expect(page.getByRole('tab', { name: 'Made-up commentary' })).toHaveAttribute('aria-selected', 'true')
-    const panel = page.getByRole('tabpanel')
+    const pick = page.getByRole('combobox', { name: 'Commentary (2 books)' })
+    await expect(pick.locator('option')).toHaveText(['Made-up commentary', 'Made-up English notes'])
+    await expect(pick).toHaveValue('demo')
+    const panel = page.locator('article.classic')
     await expect(panel).toContainText('نص ساختگي للآية الأولى.')
     await expect(panel.locator('p.tf-p')).toHaveCount(2) // a line break in the book is a paragraph
     await expect(panel).toHaveAttribute('dir', 'rtl')
-    await page.getByRole('tab', { name: 'Made-up English notes' }).click()
-    await expect(page.getByRole('tabpanel')).toContainText('Made-up note on the first ayah.')
-    await expect(page.getByRole('tabpanel')).toHaveAttribute('dir', 'ltr')
+    await pick.selectOption({ label: 'Made-up English notes' })
+    await expect(panel).toContainText('Made-up note on the first ayah.')
+    await expect(panel).toHaveAttribute('dir', 'ltr')
     // the choice of book is kept for the next ayah
     await page.goto('/#/classic/1/2')
-    await expect(page.getByRole('tab', { name: 'Made-up English notes' })).toHaveAttribute('aria-selected', 'true')
-    await expect(page.getByRole('tabpanel')).toContainText('This book has nothing on this ayah.')
+    await expect(pick.locator('option:checked')).toHaveText('Made-up English notes')
+    await expect(panel).toContainText('This book has nothing on this ayah.')
   })
 
   test('ayahs the author discusses together show the same text, and a book that is not served says so', async ({ page }) => {
     await serveClassics(page)
     await page.addInitScript(() => { localStorage.setItem('zekr.settings', JSON.stringify({ lang: 'fa' })); localStorage.setItem('zekr.classicBook', 'demo') })
     await page.goto('/#/classic/1/3')
-    await expect(page.getByRole('tabpanel')).toContainText('نص ساختگي للآيتين معا.')
-    await expect(page.getByRole('tab', { name: 'تفسیر ساختگی' })).toBeVisible() // names in the app's language
+    await expect(page.locator('article.classic')).toContainText('نص ساختگي للآيتين معا.')
+    await expect(page.getByRole('combobox').locator('option:checked')).toHaveText('تفسیر ساختگی') // names in the app's language
   })
 
   test('without the data the page says that this version does not have them', async ({ page }) => {
@@ -68,13 +68,15 @@ test.describe('classical tafsirs (made-up books)', () => {
     await expect(page.getByText('This version of the site does not include the classical tafsirs.')).toBeVisible()
   })
 
-  test('the ayah panel links to them', async ({ page }) => {
+  test('the ayah panel links to them, in plain sight on a phone', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
     await serveClassics(page)
     await page.addInitScript(() => { localStorage.setItem('zekr.settings', JSON.stringify({ lang: 'en', translationPlace: 'panel' })); localStorage.setItem('zekr.inlineDefault', 'true') })
     await page.goto('/#/page/1')
     await page.locator('#page-1 .ay').nth(2).click()
     const panel = page.getByTestId('ayah-panel')
+    await expect(panel.locator('.study-chip', { hasText: 'Classical tafsirs' })).toHaveAttribute('href', '#/classic/1/3')
     await panel.getByRole('button', { name: 'More', exact: true }).click()
-    await expect(panel.getByRole('link', { name: 'Classical tafsirs' })).toHaveAttribute('href', '#/classic/1/3')
+    await expect(panel.locator('.ayah-more').getByRole('link', { name: 'Classical tafsirs' })).toHaveAttribute('href', '#/classic/1/3')
   })
 })

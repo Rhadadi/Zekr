@@ -431,9 +431,8 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .tf-t { font-size: 1em; margin: 14px 0 2px; scroll-margin-top: 70px; }
 .tf-p { margin: 0 0 10px; text-align: justify; }
 /* the classical tafsirs: a tab for each book (the ayah panel's tabs), then the text, long paragraphs as the books have them */
-.classic-tabs { display: flex; gap: 4px; margin: 0 0 10px; overflow-x: auto; border-bottom: 1px solid var(--line); scrollbar-width: none; }
-.classic-tabs button { flex: none; min-height: 44px; padding: 0 12px; white-space: nowrap; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; background: none; color: var(--muted); font: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
-.classic-tabs button[aria-selected='true'] { color: var(--ink); border-bottom-color: var(--accent); }
+.classic-pick { margin: 0 0 14px; }
+.classic-pick select { font-weight: 600; }
 .classic-author { text-align: center; margin: -6px 0 14px; }
 .classic .tf-p { text-align: start; overflow-wrap: anywhere; }
 .classic[lang='ar'] { line-height: 2.1; }
