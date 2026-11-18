@@ -6,7 +6,7 @@ import { useAsync } from '../hooks'
 import { ayahRef, num, t } from '../i18n'
 import { href } from '../router'
 import { ayahLink, ayahText, copyText, shareText } from '../share'
-import { isBookmarked, toggleBookmark } from '../store'
+import { isBookmarked, settings, toggleBookmark } from '../store'
 import { sheetOpen } from '../ui'
 import { tafsirIndex } from '../tafsir'
 import { Icon } from './Icon'
@@ -154,7 +154,7 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
                   const first = run.texts(i)[0]
                   return (
                     <div key={i} class={`run-ay${i === run.playing ? ' playing' : ''}`} data-id={i}>
-                      <button type="button" class="run-pick" lang={first?.info.lang} dir={first?.info.dir} onClick={() => run.onPick(i)}>
+                      <button type="button" class="run-pick" lang={first?.info.lang} dir={first?.info.dir} style={{ fontSize: settings.value.trSize }} onClick={() => run.onPick(i)}>
                         {first?.text || t('mergedTranslation')} <span class="run-n">{num(n)}</span>
                       </button>
                     </div>
@@ -165,7 +165,7 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
                     {translations.map((x, k) => (
                       <div class="tr-block" key={x.info.id}>
                         {translations.length > 1 ? <p class="tr-label">{x.info.name}</p> : null}
-                        <p class={`tr${x.text ? '' : ' merged'}`} lang={x.info.lang} dir={x.info.dir}>
+                        <p class={`tr${x.text ? '' : ' merged'}`} lang={x.info.lang} dir={x.info.dir} style={{ fontSize: settings.value.trSize }}>
                           {texts[k]}{k === 0 ? <span class="run-n"> {num(n)}</span> : null}
                         </p>
                       </div>
@@ -207,7 +207,7 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
         {showTr ? translations.map((x, i) => (
           <div class="tr-block" key={x.info.id}>
             {translations.length > 1 ? <p class="tr-label">{x.info.name}</p> : null}
-            <p class={`tr${x.text ? '' : ' merged'}`} lang={x.info.lang} dir={x.info.dir}>
+            <p class={`tr${x.text ? '' : ' merged'}`} lang={x.info.lang} dir={x.info.dir} style={{ fontSize: settings.value.trSize }}>
               {texts[i]}
             </p>
           </div>

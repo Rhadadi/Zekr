@@ -5,6 +5,7 @@
 @font-face { font-family: 'Zekr Me Quran'; src: url('/fonts/me-quran.woff2') format('woff2'); font-display: swap; size-adjust: 85%; }
 @font-face { font-family: 'Zekr Scheherazade'; src: url('/fonts/scheherazade-new.woff2') format('woff2'); font-display: swap; size-adjust: 92%; }
 @font-face { font-family: 'Zekr Amiri'; src: url('/fonts/amiri-quran.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Zekr Translation'; src: url('/fonts/noto-sans-arabic-variable.ttf') format('truetype'); font-weight: 100 900; font-stretch: 62.5% 100%; font-display: swap; }
 
 /* Themes: light (default), sepia, dark. data-theme="auto" follows the system. */
 :root {
@@ -489,7 +490,7 @@ a.player-info { color: var(--ink); text-decoration: none; }
   .run-pick { display: block; width: 100%; padding: 0; border: 0; background: none; color: var(--ink); font: inherit; font-size: 1rem; line-height: 1.85; text-align: start; cursor: pointer; }
   .run-pick[dir='rtl'] { text-align: right; }
   .run-pick:hover { color: var(--accent); }
-  .run-ay.sel { margin-inline: -10px; padding-inline: 10px; border-radius: 10px; background: var(--hl); border-bottom-color: transparent; }
+  .run-ay.sel { margin-inline: -10px; padding-inline: 10px; border-radius: 6px; background: color-mix(in srgb, var(--accent) 8%, transparent); border-bottom-color: transparent; }
   .run-ay.playing .run-pick { color: var(--accent); }
   .run-n { color: var(--gold); font-size: 0.8em; white-space: nowrap; }
   .run-ay .tr-block:first-child { margin-top: 0; }
@@ -774,7 +775,7 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .il .seg { position: absolute; display: block; cursor: pointer; border-radius: 5px; padding: 0; scroll-margin: calc(var(--bar-h) + 40px) 0 calc(var(--sheet-h, 0px) + 40px); }
 .il .seg.ay:not(.sel):not(.playing) { background: none; }
 /* The box under a line: the frame stretched down its sides, a plain light box inside it */
-.il-tr { position: relative; overflow: hidden; padding: 1px 11.5% 3px; color: #262624; font-family: var(--font-ui); }
+.il-tr { position: relative; overflow: hidden; padding: 1px 10.65% 3px; color: #262624; font-family: var(--font-ui); }
 .mushaf-flow { --il-paper: #eaf7fc; --il-rule: #d8e8ef; }
 .mushaf-flow[data-color='green'] { --il-paper: #edf9ee; --il-rule: #dbeadd; }
 .mushaf-flow[data-color='purple'] { --il-paper: #f1edfc; --il-rule: #e2dcef; }
@@ -785,7 +786,12 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .il-p { position: relative; margin: 0; font-size: 14px; font-weight: 500; line-height: 1.45; text-align: justify; text-align-last: start; overflow-wrap: anywhere; }
 .il-p.measuring .il-t { white-space: nowrap; }
 .il-p .ay { cursor: pointer; background: none; } /* the Arabic above shows which ayah is chosen or recited */
-.il-mark { white-space: nowrap; }
+.il-tr:not(.il-under) .il-p { font-family: 'Zekr Translation', var(--font-ui); white-space: nowrap; overflow-wrap: normal; text-align: start; min-height: 1.5em; line-height: 1.5; word-spacing: -.02em; }
+.il-tr:not(.il-under) .il-t { display: inline-block; white-space: nowrap; vertical-align: top; }
+.il-p .ay { padding: 0; border-radius: 0; }
+.il-mark { white-space: nowrap; font-size: .72em; font-weight: 500; padding-inline: .05em; }
+.il-measure { position: absolute; inset-inline-start: -100000px; top: 0; visibility: hidden; pointer-events: none; white-space: pre; font: 500 20px 'Zekr Translation', var(--font-ui); font-stretch: 75%; word-spacing: -.02em; }
+.il-measure > span { display: inline-block; white-space: pre; }
 .mushaf-flow[data-color='dark'] .mpage.il { background: #111; }
 .mushaf-flow[data-color='dark'] .il-tr { color: #e8e6df; }
 .mushaf-flow[data-color='dark'] :is(.il-paper, .il-under) { background: #102029; border-color: #23363d; }

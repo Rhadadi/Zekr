@@ -1,11 +1,10 @@
 import { Fragment } from 'preact'
 import { memo } from 'preact/compat'
-import { useLayoutEffect, useMemo, useRef } from 'preact/hooks'
+import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { type Meta, type MushafPageMap, loadPageLines, locate, mushafImage, PAGE_TRIM } from '../data'
 import { useAsync } from '../hooks'
 import { num, t } from '../i18n'
-import { VerseNo } from './VerseNo'
-import { type Piece, bandPaper, lineTranslations, pageInk, pageStrips } from '../interlinear'
+import { type Piece, type Strip, balanceTranslationRows, translationWords, bandPaper, lineTranslations, pageInk, pageStrips } from '../interlinear'
 import { FontLine, hafsReady, layoutLines, textBands, useFontLinesFit } from './FontLines'
 
 interface Props {
@@ -21,54 +20,36 @@ interface Props {
   onJump: () => void
 }
 
-const marker = (n: number) => <VerseNo n={num(n)} />
-
-/** Make the translation under each line end at the margin, like the Arabic line above it: at the preferred size,
- * condensed or expanded by a few percent (too little to notice, so a page reads at one size) when that makes its last
- * line full, and justified. A line whose translation cannot be fitted that way keeps a short last line. */
+/** Use the font's designed width axis before reducing type size. Every row remains one complete line. */
 function fit(root: HTMLElement, base: number) {
   for (const row of root.querySelectorAll<HTMLElement>('.il-tr:not(.il-under) .il-p')) {
     const text = row.querySelector<HTMLElement>('.il-t')
     if (!text) continue
-    row.style.fontSize = '20px'
-    row.classList.add('measuring')
-    const natural = text.getBoundingClientRect().width // all of it on one line, at 20px
-    row.classList.remove('measuring')
     const width = row.clientWidth
-    if (!natural || !width) continue
-    const n = (natural * base) / 20 / width // lines it takes at the preferred size
-    const shrink = (Math.floor(n) / n) * 0.975
-    const grow = (Math.ceil(n) / n) * 0.975
-    let size = base
-    let fills = n - Math.floor(n) >= 0.7 // a nearly full last line can be justified as it is
-    if (n >= 1 && shrink >= 0.93) {
-      size = base * shrink
-      fills = true
-    } else if (grow <= 1.07) {
-      size = base * grow
-      fills = true
+    if (!width) continue
+    row.style.fontSize = '20px'
+    let natural = 0
+    for (const stretch of [100, 87.5, 75, 62.5]) {
+      row.style.fontStretch = `${stretch}%`
+      natural = text.getBoundingClientRect().width
+      if (natural * base / 20 <= width - 1) break
     }
-    row.style.fontSize = `${size.toFixed(2)}px`
-    row.classList.toggle('fills', fills)
-    // word wrapping can push a word onto an extra line: shrink a touch until it is back
-    const lines = Math.max(1, Math.round((n * base) / size))
-    for (let k = 0; fills && k < 4 && row.getBoundingClientRect().height > lines * size * 1.45 + size * 0.6; k++) {
-      size *= 0.98
-      row.style.fontSize = `${size.toFixed(2)}px`
-    }
+    const size = natural ? Math.min(base, (width - 1) * 20 / natural) : base
+    row.style.fontSize = `${Math.max(1, Math.floor(size * 100) / 100)}px`
+    row.dataset.small = String(size < 12)
   }
 }
 
-/** A printed page with the translation under each of its lines. The picture is cut into its lines (and the banners and
- * basmala between them); under each line is a box inside its frame, where each ayah's share of the
- * translation sits under its Arabic, and where an ayah ends its number comes under the Arabic one. Tap the Arabic or the
- * translation of an ayah to open it. */
+/** Printed Arabic with one continuous translation line between rows. Text can borrow neighbouring rows within
+ * a surah; each piece keeps its ayah identity, so tapping opens the complete translation at reading size. */
 export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, highlight, kind, tr, font = false, onJump }: Props) {
   const n = pg.n
   const src = mushafImage(meta, n)
   const ink = useAsync(() => pageInk(src), [src]).value
   const strips = useMemo(() => pageStrips(pg, ink), [pg, ink])
   const pieces = useMemo(() => lineTranslations(pg, strips, tr.texts), [pg, strips, tr.texts])
+  const [reflow, setReflow] = useState<{ source: typeof pieces; rows: typeof pieces }>()
+  const shown = reflow?.source === pieces ? reflow.rows : pieces
   const root = useRef<HTMLElement>(null)
   const ratio = pg.h / pg.w
   // in a font: each line's words over that line of the picture (not the opening pages, nor a page whose lines do not match)
@@ -84,13 +65,56 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
   useLayoutEffect(() => {
     const el = root.current
     if (!el) return
-    const run = () => fit(el, tr.size)
+    let disposed = false
+    let lastWidth = -1
+    const balance = () => {
+      if (disposed) return
+      const width = el.clientWidth
+      if (!width || width === lastWidth) return
+      lastWidth = width
+      const next = new Map<Strip, Piece[]>()
+      let block: Strip[] = []
+      const flush = () => {
+        if (!block.length) return
+        const rows = block.map(strip => pieces.get(strip) ?? [])
+        const probe = document.createElement('span')
+        probe.className = 'il-measure'
+        probe.setAttribute('aria-hidden', 'true')
+        const tokens = translationWords(rows)
+        for (const token of tokens) {
+          const span = document.createElement('span')
+          span.textContent = `${token.text}${token.ends ? ` ${num(locate(meta, token.id).ayah)}` : ''} `
+          probe.append(span)
+        }
+        el.append(probe)
+        const widths = Array.from(probe.children, child => child.getBoundingClientRect().width)
+        probe.remove()
+        balanceTranslationRows(rows, widths).forEach((row, i) => next.set(block[i]!, row))
+        block = []
+      }
+      for (const strip of strips) { if (strip.line) block.push(strip); else flush() }
+      flush()
+      setReflow({ source: pieces, rows: next })
+    }
+    // Measure the actual Persian glyphs, rather than estimating width from character counts.
+    const fontReady = () => { lastWidth = -1; balance() }
+    void document.fonts.load('500 20px "Zekr Translation"').then(fontReady, fontReady)
+    const observer = new ResizeObserver(balance)
+    observer.observe(el)
+    return () => { disposed = true; observer.disconnect() }
+  }, [pieces])
+
+  useLayoutEffect(() => {
+    const el = root.current
+    if (!el) return
+    let disposed = false
+    const run = () => { if (!disposed) fit(el, tr.size) }
     run()
-    void document.fonts?.ready.then(run)
+    void document.fonts.load('500 20px "Zekr Translation"').then(run, run)
     const observer = new ResizeObserver(run)
     observer.observe(el)
-    return () => observer.disconnect()
-  }, [pieces, tr.size])
+    return () => { disposed = true; observer.disconnect() }
+  }, [shown, tr.size])
 
   // the opening pages are illumination all round a small panel of text, which cannot be stretched: there the picture
   // stays whole and the page's translation comes under it
@@ -100,7 +124,7 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
       <span class="il-t">
         {row.map((p, i) => (
           <span key={`${p.id}-${i}`} class="ay" data-id={p.id} aria-hidden="true">
-            {p.text}{p.ends ? <span class="il-mark">{' '}{marker(locate(meta, p.id).ayah)}</span> : null}{' '}
+            {p.text}{p.ends ? <span class="il-mark">{' '}{num(locate(meta, p.id).ayah)}</span> : null}{' '}
           </span>
         ))}
       </span>
@@ -120,7 +144,7 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
       <div class="il-in">
       {strips.map((s, si) => {
         const h = s.bottom - s.top
-        const row = pieces.get(s)
+        const row = shown.get(s)
         return (
           <Fragment key={s.top}>
             <div class="il-strip" style={{ paddingTop: `${(h / 1000) * ratio * 100}%` }}>
@@ -147,9 +171,8 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
               {n > 2 && s.bottom === 1000 ? <button class="pg-no" aria-hidden="true" tabIndex={-1} onClick={(e) => { e.stopPropagation(); onJump() }} /> : null}
             </div>
             {row && !under ? (
-              // the translation of what is on this line, in its own reading order; an ayah's number comes where it
-              // ends, so it is in the same line of the page as the Arabic number
-              <div class="il-tr" dir={tr.dir} lang={tr.lang}>
+              // The translation flows in reading order; its number marks its own end, even when it borrows a row.
+              <div class="il-tr" dir={tr.dir} lang={tr.lang} title={t('enlargeTranslation')}>
                 {/* the frame goes on down the sides: the line's own strip of the picture, stretched to the box's height */}
                 <i class="pg-img il-pic il-frame" style={slice(s.top, h)} />
                 <span class="il-paper" />

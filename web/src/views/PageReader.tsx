@@ -189,7 +189,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
     const id = data.value?.ids[0]
     const info = id ? meta.translations.find((x) => x.id === id) : undefined
     return place === 'inline' && printed && info && data.value
-      ? { texts: data.value.trs[0]!, dir: info.dir, lang: info.lang, size: Math.round(s.trSize * (wide ? 0.82 : 0.7)) } // the sheet is twice as wide on a computer; kept small under the Arabic
+      ? { texts: data.value.trs[0]!, dir: info.dir, lang: info.lang, size: Math.round(s.trSize * 0.9) }
       : undefined
   }, [place, printed, data.value, s.trSize, wide])
   const selected = panel?.kind === 'ayah' ? panel.id : undefined
@@ -382,7 +382,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
         ar={data.value.ar[id - 1] as string}
         translations={data.value.ids.map((trId, k) => ({ info: meta.translations.find((x) => x.id === trId)!, text: data.value!.trs[k]![id - 1] as string }))}
         variant={variant}
-        showTranslations={place === 'panel' || place === 'card' || place === 'words'}
+        showTranslations={place === 'panel' || place === 'card' || place === 'words' || !!lineTr}
         menu={panel?.kind === 'ayah' && panel.id === id && !!panel.menu}
         offerWords={!words}
         inlineStudy={variant === 'box' && wide}

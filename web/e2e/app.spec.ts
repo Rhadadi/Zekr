@@ -1414,13 +1414,13 @@ test.describe('The printed mushaf as pictures (private build, made-up pictures h
     expect((await page.locator('#page-4 .pg').boundingBox())!).toEqual(before)
   })
 
-  test('on a computer the translation under each line is large enough to read, and a page turn comes in from the side the book advances from', async ({ page }) => {
+  test('on a computer translation stays on one line, and a page turn comes in from the side the book advances from', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await useSettings(page, { lang: 'fa', translationPlace: 'inline' })
     await page.goto('/#/page/3')
     await expect(page.locator('#page-3 .il-p').first()).toBeVisible()
     // the owner asked for it smaller (November 16, 2026): 14px, which fitting a line may shrink by a few percent
-    expect(await page.locator('#page-3 .il-p').first().evaluate((e) => parseFloat(getComputedStyle(e).fontSize))).toBeGreaterThanOrEqual(13)
+    await expect(page.locator('#page-3 .il-p').first()).toHaveCSS('white-space', 'nowrap')
     await expect(page.locator('.mushaf-flow')).not.toHaveAttribute('data-turn', /.+/)
     await page.keyboard.press('ArrowLeft')
     await expect(page.locator('#page-4')).toBeVisible()
@@ -1487,21 +1487,29 @@ test.describe('The printed mushaf as pictures (private build, made-up pictures h
     await page.goto('/#/page/3')
     const pg = page.locator('#page-3')
     await expect(pg.locator('.il-strip').first()).toBeVisible()
-    // the made-up map puts each of the 11 ayahs on a line of its own: 11 translation lines, each ending with its number
+    // Eleven Arabic rows keep eleven translation rows; translation boundaries may shift between them.
     await expect(pg.locator('.il-tr')).toHaveCount(11)
-    // each ayah's number in its ornamental frame, not in brackets
-    await expect(pg.locator('.il-tr').nth(1).locator('.vno-n')).toHaveText('۷')
-    await expect(pg.locator('.il-tr').nth(1)).not.toContainText('﴿')
+    // Translation numbers stay plain; the Arabic scan keeps its original ornaments.
+    await expect(pg.locator('.il-mark')).toHaveText(['۶', '۷', '۸', '۹', '۱۰', '۱۱', '۱۲', '۱۳', '۱۴', '۱۵', '۱۶'])
     await expect(pg.locator('.il-mark')).toHaveCount(11)
-    await expect(pg.locator('.il-mark .vno svg')).toHaveCount(11)
+    await expect(pg.locator('.il-mark svg')).toHaveCount(0)
+    await page.evaluate(() => document.fonts.ready)
+    await expect.poll(() => pg.locator('.il-tr:not(.il-under) .il-p').evaluateAll(rows => rows.every(row => {
+      const text = row.querySelector('.il-t')!
+      return text.getBoundingClientRect().width <= row.clientWidth + 1 && getComputedStyle(row).whiteSpace === 'nowrap'
+    }))).toBe(true)
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await expect.poll(() => pg.locator('.il-tr:not(.il-under) .il-p').evaluateAll(rows => rows.every(row => row.querySelector('.il-t')!.getBoundingClientRect().width <= row.clientWidth + 1))).toBe(true)
+    await page.setViewportSize({ width: 390, height: 844 })
     // it stays one framed page: each box sits right under its line, the frame running on down its sides
     await expect(pg.locator('.il-tr .il-frame')).toHaveCount(11)
     const edges = await pg.locator('.il-strip, .il-tr').evaluateAll((els) => els.map((e) => [e.getBoundingClientRect().top, e.getBoundingClientRect().bottom]))
     for (let i = 1; i < edges.length; i++) expect(Math.abs(edges[i]![0]! - edges[i - 1]![1]!)).toBeLessThan(1)
-    // the translation is part of the ayah: tapping it opens the ayah (its actions; the translation is already on the page)
-    await pg.locator('.il-tr').nth(1).locator('.ay').first().click()
+    // A tap opens the complete translation at normal size.
+    await pg.locator('.il-tr .ay[data-id="14"]').first().click()
     await expect(page.getByTestId('ayah-panel')).toContainText('۲:۷')
-    await expect(page.getByTestId('ayah-panel').locator('.tr')).toHaveCount(0)
+    await expect(page.getByTestId('ayah-panel').locator('.tr')).not.toBeEmpty()
+    await expect(page.getByTestId('ayah-panel').locator('.tr').first()).toHaveCSS('font-size', '17px')
     // the Arabic shows which ayah is chosen; its translation is not marked as well
     await expect(pg.locator('.il-strip .seg.sel').first()).toBeVisible()
     await expect(pg.locator('.il-tr .ay.sel')).toHaveCount(0)

@@ -52,7 +52,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2,webmanifest}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,woff2,ttf,webmanifest}'],
         globIgnores: ['data/**'],
         additionalManifestEntries: dataPrecache(),
         navigateFallback: 'index.html',

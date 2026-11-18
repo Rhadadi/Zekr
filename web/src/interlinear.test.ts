@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { MushafPageMap } from './data'
-import { lineTranslations, pageStrips, splitAcross } from './interlinear'
+import { balanceTranslationRows, translationWords, lineTranslations, pageStrips, splitAcross } from './interlinear'
 
 // A made-up page: three lines; ayah 10 fills line 1 and the right half of line 2, ayah 11 the rest; line 3 is a
 // banner (no ayahs) between lines 2 and 4.
@@ -58,6 +58,33 @@ describe('translation under each line of a printed page', () => {
     expect(pieces[1]!.map((p) => [p.id, p.ends])).toEqual([[10, true], [11, false]])
     expect(pieces[2]!.at(-1)!.ends).toBe(true)
     expect(pieces.flat().filter((p) => p.id === 11).map((p) => p.text).join(' ')).toBe('seven eight nine')
+  })
+})
+
+describe('balanced single-line translations', () => {
+  const piece = (id: number, text: string, ends = true) => ({ id, text, ends, x: 0, w: 1 })
+  it('shares a dense translation over neighbouring rows without dropping, repeating or reordering words', () => {
+    const rows = [[piece(1, 'one two three four five six seven eight nine ten')], [piece(2, 'eleven')], [piece(3, 'twelve')]]
+    const words = translationWords(rows)
+    const balanced = balanceTranslationRows(rows, words.map(() => 10))
+    expect(balanced).toHaveLength(3)
+    expect(translationWords(balanced).map(({ home: _, ...word }) => word)).toEqual(words.map(({ home: _, ...word }) => word))
+    const counts = balanced.map(row => translationWords([row]).length)
+    expect(Math.max(...counts)).toBeLessThan(10)
+    expect(balanced.flat().filter(p => p.ends).map(p => p.id)).toEqual([1, 2, 3])
+  })
+  it('preserves mixed scripts, punctuation, continuation pieces and merged-translation numbers', () => {
+    const rows = [[piece(1, 'یک واژه،', false)], [piece(1, 'دو واژه.'), piece(2, '')], [piece(3, 'another word')]]
+    const words = translationWords(rows)
+    const balanced = balanceTranslationRows(rows, words.map(word => word.text.length + 2))
+    expect(translationWords(balanced).map(({ home: _, ...word }) => word)).toEqual(words.map(({ home: _, ...word }) => word))
+  })
+  it('keeps sparse blocks, very wide words and single rows intact', () => {
+    const rows = [[piece(1, 'unbreakable')], [], [piece(2, 'end')]]
+    expect(translationWords(balanceTranslationRows(rows, [1000, 5])).map(t => t.text)).toEqual(['unbreakable', 'end'])
+    expect(balanceTranslationRows([rows[0]!], [1000])).toEqual([rows[0]])
+    expect(balanceTranslationRows([[], []], [])).toEqual([[], []])
+    expect(() => balanceTranslationRows(rows, [10])).toThrow('measurements')
   })
 })
 

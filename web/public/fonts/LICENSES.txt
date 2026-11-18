@@ -3,6 +3,10 @@ Quran fonts used by Zekr
 
 The files in this folder are the unmodified font files listed below.
 
+noto-sans-arabic-variable.ttf  Noto Sans Arabic, Copyright 2022 The Noto Project Authors.
+                              Unmodified variable font from google/fonts/ofl/notosansarabic.
+                              SIL Open Font License 1.1; see noto-sans-arabic-OFL.txt.
+
 kfgqpc-hafs.woff2   KFGQPC HAFS Uthmanic Script, King Fahd Glorious Quran Printing Complex
 kfgqpc-naskh.woff2  KFGQPC Uthman Taha Naskh, King Fahd Glorious Quran Printing Complex
                     Both are the web versions served by the Tanzil Project (tanzil.net/fonts/).

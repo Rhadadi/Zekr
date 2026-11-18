@@ -87,6 +87,67 @@ export function splitAcross(text: string, weights: number[]): string[] {
 
 export interface Piece { id: number; x: number; w: number; text: string; ends: boolean }
 
+export interface TranslationWord { id: number; text: string; ends: boolean; home: number }
+
+/** Reflow whole words across neighbouring lines, keeping their ayah identity and order. */
+export function translationWords(rows: Piece[][]): TranslationWord[] {
+  return rows.flatMap((row, home) => row.flatMap(piece => {
+    const words = piece.text.split(/\s+/).filter(Boolean)
+    if (!words.length) return piece.ends ? [{ id: piece.id, text: '', ends: true, home }] : []
+    return words.map((text, i) => ({ id: piece.id, text, ends: piece.ends && i === words.length - 1, home }))
+  }))
+}
+
+/** Balance a block between banners. Line ends are soft anchors; no text crosses a surah heading. */
+export function balanceTranslationRows(rows: Piece[][], widths: number[]): Piece[][] {
+  const tokens = translationWords(rows)
+  const count = rows.length
+  if (!tokens.length || count < 2) return rows
+  if (widths.length !== tokens.length || widths.some(width => !Number.isFinite(width) || width < 0)) throw new Error('Translation word measurements differ')
+  const sums = [0]
+  for (const width of widths) sums.push(sums.at(-1)! + width)
+  const target = Math.max(1, sums.at(-1)! / count)
+  const ceiling = Math.max(...widths, target * 2)
+  const each = tokens.length >= count ? 1 : 0
+  let costs = new Float64Array(tokens.length + 1).fill(Infinity)
+  costs[0] = 0
+  const breaks: Int32Array[] = []
+  for (let row = 0; row < count; row++) {
+    const next = new Float64Array(tokens.length + 1).fill(Infinity)
+    const from = new Int32Array(tokens.length + 1).fill(-1)
+    const drift = [0]
+    for (const token of tokens) drift.push(drift.at(-1)! + Math.max(0, Math.abs(token.home - row) - 1) ** 2)
+    for (let end = (row + 1) * each; end <= tokens.length - (count - row - 1) * each; end++) {
+      for (let start = end - each; start >= row * each; start--) {
+        const width = sums[end]! - sums[start]!
+        if (width > ceiling) break
+        if (!Number.isFinite(costs[start])) continue
+        const last = tokens[end - 1]
+        const punctuation = last?.ends || /[.،؛:!?؟]$/.test(last?.text ?? '') ? 0 : .025
+        const cost = costs[start]! + ((width - target) / target) ** 2 * 6 + (drift[end]! - drift[start]!) * .015 + punctuation
+        if (cost < next[end]!) { next[end] = cost; from[end] = start }
+      }
+    }
+    breaks.push(from)
+    costs = next
+  }
+  if (!Number.isFinite(costs[tokens.length])) return rows
+  const result: Piece[][] = Array.from({ length: count }, () => [])
+  let end = tokens.length
+  for (let row = count - 1; row >= 0; row--) {
+    const start = breaks[row]![end]!
+    for (const token of tokens.slice(start, end)) {
+      const previous = result[row]!.at(-1)
+      if (previous?.id === token.id && !previous.ends) {
+        previous.text += `${previous.text && token.text ? ' ' : ''}${token.text}`
+        previous.ends = token.ends
+      } else result[row]!.push({ id: token.id, x: 0, w: 0, text: token.text, ends: token.ends })
+    }
+    end = start
+  }
+  return result
+}
+
 /** For each text line of a page, the translation pieces under its ayah pieces (right to left). */
 export function lineTranslations(pg: MushafPageMap, strips: Strip[], texts: string[]): Map<Strip, Piece[]> {
   const shares = new Map<number, string[]>()
