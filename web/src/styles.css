@@ -556,8 +556,8 @@ a.player-info { color: var(--ink); text-decoration: none; }
   .mb-surah { font-size: 1.3rem; }
   .mb-juz { font-size: 0.9rem; }
 }
-@keyframes side-in { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
-@keyframes dock-in { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
+@keyframes side-in { from { transform: translateX(14px); } to { transform: none; } }
+@keyframes dock-in { from { transform: translateX(-14px); } to { transform: none; } }
 @media (prefers-reduced-motion: reduce) { .mushaf-flow { transition: none; } .side-panel, .drawer.docked { animation: none; } }
 @media (hover: none) { .edge-turn { display: none; } }
 .side-panel .sheet-head { flex-wrap: wrap; gap: 4px; }

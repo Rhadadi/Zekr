@@ -156,7 +156,7 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
   const returnArabic = () => { anchor.current = null; setCompanionOpen(false); move(current) }
   const followRecitation = () => { anchor.current = null; setCompanionOpen(false); setFollowing(true) }
   const tabs: [StudyTab, string][] = [['translation', t('ayahTranslation')], ['tafsir', t('tafsir')], ['words', t('words')]]
-  return <div class="study-reader" ref={reader} data-focus={focusMode} style={{ '--study-ar-size': `${s.arabicSize}px`, '--study-tr-size': `${s.trSize}px`, '--study-progress': current / surah.ayahs }}>
+  return <div class="study-reader" ref={reader} data-focus={focusMode} data-following={following && playing !== undefined} style={{ '--study-ar-size': `${s.arabicSize}px`, '--study-tr-size': `${s.trSize}px`, '--study-progress': current / surah.ayahs }}>
     <header class="study-toolbar">
       <div class="study-toolbar-start">
         <button class="study-menu" aria-label={t('menu')} aria-haspopup="dialog" aria-expanded={drawerOpen.value} onClick={e => openDrawer(e.currentTarget)}><Icon name="list" /></button>
