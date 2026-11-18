@@ -645,7 +645,7 @@ def main(argv=None) -> int:
     build_web(args.web_dir, tafsir=["almizan"] if args.almizan_web else None, wbw=words is not None,
               classics=[b[0] for b in classical_tafsir.BOOKS] if args.classics else None, **kw)
     if args.classics:
-        classical_tafsir.build_web(args.web_dir, [s.ayahs for s in surahs])
+        classical_tafsir.build_web(args.web_dir, texts["clean"])
     if words is not None:
         import wbw
         wbw.build_web(args.web_dir, words, [s.ayahs for s in surahs])

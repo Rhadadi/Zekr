@@ -5,9 +5,11 @@ import { loadMeta } from './data'
 
 export interface ClassicBook {
   id: string
-  lang: 'ar' | 'en'
+  lang: 'ar' | 'fa' | 'en'
   name: { en: string; fa: string }
   author: { en: string; fa: string }
+  /** where this book's text is from, when not the index's source */
+  source?: string
   /** For each surah the book has text for: the first ayah of each of its chunks. */
   chunks: Record<string, number[]>
 }

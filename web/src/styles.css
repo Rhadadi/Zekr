@@ -436,6 +436,8 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .classic-author { text-align: center; margin: -6px 0 14px; }
 .classic .tf-p { text-align: start; overflow-wrap: anywhere; }
 .classic[lang='ar'] { line-height: 2.1; }
+.classic[lang='fa'] { line-height: 1.95; }
+.classic-part { margin: 22px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--line); font-size: 0.95em; color: var(--accent); }
 .tf-q { color: var(--accent); }
 .tf-d { color: var(--gold); }
 .tafsir sup.fn { font-size: 0.65em; color: var(--muted); margin-inline-start: 1px; }

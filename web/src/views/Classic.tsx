@@ -29,10 +29,12 @@ export function ClassicView({ surah, ayah }: { meta: Meta; surah: number; ayah: 
               {d.books.map((b) => <option key={b.id} value={b.id}>{b.name[l]}</option>)}
             </select>
           </label>
-          <article class="tafsir classic" lang={d.book.lang} dir={d.book.lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontSize: `${settings.value.trSize}px` }}>
+          <article class="tafsir classic" lang={d.book.lang} dir={d.book.lang === 'en' ? 'ltr' : 'rtl'} style={{ fontSize: `${settings.value.trSize}px` }}>
             <p class="classic-author muted small">{d.book.author[l]}</p>
-            {d.text ? d.text.split('\n').filter((p) => p.trim()).map((p, i) => <p key={i} class="tf-p">{p}</p>) : <p class="status">{t('classicsNone')}</p>}
-            <p class="muted small" dir="ltr">{t('classicsSource', { source: d.source })}</p>
+            {d.text ? d.text.split('\n').filter((p) => p.trim()).map((p, i) =>
+              // "# " begins the heading of a part of the text (Meybodi's three rounds)
+              p.startsWith('# ') ? <h3 key={i} class="classic-part">{p.slice(2)}</h3> : <p key={i} class="tf-p">{p}</p>) : <p class="status">{t('classicsNone')}</p>}
+            <p class="muted small" dir="ltr">{t('classicsSource', { source: d.book.source ?? d.source })}</p>
           </article>
         </>
       )}

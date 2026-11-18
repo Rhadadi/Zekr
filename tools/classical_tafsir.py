@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Classical tafsirs, one text per ayah, for Zekr's web build (data/classical/).
 
-The texts come from github.com/spa5k/tafsir_api (the per-surah JSON files, served by jsDelivr).
+The texts come from github.com/spa5k/tafsir_api (the per-surah JSON files, served by jsDelivr), and the Persian
+ones from ganjoor.net, which shares its texts for others to build on (its API, four requests at a time).
 Only works whose authors died long ago, or that their publisher (the Royal Aal al-Bayt Institute, altafsir.com)
 gives away free, are here; modern commentaries (Qutb, Ibn Ashur, Mawdudi ...) are in copyright and are not.
 
@@ -29,8 +30,11 @@ ROOT = Path(__file__).resolve().parent.parent
 RAW = ROOT / "data" / "raw" / "classical"
 URL = "https://cdn.jsdelivr.net/gh/spa5k/tafsir_api@main/tafsir/{edition}/{surah}.json"
 
-# id, source edition, language, name and author (en, fa)
+# id, source edition, language, name and author (en, fa); the first is the one shown until the reader picks another
 BOOKS = [
+    ("meybodi", "ganjoor:1905", "fa",
+     ("Kashf al-Asrar, Meybodi (in Persian)", "کشف‌الاسرار و عدة‌الابرار، میبدی"),
+     ("Rashid al-Din Meybodi (wrote it in 520/1126); the text of ganjoor.net", "رشیدالدین میبدی (نگارش ۵۲۰)؛ متن گنجور")),
     ("jalalayn", "ar-tafsir-al-jalalayn", "ar",
      ("Tafsir al-Jalalayn", "تفسیر جلالین"),
      ("al-Mahalli (d. 864/1459) and al-Suyuti (d. 911/1505)", "جلال‌الدین محلی (د. ۸۶۴) و جلال‌الدین سیوطی (د. ۹۱۱)")),
@@ -84,16 +88,114 @@ def fetch_one(job):
 
 
 def fetch_all() -> None:
-    jobs = [(b[1], s) for b in BOOKS for s in range(1, 115)]
+    jobs = [(b[1], s) for b in BOOKS if not b[1].startswith("ganjoor:") for s in range(1, 115)]
     with ThreadPoolExecutor(12) as pool:
         failed = sum(pool.map(fetch_one, jobs))
+    failed += sum(fetch_ganjoor(b[1]) for b in BOOKS if b[1].startswith("ganjoor:"))
     print(f"fetched {len(jobs)} files, {failed} missing")
 
 
-def read_surah(edition: str, surah: int) -> dict[int, str]:
-    f = RAW / edition / f"{surah}.json"
+# Persian tafsirs from ganjoor.net (its API): the edition is "ganjoor:<the book's category id>". A surah is saved as the
+# list of its sections, [title, text] each, in order.
+GANJOOR = "https://api.ganjoor.net/api/ganjoor/"
+
+
+def ganjoor(path: str):
+    data = get(GANJOOR + path)
+    return json.loads(data) if data else None
+
+
+def fetch_ganjoor(edition: str) -> int:
+    book = ganjoor(f"cat/{edition.split(':')[1]}")
+    if not book:
+        return 114
+    failed = 0
+    for k, cat in enumerate(book["cat"]["children"][:114]):
+        out = RAW / edition.replace(":", "-") / f"{k + 1}.json"
+        if out.exists():
+            continue
+        listing = ganjoor(f"cat/{cat['id']}?poems=true")
+        poems = listing["cat"]["poems"] if listing else None
+        with ThreadPoolExecutor(4) as pool:
+            got = list(pool.map(lambda p: ganjoor(f"poem/{p['id']}?catInfo=false&rhymes=false&recitations=false&images=false&songs=false&comments=false&navigation=false&relatedpoems=false"), poems or []))
+        if not poems or any(g is None for g in got):
+            failed += 1
+            continue
+        sections = [[g["title"], "\n".join(v["text"].strip() for v in g["verses"] if v["text"].strip())] for g in got]
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(sections, ensure_ascii=False), encoding="utf-8")
+    return failed
+
+
+# Meybodi goes through the Quran in sessions of a few ayahs, each in three rounds (nowba): his Persian rendering of the
+# ayahs, then the commentary, then the mystic reading. The rendering quotes the ayahs, vowelled, phrase by phrase; the
+# Persian is not vowelled. Ganjoor's copy mostly lacks the ayah numbers, so a session is placed by finding its first
+# quoted words in the surah.
+ROUNDS = {"الاولی": "ترجمه", "الثانیة": "تفسیر", "الثالثة": "تفسیر عرفانی"}
+VOWELS = re.compile("[\u064B-\u0652]")
+NOT_LETTERS = re.compile("[^\u0621-\u064A]")
+LETTERS = str.maketrans({"ی": "ي", "ى": "ي", "ک": "ك", "أ": "ا", "إ": "ا", "آ": "ا", "ٱ": "ا", "ؤ": "و", "ئ": "ي", "ء": None, "ة": "ه"})
+
+
+def bare(text: str) -> str:
+    """Arabic letters only, spelt one way: what the two copies of an ayah have in common."""
+    return NOT_LETTERS.sub("", text.translate(LETTERS))
+
+
+def first_words(rendering: str, letters: str, after: int) -> int | None:
+    """Where in the surah's letters a session's rendering begins: its first quoted (vowelled) words, looked for after
+    position `after`. None when they are not found."""
+    quoted = [bare(w) for w in rendering.split() if VOWELS.search(w)]
+    for skip in range(4):  # a stray first word ("الم", a spelling of its own) is passed over
+        key = "".join(quoted[skip:skip + 3])
+        if len(key) < 6:
+            continue
+        at = letters.find(key, after)
+        if at >= 0:
+            return at
+    return None
+
+
+def read_sessions(sections: list[list[str]], quran: list[str]) -> dict[int, str]:
+    """Every ayah of a surah (`quran`: its ayahs' text), the whole session it is in: "# <round>" lines, then the
+    round's paragraphs. A session that cannot be placed stays with the one before it."""
+    letters, owner = "", []
+    for n, ayah in enumerate(quran, 1):
+        b = bare(ayah)
+        letters += b
+        owner += [n] * len(b)
+    sessions: list[tuple[int, list[str]]] = []  # first ayah, parts
+    after = 0
+    for title, text in sections:
+        round_ = next((k for k in ROUNDS if k in title.replace("ى", "ی")), None)  # spelt with either yeh
+        part = f"# النوبة {round_} — {ROUNDS[round_]}\n{text}" if round_ else text
+        if round_ == "الاولی" or not sessions:
+            at = first_words(text, letters, after) if sessions else 0
+            start = owner[at] if at is not None and at < len(owner) else None
+            if not sessions or (start is not None and start > sessions[-1][0]):
+                sessions.append((start or 1, [part]))
+                after = (at or 0) + 1
+                continue
+        sessions[-1][1].append(part)
+    out: dict[int, str] = {}
+    for k, (start, parts) in enumerate(sessions):
+        end = sessions[k + 1][0] - 1 if k + 1 < len(sessions) else len(quran)
+        body = "\n".join(parts)
+        for n in range(start, end + 1):
+            out[n] = body
+    return out
+
+
+def raw_file(edition: str, surah: int) -> Path:
+    return RAW / edition.replace(":", "-") / f"{surah}.json"
+
+
+def read_surah(edition: str, surah: int, quran: list[str]) -> dict[int, str]:
+    f = raw_file(edition, surah)
     if not f.exists():
         return {}
+    if edition.startswith("ganjoor:"):
+        return read_sessions(json.loads(f.read_text(encoding="utf-8")), quran)
     j = json.loads(f.read_text(encoding="utf-8"))
     rows = j if isinstance(j, list) else j.get("ayahs", [])
     texts = {int(r["ayah"]): PAGE_MARK.sub("", r["text"]).strip() for r in rows}
@@ -126,14 +228,14 @@ def fingerprint() -> str:
     digest = hashlib.sha256(repr((BOOKS, CHUNK)).encode())
     for b in BOOKS:
         for surah in range(1, 115):
-            f = RAW / b[1] / f"{surah}.json"
+            f = raw_file(b[1], surah)
             if f.exists():
                 digest.update(f.read_bytes())
     return digest.hexdigest()[:16]
 
 
-def build_web(out: Path, ayahs: list[int]) -> None:
-    """Writes out/classics/. `ayahs`: how many ayahs each surah has."""
+def build_web(out: Path, quran: dict[tuple[int, int], str]) -> None:
+    """Writes out/classics/. `quran`: the text of every ayah (Tanzil's simple-clean, without the basmala)."""
     d = out / "classics"
     if d.exists():
         for f in d.rglob("*"):
@@ -143,7 +245,8 @@ def build_web(out: Path, ayahs: list[int]) -> None:
     for id_, edition, lang, name, author in BOOKS:
         starts: dict[str, list[int]] = {}
         for surah in range(1, 115):
-            texts = {n: t for n, t in read_surah(edition, surah).items() if 1 <= n <= ayahs[surah - 1]}
+            ayahs = [quran[surah, n] for n in range(1, 300) if (surah, n) in quran]
+            texts = {n: t for n, t in read_surah(edition, surah, ayahs).items() if 1 <= n <= len(ayahs)}
             if not texts:
                 continue
             for k, chunk in enumerate(chunks_of(texts)):
@@ -152,7 +255,8 @@ def build_web(out: Path, ayahs: list[int]) -> None:
                 f.parent.mkdir(parents=True, exist_ok=True)
                 f.write_bytes(body)
                 starts.setdefault(str(surah), []).append(min(int(n) for n in chunk))
-        books.append({"id": id_, "lang": lang, "name": {"en": name[0], "fa": name[1]}, "author": {"en": author[0], "fa": author[1]}, "chunks": starts})
+        books.append({"id": id_, "lang": lang, "name": {"en": name[0], "fa": name[1]}, "author": {"en": author[0], "fa": author[1]},
+                      **({"source": "ganjoor.net"} if edition.startswith("ganjoor:") else {}), "chunks": starts})
     index = {"source": SOURCE, "books": books}
     (d / "index.json").write_text(json.dumps(index, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 

@@ -29,6 +29,8 @@ jobs:
         with:
           path: data/raw/classical
           key: classical-tafsir-${{ hashFiles('tools/classical_tafsir.py') }}
+          # a new list of books starts from the texts already downloaded and fetches only what is missing
+          restore-keys: classical-tafsir-
       - name: Build the data (downloads from Tanzil), with Al-Mizan, The Study Quran and the classical tafsirs
         # The Study Quran is published with the owner's confirmation of permission (October 16, 2026).
         run: |
