@@ -33,7 +33,7 @@ async function fixture(page: Page, lang = 'en', theme = 'light', translations = 
     const response = await route.fetch()
     const meta = await response.json()
     first = meta.surahs.find((s: { id: number }) => s.id === 112).first
-    await route.fulfill({ response, json: { ...meta, wbw: 'fa', studyQuran: {
+    await route.fulfill({ response, json: { ...meta, wbw: 'fa', classics: ['example', 'example-fa'], tafsir: ['almizan'], studyQuran: {
       id: 'study_quran', name: 'The Study Quran', pdfSha256: 'fixture', importVersion: 'fixture',
     } } })
   })
@@ -51,9 +51,84 @@ async function fixture(page: Page, lang = 'en', theme = 'light', translations = 
     json: Array.from({ length: 4 }, () => [['مثال', 'معنای نمونه']]),
   }))
   await page.route('**/data/intro/study_quran/*.json*', (route) => route.fulfill({ json: { text: '', html: '', pages: [] } }))
+  await page.route('**/data/classics/index.json*', route => route.fulfill({ json: { source: 'Invented test source', books: [{ id: 'example', lang: 'ar', name: { en: 'Example tafsir', fa: 'تفسیر نمونه' }, author: { en: 'Example author', fa: 'نویسندهٔ نمونه' }, chunks: { '112': [1] } }, { id: 'example-fa', lang: 'fa', source: 'Invented Persian source', name: { en: 'Persian tafsir', fa: 'تفسیر فارسی نمونه' }, author: { en: 'Example author', fa: 'نویسندهٔ نمونه' }, chunks: { '112': [1] } }] } }))
+  await page.route('**/data/classics/example/*.json.gz*', route => route.fulfill({ json: { '1': 'An invented classical commentary for the reading test.', '2': 'A second invented classical commentary.' } }))
+  await page.route('**/data/classics/example-fa/*.json.gz*', route => route.fulfill({ json: { '1': '# نوبت نخست\nاین متن فارسی برای آزمون ساخته شده است.' } }))
+  await page.route('**/data/almizan/index.json*', route => route.fulfill({ json: { source: 'Invented test source', sections: [['example-section', first, first + 1]] } }))
+  await page.route('**/data/almizan/example-section.json*', route => route.fulfill({ json: { id: 'example-section', surah: 112, from: 1, to: 2, title: 'عنوان نمونه', blocks: [{ t: 'h', r: [['عنوان بخش']] }, { t: 'p', r: [['این متنی ساختگی برای آزمون مطالعه است.']] }], notes: [] } }))
 }
 
 test.use({ serviceWorkers: 'block' })
+
+async function sourcePicker(page: Page, ayah = 1) {
+  await page.locator(`.study-reader #a-${ayah} .study-add-source`).click()
+  return page.getByRole('dialog', { name: /Add translation or tafsir|افزودن ترجمه یا تفسیر/ })
+}
+
+async function addSource(page: Page, category: 'tafsir' | 'words', source: string, ayah = 1) {
+  const picker = await sourcePicker(page, ayah)
+  await picker.getByRole('button', { name: category === 'tafsir' ? /^(Tafsir|تفسیر)$/ : /^(Words|واژگان)$/ }).click()
+  await picker.getByRole('checkbox', { name: source, exact: true }).check()
+  await picker.getByRole('button', { name: /^(Done|تمام)$/ }).click()
+}
+
+test('extra sources belong to their ayah and survive a reload', async ({ page }) => {
+  await fixture(page)
+  await page.goto('/#/verse/112/1')
+  const first = page.locator('.study-reader #a-1')
+  const second = page.locator('.study-reader #a-2')
+  const picker = await sourcePicker(page)
+  await picker.getByRole('searchbox').fill('Saheeh')
+  await picker.getByRole('checkbox', { name: 'Saheeh International', exact: true }).check()
+  await picker.getByRole('button', { name: 'Done', exact: true }).click()
+  await expect(first.locator('[data-source="tr:en.sahih"] .tr')).not.toBeEmpty()
+  await expect(second.locator('[data-source="tr:en.sahih"]')).toHaveCount(0)
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('zekr.settings')!).translations)).toEqual(['fa.safavi'])
+  await addSource(page, 'tafsir', 'The Study Quran')
+  await addSource(page, 'tafsir', 'Example tafsir')
+  await addSource(page, 'tafsir', 'Persian tafsir')
+  await addSource(page, 'tafsir', 'Al-Mizan')
+  await addSource(page, 'tafsir', 'Al-Mizan', 2)
+  await expect(first.locator('[data-source="classic:example"]')).toContainText('An invented classical commentary for the reading test.')
+  const persian = first.locator('[data-source="classic:example-fa"]')
+  await expect(persian.locator('[lang="fa"]')).toHaveAttribute('dir', 'rtl')
+  await expect(persian.getByRole('heading', { name: 'نوبت نخست', exact: true })).toBeVisible()
+  await expect(persian).toContainText('Invented Persian source')
+  await expect(first.locator('[data-source="almizan"]')).toContainText('این متنی ساختگی برای آزمون مطالعه است.')
+  const ids = await page.locator('.study-reader [id]').evaluateAll(els => els.map(el => el.id))
+  expect(new Set(ids).size).toBe(ids.length)
+  await page.reload()
+  await expect(first.locator('[data-source="study_quran"]')).toContainText('An invented note for the Study canvas.')
+  await expect(first.locator('[data-source="tr:en.sahih"] .tr')).not.toBeEmpty()
+  await expect(second.locator('[data-source="study_quran"]')).toHaveCount(0)
+  const note = first.locator('[data-source="study_quran"]')
+  await note.getByRole('button', { name: 'The Study Quran', exact: true }).click()
+  await expect(note.locator('.study-companion-body')).toBeHidden()
+  await note.getByRole('button', { name: 'The Study Quran', exact: true }).click()
+  await expect(note.locator('.study-companion-body')).toBeVisible()
+  await note.getByRole('button', { name: 'Remove The Study Quran', exact: true }).click()
+  await expect(first.locator('[data-source="study_quran"]')).toHaveCount(0)
+  await expect(first.locator('.study-add-source')).toBeFocused()
+  await expect(first.locator('.ar')).not.toBeEmpty()
+})
+
+test('saved commentary loading above the passage keeps the selected ayah in place', async ({ page }) => {
+  await fixture(page)
+  await page.goto('/#/verse/69/1')
+  const first = Number(await page.locator('.study-reader #a-1').getAttribute('data-id'))
+  await page.evaluate(id => localStorage.setItem(`zekr.studySources.${id}`, JSON.stringify(['study_quran'])), first)
+  await page.route('**/data/tafsir/study_quran/69.json*', async route => {
+    await new Promise(resolve => setTimeout(resolve, 350))
+    await route.fulfill({ json: { surah: 69, entries: [{ id: 'delayed-example', surah_id: 69, note_label: '1', first_ayah: 1, last_ayah: 1, coverage_kind: 'explicit_note', lemma_text: '', html: '', text: Array.from({ length: 20 }, () => 'An invented paragraph for delayed commentary.').join('\n\n'), ayah_ids: [first], pages: [1], references: [] }], byAyah: { [String(first)]: ['delayed-example'] } } })
+  })
+  await page.goto('/#/verse/69/9')
+  await page.reload()
+  await expect(page.locator('.study-reader #a-1 [data-source="study_quran"]')).toContainText('An invented paragraph for delayed commentary.')
+  const current = page.locator('.study-reader #a-9')
+  await expect(current).toHaveClass(/focused/)
+  await expect.poll(() => current.evaluate(el => el.getBoundingClientRect().top)).toBeLessThanOrEqual(185)
+  await expect.poll(() => current.evaluate(el => el.getBoundingClientRect().top)).toBeGreaterThanOrEqual(100)
+})
 
 for (const language of ['en', 'fa']) for (const theme of ['light', 'sepia', 'dark']) test(`bilingual reading keeps complete translations together: ${language}, ${theme}`, async ({ page }, testInfo) => {
   await fixture(page, language, theme, ['fa.safavi', 'en.sahih'])
@@ -91,8 +166,8 @@ test('a short ayah stays visible with its notes and passage tools', async ({ pag
   await fixture(page)
   await page.goto('/#/verse/112/1')
   const reader = page.locator('.study-reader')
-  await reader.getByRole('tab', { name: 'Tafsir', exact: true }).click()
-  await expect(reader.getByRole('tabpanel')).toContainText('An invented note for the Study canvas.')
+  await addSource(page, 'tafsir', 'The Study Quran')
+  await expect(reader.locator('#a-1 [data-source="study_quran"]')).toContainText('An invented note for the Study canvas.')
   const arabic = (await reader.locator('#a-1 .ar').boundingBox())!
   const toolbar = (await reader.locator('.study-toolbar').boundingBox())!
   expect(arabic.y).toBeGreaterThanOrEqual(toolbar.y + toolbar.height)
@@ -142,14 +217,19 @@ for (const lang of ['en', 'fa']) for (const theme of ['light', 'sepia', 'dark'])
 }
 
 for (const lang of ['en', 'fa']) for (const theme of ['light', 'sepia', 'dark']) {
-  test(`Study companion tabs remain accessible: ${lang}, ${theme}`, async ({ page }, testInfo) => {
+  test(`ayah source controls remain accessible: ${lang}, ${theme}`, async ({ page }, testInfo) => {
     test.setTimeout(90_000)
     await fixture(page, lang, theme)
     await page.goto('/#/verse/112/1')
     const reader = page.locator('.study-reader')
-    for (const tab of ['tafsir', 'words']) {
-      await reader.locator(`#study-tab-${tab}`).click()
-      await expect(reader.getByRole('tabpanel')).not.toBeEmpty()
+    for (const category of ['tafsir', 'words'] as const) {
+      const picker = await sourcePicker(page)
+      await picker.getByRole('button', { name: category === 'tafsir' ? /^(Tafsir|تفسیر)$/ : /^(Words|واژگان)$/ }).click()
+      const pickerA11y = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()
+      expect(pickerA11y.violations).toEqual([])
+      await picker.getByRole('checkbox', { name: category === 'tafsir' ? 'The Study Quran' : lang === 'fa' ? 'واژگان' : 'Words', exact: true }).check()
+      await picker.getByRole('button', { name: /^(Done|تمام)$/ }).click()
+      await expect(reader.locator(`#a-1 [data-source="${category === 'tafsir' ? 'study_quran' : 'words'}"]`)).not.toBeEmpty()
       const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).exclude('.mushaf-host').analyze()
       expect(result.violations.map(v => `${v.id}: ${v.nodes.map(n => n.target.join(' ')).join(', ')}`)).toEqual([])
     }
@@ -164,27 +244,28 @@ for (const lang of ['en', 'fa']) for (const theme of ['light', 'sepia', 'dark'])
   })
 }
 
-test('Study tools are keyboard-operable and retain the selected ayah', async ({ page }) => {
+test('ayah sources are keyboard-operable and retain the selected ayah', async ({ page }) => {
   await fixture(page)
   await page.goto('/#/verse/112/1')
   const reader = page.locator('.study-reader')
   const ayah = reader.locator('article#a-1')
-  const translation = reader.getByRole('tab', { name: 'Translation', exact: true })
-  const tafsir = reader.getByRole('tab', { name: 'Tafsir', exact: true })
-  const words = reader.getByRole('tab', { name: 'Words', exact: true })
-  await expect(translation).toHaveAttribute('aria-selected', 'true')
-  await translation.press('ArrowRight')
-  await expect(tafsir).toBeFocused()
-  await expect(tafsir).toHaveAttribute('aria-selected', 'true')
-  await expect(ayah.getByRole('tabpanel')).toContainText('An invented note for the Study canvas.')
-  await tafsir.press('End')
-  await expect(words).toBeFocused()
-  await expect(words).toHaveAttribute('aria-selected', 'true')
-  await expect(ayah.getByRole('tabpanel')).toContainText('معنای نمونه')
-  await words.press('Home')
-  await expect(translation).toBeFocused()
-  await expect(translation).toHaveAttribute('aria-selected', 'true')
-  await expect(ayah.getByRole('tabpanel').locator('.tr')).not.toBeEmpty()
+  const add = ayah.getByRole('button', { name: 'Add translation or tafsir', exact: true })
+  await expect(reader.locator('.study-tools-shell')).toHaveCount(0)
+  await add.press('Enter')
+  const picker = page.getByRole('dialog')
+  const search = picker.getByRole('searchbox', { name: 'Find a source', exact: true })
+  await expect(search).toBeFocused()
+  await search.fill('Saheeh')
+  await picker.getByRole('checkbox', { name: /Saheeh International/ }).press('Space')
+  await picker.getByRole('button', { name: 'Done', exact: true }).press('Enter')
+  await expect(add).toBeFocused()
+  await expect(ayah.locator('[data-source="tr:en.sahih"] .tr')).not.toBeEmpty()
+  await addSource(page, 'tafsir', 'The Study Quran')
+  await expect(ayah.locator('[data-source="study_quran"]')).toContainText('An invented note for the Study canvas.')
+  await add.press('Enter')
+  await page.keyboard.press('Escape')
+  await expect(picker).toHaveCount(0)
+  await expect(add).toBeFocused()
   await expect(page).toHaveURL(/#\/verse\/112\/1$/)
 })
 
@@ -318,7 +399,8 @@ test('manual browsing suspends following without interrupting recitation', async
   await expect(follow).toHaveCount(0)
   await expect(page.locator('.player')).toHaveAttribute('data-status', 'playing')
   // Opening study material also lets the reader browse without being pulled back by audio.
-  await reader.getByRole('tab', { name: 'Tafsir', exact: true }).click()
+  const picker = await sourcePicker(page, 282)
+  await picker.getByRole('button', { name: 'Done', exact: true }).click()
   await expect(follow).toBeVisible()
   await expect(page.locator('.player')).toHaveAttribute('data-status', 'playing')
 })
