@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'preact/hooks'
+import { useEffect, useLayoutEffect, useRef } from 'preact/hooks'
 import { type Meta, locate } from '../data'
 import { t } from '../i18n'
 import { type LayerName, href, mushafAt } from '../router'
@@ -36,7 +36,7 @@ export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active
   const pushed = useRef(false)
   const opener = useRef<Element | null>(null)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open) return
     opener.current = takeDrawerOpener() ?? document.activeElement
     history.pushState(history.state, '')

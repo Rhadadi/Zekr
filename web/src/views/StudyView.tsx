@@ -28,6 +28,7 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
   const anchor = useRef<HTMLElement | null>(null)
   const layoutEpoch = useRef(0)
   const positioning = useRef(false)
+  const browsing = useRef(false)
   const previousRoute = useRef('')
   const tab = panels[current] ?? 'translation'
   const p = player.value
@@ -39,6 +40,7 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
   }, [s.script, s.translations.join(',')])
   const moveTo = (id: string) => {
     const epoch = ++layoutEpoch.current
+    browsing.current = false
     positioning.current = true
     const restore = () => {
       const target = document.getElementById(id)
@@ -72,17 +74,20 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
   useEffect(() => {
     const layer = reader.current?.closest<HTMLElement>('.layer')
     if (!layer) return
-    const suspend = () => { layoutEpoch.current++; positioning.current = false; anchor.current = null; setCompanionOpen(false); setFollowing(false) }
+    const suspend = () => { browsing.current = true; layoutEpoch.current++; positioning.current = false; anchor.current = null; setCompanionOpen(false); setFollowing(false) }
+    const pointer = (e: PointerEvent) => { if (e.target === layer) suspend() }
     const key = (e: KeyboardEvent) => { if (['PageDown', 'PageUp', 'ArrowDown', 'ArrowUp', 'Home', 'End', ' '].includes(e.key) && !(e.target instanceof Element && e.target.closest('button,input,[role="tab"]'))) suspend() }
     layer.addEventListener('wheel', suspend, { passive: true })
     layer.addEventListener('touchmove', suspend, { passive: true })
     layer.addEventListener('keydown', key)
+    layer.addEventListener('pointerdown', pointer)
     let frame = 0
     const observe = () => {
       cancelAnimationFrame(frame)
       frame = requestAnimationFrame(() => {
         // Companion navigation intentionally holds its ayah while its full text is read.
-        if (anchor.current || positioning.current || drawerOpen.peek()) return
+        // Font reflow, focus and opening a drawer can scroll too; only browsing changes the selected ayah.
+        if (!browsing.current || anchor.current || positioning.current || drawerOpen.peek()) return
         const articles = reader.current?.querySelectorAll<HTMLElement>('article.ayah')
         let n = ayah ?? 1
         for (const el of articles ?? []) {
@@ -95,7 +100,7 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
       })
     }
     layer.addEventListener('scroll', observe, { passive: true })
-    return () => { cancelAnimationFrame(frame); layer.removeEventListener('wheel', suspend); layer.removeEventListener('touchmove', suspend); layer.removeEventListener('keydown', key); layer.removeEventListener('scroll', observe) }
+    return () => { cancelAnimationFrame(frame); layer.removeEventListener('wheel', suspend); layer.removeEventListener('touchmove', suspend); layer.removeEventListener('keydown', key); layer.removeEventListener('pointerdown', pointer); layer.removeEventListener('scroll', observe) }
   }, [surahId, ayah])
   useEffect(() => {
     if (playing === undefined || !following || !s.autoScroll) return

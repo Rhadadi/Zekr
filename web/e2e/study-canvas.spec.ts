@@ -207,6 +207,7 @@ for (const lang of ['en', 'fa']) for (const width of [390, 1280]) {
     await expect(page.locator('.drawer').getByRole('link', { name: lang === 'fa' ? 'مطالعه' : 'Study', exact: true })).toHaveAttribute('aria-current', 'page')
     await expect(reading).toHaveAttribute('href', '#/ayah/12/3')
     await page.keyboard.press('Escape')
+    await expect(page.locator('.drawer')).toHaveCount(0)
     await expect(menu).toBeFocused()
     await menu.click()
     await reading.click()
@@ -214,6 +215,27 @@ for (const lang of ['en', 'fa']) for (const width of [390, 1280]) {
     await expect(page.locator('.study-reader')).toHaveCount(0)
   })
 }
+
+test('incidental scrolling keeps the passage, while manual browsing updates it', async ({ page }) => {
+  await fixture(page)
+  await page.goto('/#/verse/12/3')
+  const reader = page.locator('.study-reader')
+  const layer = page.locator('.study-layer')
+  await expect(reader.locator('#a-3 .ar')).not.toBeEmpty()
+  await page.evaluate(() => document.fonts.ready)
+  await expect.poll(() => reader.locator('#a-3').evaluate(el => el.getBoundingClientRect().top)).toBeLessThan(185)
+  // A focus/layout adjustment can scroll the container without a browsing gesture.
+  await layer.evaluate(el => el.scrollTo(0, 0))
+  await expect.poll(() => layer.evaluate(el => el.scrollTop)).toBe(0)
+  await reader.getByRole('button', { name: 'Menu', exact: true }).click()
+  await expect(page.locator('.drawer-modes').getByRole('link', { name: 'Reading', exact: true })).toHaveAttribute('href', '#/ayah/12/3')
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.drawer')).toHaveCount(0)
+  await page.mouse.move(200, 360)
+  await page.mouse.wheel(0, 1200)
+  await expect.poll(() => reader.getByRole('heading', { level: 1 }).textContent()).not.toContain('3 / 111')
+  await expect.poll(() => reader.locator('article.focused').getAttribute('data-ayah')).not.toBe('3')
+})
 
 test('manual browsing suspends following without interrupting recitation', async ({ page }) => {
   await fixture(page)
