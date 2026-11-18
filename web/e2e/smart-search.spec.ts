@@ -17,6 +17,7 @@ async function setup(page: Page, lang = 'en') {
 test('an inflected query ranks literal ayahs first, then labels and highlights related roots', async ({ page }) => {
   await setup(page)
   await page.goto('/#/search?q=ضربتم')
+  await page.getByRole('button', { name: 'Search options', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Search the root ضرب', exact: true })).toBeVisible()
   await expect(page.locator('.search-count')).toHaveText('54 results')
   const hits = page.locator('.search-result')
@@ -36,6 +37,7 @@ for (const language of ['en', 'fa']) test(`Persian and Arabic keyboards return t
   await setup(page, language)
   await page.goto('/#/search?q=كتاب')
   const input = page.locator('.smart-search input')
+  await page.getByRole('button', { name: language === 'fa' ? 'گزینه‌های جستجو' : 'Search options', exact: true }).click()
   await expect(page.locator('.search-roots')).toContainText('كتب')
   const count = await page.locator('.search-count').textContent()
   const refs = await page.locator('.search-result .ref').evaluateAll(links => links.slice(0, 5).map(link => link.getAttribute('href')))
@@ -61,8 +63,30 @@ test('root search controls are accessible on a phone', async ({ page }) => {
   await setup(page, 'fa')
   await page.goto('/#/search?q=ضربتم')
   await expect(page.locator('.search-count')).toContainText('۵۴')
+  await page.getByRole('button', { name: 'گزینه‌های جستجو', exact: true }).click()
   const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).exclude('.mushaf-host').analyze()
   expect(result.violations.map(item => `${item.id}: ${item.nodes.map(node => node.target.join(' ')).join(', ')}`)).toEqual([])
+})
+
+test('search stays compact and finds the Arabic forms of زنا', async ({ page }) => {
+  await setup(page, 'fa')
+  await page.goto('/#/search?q=زنا')
+  const options = page.getByRole('button', { name: 'گزینه‌های جستجو', exact: true })
+  await expect(options).toHaveAttribute('aria-expanded', 'false')
+  await expect(page.locator('#search-options')).toBeHidden()
+  const result = page.locator('.search-result').filter({ has: page.locator('a.ref[href="#/ayah/60/12"]') })
+  await expect(result).toBeVisible()
+  await expect(result.locator('.ar mark')).toContainText('يَزْنِينَ')
+  await expect(page.locator('.search-result a.ref[href="#/ayah/2/222"]')).toHaveCount(0)
+  const first = (await page.locator('.search-result').first().boundingBox())!
+  expect(first.y).toBeLessThan(300)
+  await options.click()
+  await expect(page.getByRole('button', { name: 'جستجوی ریشهٔ زني', exact: true })).toBeVisible()
+  await page.getByRole('combobox', { name: 'روش جستجو', exact: true }).selectOption('root')
+  await expect(page.locator('.search-count')).toHaveText('۵ نتیجه')
+  await page.goto('/#/search?q=زنی&mode=root')
+  await expect(page.locator('.smart-search input')).toHaveValue('زنی')
+  await expect(page.locator('.search-count')).toHaveText('۵ نتیجه')
 })
 
 test('phone settings remain narrow and their controls remain reachable', async ({ page }) => {

@@ -29,18 +29,19 @@ interface Props {
   /** Highlight matches of this query. */
   query?: string
   arQuery?: string
+  wordMatches?: boolean
 }
 
-function Marked({ text, query }: { text: string; query?: string }) {
+function Marked({ text, query, wordMatches }: { text: string; query?: string; wordMatches?: boolean }) {
   if (!query) return <>{text}</>
   return (
     <>
-      {highlight(text, query).map((p, i) => (p.hit ? <mark key={i}>{p.text}</mark> : <span key={i}>{p.text}</span>))}
+      {highlight(text, query, wordMatches).map((p, i) => (p.hit ? <mark key={i}>{p.text}</mark> : <span key={i}>{p.text}</span>))}
     </>
   )
 }
 
-function AyahCardView({ meta, id, ar, translations, playing, focused, showRef, query, arQuery }: Props) {
+function AyahCardView({ meta, id, ar, translations, playing, focused, showRef, query, arQuery, wordMatches }: Props) {
   const { surah, ayah } = locate(meta, id)
   const s = settings.value
   const saved = isBookmarked(id)
@@ -91,13 +92,13 @@ function AyahCardView({ meta, id, ar, translations, playing, focused, showRef, q
         </div>
       </div>
       <p class="ar" lang="ar" dir="rtl" style={{ fontSize: `${s.arabicSize}px` }}>
-        <Marked text={ar} query={arQuery ?? query} />
+        <Marked text={ar} query={arQuery ?? query} wordMatches={wordMatches} />
       </p>
       {translations.map((x, i) => (
         <div class="tr-block" key={x.info.id}>
           {labelled ? <p class="tr-label">{x.info.name}</p> : null}
           <p class={`tr${x.text ? '' : ' merged'}`} lang={x.info.lang} dir={x.info.dir} style={{ fontSize: `${s.trSize}px` }}>
-            {x.text ? <Marked text={x.text} query={query} /> : trTexts[i]}
+            {x.text ? <Marked text={x.text} query={query} wordMatches={wordMatches} /> : trTexts[i]}
           </p>
         </div>
       ))}

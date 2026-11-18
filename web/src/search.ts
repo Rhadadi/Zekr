@@ -83,13 +83,14 @@ export function search(query: string, corpora: Corpus[], limit = 80): { hits: Hi
 }
 
 /** Split `text` into pieces, marking the parts that match a query word. */
-export function highlight(text: string, query: string): { text: string; hit: boolean }[] {
+export function highlight(text: string, query: string, wordMatches = false): { text: string; hit: boolean }[] {
   const toks = tokens(query)
   if (toks.length === 0) return [{ text, hit: false }]
   const { folded, map } = foldWithMap(text)
   const marked = new Array<boolean>(folded.length).fill(false)
   for (const tok of toks) {
     for (let at = folded.indexOf(tok); at !== -1; at = folded.indexOf(tok, at + 1)) {
+      if (wordMatches && (/[\p{L}\p{N}]/u.test(folded[at - 1] ?? '') || (tok.length < 4 && /[\p{L}\p{N}]/u.test(folded[at + tok.length] ?? '')))) continue
       for (let k = at; k < at + tok.length; k++) marked[k] = true
     }
   }

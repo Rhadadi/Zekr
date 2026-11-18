@@ -84,7 +84,15 @@ export class SearchEngine {
   }
   private rootsFor(term: string): number[] {
     const forms = this.morphology?.forms
-    return forms && Object.prototype.hasOwnProperty.call(forms, term) ? forms[term]! : []
+    if (!forms) return []
+    const lookup = (word: string) => Object.prototype.hasOwnProperty.call(forms, word) ? forms[word]! : []
+    const direct = lookup(term)
+    if (direct.length || !term.endsWith('ا') || term.length < 3) return direct
+    // Everyday spellings can use ا where the annotated Quran form has ى or وا (زنا / زنى, الربا / الربوا).
+    // Accept only attested forms with a weak final root; never fold ا and ي throughout the text.
+    const stem = term.slice(0, -1)
+    return [...new Set([`${stem}ي`, `${stem}و`, `${stem}وا`].flatMap(lookup))]
+      .filter(id => /[ويى]$/.test(this.morphology!.roots[id]!))
   }
   search(input: string, options: { mode?: SearchMode; first?: number; last?: number; limit?: number } = {}): SearchResult {
     const explicitRoot = /^(?:root|ریشه|جذر)\s*:/iu.test(input.trim())
@@ -104,9 +112,9 @@ export class SearchEngine {
         const matches = new Map<number, { score: number; text: boolean }>()
         if (mode !== 'root') {
           const candidates = [term]
-          if (mode === 'smart' && term.length >= 3) {
+          if (mode === 'smart' && term.length >= 4 && field.key !== 'ar') {
             for (const word of field.postings.keys()) {
-              if (word !== term && word.includes(term)) candidates.push(word)
+              if (word !== term && word.startsWith(term)) candidates.push(word)
               if (candidates.length >= 100) break
             }
           }
@@ -138,8 +146,9 @@ export class SearchEngine {
         const match = mode === 'root' || !direct ? 'root' : phrase ? 'phrase' : 'text'
         const score = (match === 'phrase' ? 3000 : match === 'text' ? 2000 : 1000) + clauses.reduce((sum, clause) => sum + clause.get(id)!.score, 0)
         if (best.has(id) && best.get(id)!.score >= score) continue
-        const matchingRoots = field.key === 'ar' ? [...rootIds].filter(root => this.rootAyahs.get(root)?.has(id)) : []
-        const matchedWords = field.key === 'ar' ? words(text).filter(word => terms.some(term => word.includes(term)) || this.rootsFor(word).some(root => matchingRoots.includes(root))) : []
+        const matchingRoots = [...rootIds].filter(root => this.rootAyahs.get(root)?.has(id))
+        const arabicText = this.fields.find(value => value.key === 'ar')?.texts[id - 1] ?? ''
+        const matchedWords = words(arabicText).filter(word => terms.includes(word) || this.rootsFor(word).some(root => matchingRoots.includes(root)))
         best.set(id, { id, key: field.key, match, score, words: [...new Set(matchedWords)], roots: matchingRoots.map(root => this.morphology!.roots[root]!) })
       }
     }

@@ -24,6 +24,7 @@ export function SearchView({ meta, initial }: { meta: Meta; initial: string }) {
     return value >= 1 && value <= 114 ? value : 0
   })
   const [limit, setLimit] = useState(60)
+  const [optionsOpen, setOptionsOpen] = useState(false)
   const field = useRef<HTMLInputElement>(null)
   const s = settings.value
   const trKey = s.translations.join(',')
@@ -64,10 +65,13 @@ export function SearchView({ meta, initial }: { meta: Meta; initial: string }) {
       <form class="smart-search" role="search" onSubmit={e => { e.preventDefault(); setQuery(input) }}>
         <Icon name="search" size={22} />
         <input ref={field} class="search-input" type="search" dir="auto" autofocus value={input} maxLength={240} autoComplete="off" spellcheck={false} placeholder={t('searchPlaceholder')}
-          onInput={(e) => setInput(e.currentTarget.value)} aria-label={t('navSearch')} aria-describedby="search-help" />
+          onInput={(e) => setInput(e.currentTarget.value)} aria-label={t('navSearch')} aria-describedby={optionsOpen ? 'search-help' : undefined} />
         {input ? <button type="button" aria-label={t('searchClear')} onClick={() => { setInput(''); field.current?.focus({ preventScroll: true }) }}><Icon name="close" size={18} /></button> : null}
+        <button type="button" class="search-options-toggle" aria-label={t('searchOptions')} aria-expanded={optionsOpen} aria-controls="search-options" onClick={() => setOptionsOpen(!optionsOpen)}>
+          <Icon name="settings" size={20} />{mode !== 'smart' || surah ? <span class="search-filter-dot" aria-hidden="true" /> : null}
+        </button>
       </form>
-      <p class="search-help" id="search-help">{t('searchKeyboardHint')}</p>
+      <div id="search-options" class="search-options" hidden={!optionsOpen} role="region" aria-label={t('searchOptions')}>
       <div class="search-filters">
         <label><span>{t('searchMethod')}</span><select value={mode} onChange={e => setMode(e.currentTarget.value as SearchMode)}>
           <option value="smart">{t('searchSmart')}</option>
@@ -82,6 +86,8 @@ export function SearchView({ meta, initial }: { meta: Meta; initial: string }) {
       {morphology.error ? <p class="muted small">{t('searchRootsUnavailable')} <button class="btn" onClick={morphology.retry}>{t('retry')}</button></p> : null}
       {found?.roots.length ? <div class="search-roots" role="group" aria-label={t('searchRoots')}><span>{t('searchRoots')}</span>{found.roots.map(root => <button key={root} onClick={() => { setInput(root); setMode('root') }} aria-label={t('searchThisRoot', { root })}><span lang="ar" dir="rtl">{root}</span></button>)}</div> : null}
       {meta.studyQuran ? <StudySearchPanel meta={meta} query={query} /> : null}
+      <p class="search-help" id="search-help">{t('searchKeyboardHint')}</p>
+      </div>
       {corpora.error ? <LoadError retry={corpora.retry} /> : null}
       {!query.trim() ? <p class="muted tip">{t('searchHint')}</p> : null}
       {places.length ? (
@@ -105,8 +111,7 @@ export function SearchView({ meta, initial }: { meta: Meta; initial: string }) {
         found.total === 0 ? (waiting || places.length ? null : <div class="search-empty"><p class="status" role="status">{t('noResults')}</p>{found.suggestions.length ? <div class="search-suggestions"><span>{t('searchDidYouMean')}</span>{found.suggestions.map(value => <button key={value} onClick={() => setInput(value)}>{value}</button>)}</div> : null}</div>) : (
           <>
             <p class="search-count muted small" role="status">
-              {found.total > found.hits.length ? t('resultsMore', { n: found.hits.length }) : t('results', { n: found.total })}
-              {found.total > found.hits.length ? ` (${num(found.total)})` : ''}
+              {t('results', { n: found.total })}
             </p>
             <div class="ayahs search-results">
               {found.hits.map((h) => {
@@ -115,7 +120,7 @@ export function SearchView({ meta, initial }: { meta: Meta; initial: string }) {
                 return (
                   <div class="search-result" key={h.id}>
                   {h.match === 'root' ? <p class="search-reason">{t('searchRelatedRoot')} <span lang="ar" dir="rtl">{h.roots.join(' · ')}</span></p> : null}
-                  <AyahCard meta={meta} id={h.id} showRef query={query} arQuery={h.words.length ? h.words.join(' ') : undefined}
+                  <AyahCard meta={meta} id={h.id} showRef wordMatches query={query} arQuery={h.words.length ? h.words.join(' ') : undefined}
                     ar={script.value?.[h.id - 1] ?? arText}
                     translations={translationIds.map(id => ({
                       info: meta.translations.find((x) => x.id === id)!,

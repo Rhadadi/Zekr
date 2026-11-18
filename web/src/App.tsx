@@ -43,7 +43,7 @@ function layerView(m: Meta, layer: Layer, query: URLSearchParams) {
     case 'tafsir': return <TafsirView meta={m} surah={layer.surah!} ayah={layer.ayah!} />
     case 'index': return <IndexView meta={m} tab={query.get('tab') === 'juz' ? 'juz' : 'surah'} />
     case 'daily': return <Daily meta={m} />
-    case 'search': return <SearchView meta={m} initial={query.get('q') ?? ''} />
+    case 'search': return <SearchView key={query.toString()} meta={m} initial={query.get('q') ?? ''} />
     case 'saved': return <Saved meta={m} />
     case 'settings': return <SettingsView meta={m} />
     case 'about': return <About meta={m} />

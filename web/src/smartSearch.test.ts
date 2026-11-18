@@ -56,4 +56,24 @@ describe('smart search', () => {
     expect(plain.search('constructor').hits).toEqual([])
     expect(plain.search('«»').hits).toEqual([])
   })
+  it('resolves final-alif spellings through attested weak-root forms, without unrelated substring matches', () => {
+    const variants = new SearchEngine([
+      { key: 'ar', texts: ['الزنى', 'الزاني', 'يزنون', 'الربوا', 'ربي', 'زنان'] },
+      { key: 'fa.safavi', texts: ['زنا', '', '', '', '', 'زنان'] },
+    ], {
+      version: 'test', source: 'test', roots: ['زني', 'ربو', 'ربب'],
+      forms: { زني: [0], الزني: [0], الزاني: [0], يزنون: [0], الربوا: [1], ربي: [1, 2] },
+      ayahs: [[0], [0], [0], [1], [2], []],
+    })
+    expect(variants.search('زنا').hits.map(hit => hit.id).sort()).toEqual([1, 2, 3])
+    expect(variants.search('زنا').roots).toEqual(['زني'])
+    expect(variants.search('زنا').hits.find(hit => hit.id === 1)?.words).toContain('الزني')
+    expect(variants.search('الزنا', { mode: 'root' }).hits.map(hit => hit.id).sort()).toEqual([1, 2, 3])
+    expect(variants.search('زنی', { mode: 'root' }).total).toBe(3)
+    expect(variants.search('الربا', { mode: 'root' }).hits.map(hit => hit.id)).toEqual([4])
+    expect(variants.search('ربا', { mode: 'root' }).roots).toEqual(['ربو'])
+    expect(variants.search('زنا', { mode: 'exact' }).hits.map(hit => hit.id)).toEqual([1])
+    expect(variants.search('زنان').hits.map(hit => hit.id)).toEqual([6])
+    expect(highlight('زنان، زنا', 'زنا', true).filter(part => part.hit).map(part => part.text)).toEqual(['زنا'])
+  })
 })
