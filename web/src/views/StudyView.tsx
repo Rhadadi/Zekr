@@ -154,6 +154,7 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
   }
   const resume = () => { anchor.current = null; setCompanionOpen(false); setFollowing(true); if (playing !== undefined) { setCurrent(playing); move(playing) } }
   const returnArabic = () => { anchor.current = null; setCompanionOpen(false); move(current) }
+  const followRecitation = () => { anchor.current = null; setCompanionOpen(false); setFollowing(true) }
   const tabs: [StudyTab, string][] = [['translation', t('ayahTranslation')], ['tafsir', t('tafsir')], ['words', t('words')]]
   return <div class="study-reader" ref={reader} data-focus={focusMode} style={{ '--study-ar-size': `${s.arabicSize}px`, '--study-tr-size': `${s.trSize}px`, '--study-progress': current / surah.ayahs }}>
     <header class="study-toolbar">
@@ -178,6 +179,7 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
           return <StudyVerse key={id} meta={meta} surah={surahId} n={i + 1} ar={data.value!.ar[id - 1]!}
             translations={data.value!.ids.map((idTr, k) => ({ info: meta.translations.find(x => x.id === idTr)!, text: data.value!.trs[k]![id - 1]! }))}
             active={current === i + 1} tab={panels[i + 1] ?? 'translation'} playing={playing === i + 1} paused={p?.status === 'paused' || p?.status === 'error'} focused={current === i + 1}
+            onPlay={followRecitation}
             onSelect={() => { if (current !== i + 1) { layoutEpoch.current++; positioning.current = false; anchor.current = null; setCompanionOpen(false); setFollowing(false); setCurrent(i + 1); setLastRead(surahId, i + 1) } }} />
         })}
       </div>}
@@ -206,13 +208,15 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
       </div>
       <div class="study-passage-actions">
       {playing !== current ? <button class="study-listen" aria-label={t('playFromHere')} onClick={e => {
+        followRecitation()
+        move(current)
         playFrom(surah.first + current - 1)
         if (e.detail === 0) requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.player-controls .big')?.focus({ preventScroll: true }))
       }}><span><Icon name="play" size={17} /></span><small>{t('studyListen')}</small></button> : null}
       <button class="study-save" aria-label={isBookmarked(surah.first + current - 1) ? t('unbookmark') : t('bookmark')} title={isBookmarked(surah.first + current - 1) ? t('unbookmark') : t('bookmark')} aria-pressed={isBookmarked(surah.first + current - 1)} onClick={() => toggleBookmark(surah.first + current - 1)}><Icon name="bookmark" size={18} /></button>
       <button class="study-edition-toggle" aria-label={t('more')} title={t('more')} aria-expanded={options} aria-controls="study-edition" onClick={() => setOptions(!options)}><Icon name="more" size={18} /></button>
       </div>
-      {options ? <div class="study-edition" id="study-edition"><StudyIntroLink meta={meta} surah={surahId} /><button onClick={() => playSurah(surahId)}><Icon name="play" size={16} />{t('playSurah')}</button><TranslationAudioToggle /></div> : null}
+      {options ? <div class="study-edition" id="study-edition"><StudyIntroLink meta={meta} surah={surahId} /><button onClick={() => { followRecitation(); playSurah(surahId) }}><Icon name="play" size={16} />{t('playSurah')}</button><TranslationAudioToggle /></div> : null}
     </div>
   </div>
 }

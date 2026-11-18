@@ -10,10 +10,10 @@ import { tafsirIndex } from '../tafsir'
 import { Icon } from './Icon'
 import { StudyChips, StudyInline } from './StudyQuranPanel'
 export type StudyTab = 'translation' | 'tafsir' | 'words'
-export function StudyVerse({ meta, surah, n, ar, translations, active, tab, playing, paused, focused, onSelect }: {
+export function StudyVerse({ meta, surah, n, ar, translations, active, tab, playing, paused, focused, onSelect, onPlay }: {
   meta: Meta; surah: number; n: number; ar: string;
   translations: { info: TranslationInfo; text: string }[];
-  active: boolean; tab: StudyTab; playing: boolean; paused: boolean; focused: boolean; onSelect: () => void;
+  active: boolean; tab: StudyTab; playing: boolean; paused: boolean; focused: boolean; onSelect: () => void; onPlay: () => void;
 }) {
   const id = meta.surahs[surah - 1]!.first + n - 1
   const [more, setMore] = useState(false)
@@ -25,7 +25,7 @@ export function StudyVerse({ meta, surah, n, ar, translations, active, tab, play
   return <article class={`ayah study-ayah${playing ? ' playing' : ''}${focused ? ' focused' : ''}`} aria-label={t('ayahN', { n })} id={`a-${n}`} data-ayah={n} data-id={id} onClick={onSelect}>
     <p class="ar study-ar" lang="ar" dir="rtl">{ar}<button class="study-marker" lang={lang.value} aria-label={t('more')} title={t('more')} aria-expanded={more} onClick={() => setMore(!more)}>{num(n)}</button></p>
     {more ? <div class="study-more">
-      <button aria-label={sounding ? t('pause') : t('play')} aria-pressed={sounding} onClick={() => toggleAyah(id)}><Icon name={sounding ? 'pause' : 'play'} size={17} />{sounding ? t('pause') : t('playThisAyah')}</button>
+      <button aria-label={sounding ? t('pause') : t('play')} aria-pressed={sounding} onClick={e => { e.stopPropagation(); onSelect(); if (!sounding) onPlay(); toggleAyah(id) }}><Icon name={sounding ? 'pause' : 'play'} size={17} />{sounding ? t('pause') : t('playThisAyah')}</button>
       <button onClick={() => toggleBookmark(id)} aria-pressed={saved}>{saved ? t('unbookmark') : t('bookmark')}</button>
       <button onClick={() => loopAyah(id, !looping.value)} aria-pressed={playing && looping.value}>{t('repeatAyah')}</button>
       <button onClick={() => copyText(text())}>{t('copy')}</button>

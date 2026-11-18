@@ -68,8 +68,9 @@ for (const language of ['en', 'fa']) for (const theme of ['light', 'sepia', 'dar
   const original = await pair.allTextContents()
   const faBox = (await persian.boundingBox())!
   const enBox = (await english.boundingBox())!
-  expect(faBox.x).toBeGreaterThan(enBox.x)
-  expect(Math.abs(faBox.y - enBox.y)).toBeLessThan(2)
+  expect(Math.abs(faBox.x - enBox.x)).toBeLessThan(2)
+  expect(enBox.y).toBeGreaterThanOrEqual(faBox.y + faBox.height)
+  expect(faBox.width).toBeLessThanOrEqual(740)
   await expect(reader.locator('.study-modes [aria-current="page"]')).toHaveText(language === 'fa' ? 'مطالعه' : 'Study')
   await expect(reader.locator('.study-modes a')).toHaveAttribute('href', '#/ayah/69/9')
   await page.screenshot({ path: testInfo.outputPath('reading-desktop.png') })
@@ -320,6 +321,26 @@ test('manual browsing suspends following without interrupting recitation', async
   await reader.getByRole('tab', { name: 'Tafsir', exact: true }).click()
   await expect(follow).toBeVisible()
   await expect(page.locator('.player')).toHaveAttribute('data-status', 'playing')
+})
+
+test('starting recitation after browsing follows and highlights each new ayah', async ({ page }) => {
+  await fixture(page)
+  await page.goto('/#/verse/112/1')
+  const reader = page.locator('.study-reader')
+  await reader.getByRole('button', { name: 'Next ayah', exact: true }).click()
+  await expect(reader.locator('article.focused')).toHaveAttribute('data-ayah', '2')
+  await reader.getByRole('button', { name: 'Play from here', exact: true }).click()
+  await expect(reader.locator('article.focused.playing')).toHaveAttribute('data-ayah', '2')
+  await page.evaluate(() => {
+    const w = window as unknown as { canvasAudio: EventTarget[] }
+    w.canvasAudio.at(-1)!.dispatchEvent(new Event('ended'))
+  })
+  const active = reader.locator('article.focused.playing')
+  await expect(active).toHaveAttribute('data-ayah', '3')
+  await expect.poll(() => active.evaluate(el => el.getBoundingClientRect().top)).toBeLessThanOrEqual(185)
+  await expect.poll(() => active.evaluate(el => el.getBoundingClientRect().top)).toBeGreaterThanOrEqual(100)
+  expect(await active.evaluate(el => getComputedStyle(el, '::after').backgroundColor)).not.toBe('rgba(0, 0, 0, 0)')
+  await expect(reader.getByRole('button', { name: 'Return to recitation', exact: true })).toHaveCount(0)
 })
 
 test('starting recitation from the keyboard keeps Pause within reach', async ({ page }) => {
