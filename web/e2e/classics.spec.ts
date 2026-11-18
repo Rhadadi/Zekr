@@ -1,6 +1,9 @@
 import { expect, test, type Page } from '@playwright/test'
 import { gzipSync } from 'node:zlib'
 
+// The service worker can bypass the made-up book responses below.
+test.use({ serviceWorkers: 'block' })
+
 // The classical tafsirs (src/classics.ts). CI's data has none, so this serves two made-up books: 'demo' (Arabic) on
 // 1:1–1:3 (1:2 and 1:3 share the text of 1:2), and 'demo-en' (English) on 1:1 only.
 const index = {
