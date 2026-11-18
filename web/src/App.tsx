@@ -23,8 +23,10 @@ import { SearchView } from './views/Search'
 import { Saved } from './views/Saved'
 import { SettingsView } from './views/Settings'
 import { TafsirView } from './views/Tafsir'
+import { ClassicView } from './views/Classic'
 import { CommentaryView, IntroView } from './views/Commentary'
 import { checkTafsir } from './tafsir'
+import { checkClassics } from './classics'
 
 /** Where the mushaf is: a page, and the ayah to select there, if any. */
 function placeOf(m: Meta, base: Base): { pageNo: number; focusId?: number } {
@@ -41,6 +43,7 @@ function layerView(m: Meta, layer: Layer, query: URLSearchParams) {
     case 'commentary': return <CommentaryView key={`${layer.surah}:${layer.ayah}`} meta={m} surah={layer.surah!} ayah={layer.ayah!} />
     case 'intro': return <IntroView key={layer.surah} meta={m} surah={layer.surah!} />
     case 'tafsir': return <TafsirView meta={m} surah={layer.surah!} ayah={layer.ayah!} />
+    case 'classic': return <ClassicView key={`${layer.surah}:${layer.ayah}`} meta={m} surah={layer.surah!} ayah={layer.ayah!} />
     case 'index': return <IndexView meta={m} tab={query.get('tab') === 'juz' ? 'juz' : 'surah'} />
     case 'daily': return <Daily meta={m} />
     case 'search': return <SearchView key={query.toString()} meta={m} initial={query.get('q') ?? ''} />
@@ -59,6 +62,7 @@ function layerTitle(m: Meta, l: Layer): { title: string; sub?: string } {
     case 'commentary': return { title: t('commentary'), sub: `${t('studyQuranName')} · ${ayahRef(s!, l.ayah!)}` }
     case 'intro': return { title: t('aboutSurah'), sub: `${t('studyQuranName')} · ${surahName(s!)}` }
     case 'tafsir': return { title: t('almizan'), sub: ayahRef(s!, l.ayah!) }
+    case 'classic': return { title: t('classics'), sub: ayahRef(s!, l.ayah!) }
     case 'index': return { title: t('navIndex') }
     case 'today': return { title: t('navToday') }
     case 'daily': return { title: t('dailyTitle') }
@@ -100,6 +104,7 @@ export function App() {
     if (meta.value) {
       initAudio(meta.value)
       void checkTafsir()
+      void checkClassics()
     }
   }, [meta.value])
   const r = route.value

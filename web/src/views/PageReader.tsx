@@ -86,7 +86,10 @@ const MushafPage = memo(function MushafPage({ meta, n, ar, basmala, size, highli
 })
 
 /** Where an ayah is on screen: the line rectangles on a printed page, or the lines of its text. */
-const ayahEl = (id: number) => document.querySelector(`.ay[data-id="${id}"] .seg`) ?? document.querySelector(`.ay[data-id="${id}"]`)
+const rootPx = (name: string) => parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0
+/** Where the page shows from: below the top bar, and below the recitation strip when it sits under the bar */
+const barBottom = () => (document.querySelector<HTMLElement>('.appbar')?.offsetHeight ?? 0) + rootPx('--player-top')
+const ayahEl = (id: number) =>document.querySelector(`.ay[data-id="${id}"] .seg`) ?? document.querySelector(`.ay[data-id="${id}"]`)
 function ayahRects(id: number): DOMRect[] {
   const el = document.querySelector(`.ay[data-id="${id}"]`)
   if (!el) return []
@@ -313,8 +316,8 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
         const el = ayahEl(playingId)
         if (!el) return
         const r = el.getBoundingClientRect()
-        const top = (document.querySelector<HTMLElement>('.appbar')?.offsetHeight ?? 0) + 12
-        const bottom = window.innerHeight - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--player-h')) || 0) - 12
+        const top = barBottom() + 12
+        const bottom = window.innerHeight - rootPx('--player-h') - 12
         if (r.top < top || r.bottom > bottom) el.scrollIntoView({ block: 'center', behavior: 'smooth' })
       }, 60)
     }
@@ -335,8 +338,8 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
       const firstLine = lines[0]!
       const lastLine = lines[lines.length - 1]!
       const below = lastLine.bottom + 6
-      const bar = document.querySelector<HTMLElement>('.appbar')?.offsetHeight ?? 0
-      const room = window.innerHeight - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--player-h')) || 0) // above the player bar
+      const bar = barBottom()
+      const room = window.innerHeight - rootPx('--player-h') // above the player bar
       pop.style.top = `${below + pop.offsetHeight <= room ? below : Math.max(bar + 6, firstLine.top - pop.offsetHeight - 6)}px`
     }
     place()

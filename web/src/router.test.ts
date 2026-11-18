@@ -42,6 +42,7 @@ describe('pages, the Study view and the other layers', () => {
     expect(parseRoute('#/commentary/2/6')).toMatchObject({ base: { surah: 2, ayah: 6 }, layer: { name: 'commentary', surah: 2, ayah: 6 } })
     expect(parseRoute('#/intro/2')).toMatchObject({ base: { surah: 2 }, layer: { name: 'intro', surah: 2 } })
     expect(parseRoute('#/tafsir/19/7')).toMatchObject({ base: { surah: 19, ayah: 7 }, layer: { name: 'tafsir', surah: 19, ayah: 7 } })
+    expect(parseRoute('#/classic/2/255')).toMatchObject({ base: { surah: 2, ayah: 255 }, layer: { name: 'classic', surah: 2, ayah: 255 } })
   })
   it('a plain layer leaves the mushaf where it is', () => {
     for (const name of ['index', 'daily', 'search', 'saved', 'settings', 'about']) {

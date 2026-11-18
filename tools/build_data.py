@@ -16,6 +16,7 @@ Usage:
   python3 tools/build_data.py --refresh  ignore the download cache
   python3 tools/build_data.py --almizan  also build the Al-Mizan tafsir for the iPhone app
                                          (downloads it first if needed; see tools/almizan.py)
+  python3 tools/build_data.py --classics also build the classical tafsirs for the web (tools/classical_tafsir.py)
 
 Downloaded files are cached in data/raw/ (not committed). Generated files are not
 committed either; run this script to recreate them.
@@ -463,7 +464,7 @@ def build_sqlite(path: Path, *, surahs, marks, texts, translations, pools, versi
     db.close()
 
 
-def build_web(out: Path, *, surahs, marks, texts, translations, pools, version: str, tafsir: list[str] | None = None, wbw: bool = False):
+def build_web(out: Path, *, surahs, marks, texts, translations, pools, version: str, tafsir: list[str] | None = None, wbw: bool = False, classics: list[str] | None = None):
     if out.exists():
         shutil.rmtree(out)
     order = [(s.id, n) for s in surahs for n in range(1, s.ayahs + 1)]
@@ -497,6 +498,8 @@ def build_web(out: Path, *, surahs, marks, texts, translations, pools, version: 
             ],
             # tafsirs in data/<id>/ (private builds only; the public site has none)
             "tafsir": tafsir or [],
+            # the classical tafsirs in data/classics/ (tools/classical_tafsir.py): their ids; the index has the rest
+            **({"classics": classics} if classics else {}),
             # word-by-word Persian meanings in data/wbw/<surah>.json (tools/wbw.py)
             **({"wbw": "fa"} if wbw else {}),
             # data/lines/NNN.json: each printed page's text lines (assets/mushaf-lines.json)
@@ -523,6 +526,10 @@ def main(argv=None) -> int:
     ap.add_argument(
         "--almizan-web", action="store_true",
         help="also put Al-Mizan into the web data (private builds only: never deploy it publicly, see docs/PLAN.md §8)",
+    )
+    ap.add_argument(
+        "--classics", action="store_true",
+        help="also put the classical tafsirs (Tabari, Razi, Ibn Kathir ...) into the web data (downloads them first if needed)",
     )
     ap.add_argument("--no-wbw", action="store_true", help="leave out the word-by-word Persian meanings (no download)")
     args = ap.parse_args(argv)
@@ -616,6 +623,10 @@ def main(argv=None) -> int:
     pools = build_pools(surahs, texts["simple"], translations, chosen)
     if args.almizan_web:
         hashes["almizan-web"] = "1"  # a build with the tafsir gets its own data version
+    if args.classics:
+        import classical_tafsir
+        classical_tafsir.fetch_all()
+        hashes["classics"] = classical_tafsir.fingerprint()
     if MUSHAF_LINES.exists():
         # the line files are data too: a new version makes installed copies fetch meta.json (and them) again
         hashes["mushaf-lines"] = hashlib.sha256(MUSHAF_LINES.read_bytes()).hexdigest()
@@ -631,7 +642,10 @@ def main(argv=None) -> int:
     kw = dict(surahs=surahs, marks=marks, texts=texts, translations=translations, pools=pools, version=version)
     build_sqlite(args.ios_db, widget=False, **kw)
     build_sqlite(args.widget_db, widget=True, **kw)
-    build_web(args.web_dir, tafsir=["almizan"] if args.almizan_web else None, wbw=words is not None, **kw)
+    build_web(args.web_dir, tafsir=["almizan"] if args.almizan_web else None, wbw=words is not None,
+              classics=[b[0] for b in classical_tafsir.BOOKS] if args.classics else None, **kw)
+    if args.classics:
+        classical_tafsir.build_web(args.web_dir, [s.ayahs for s in surahs])
     if words is not None:
         import wbw
         wbw.build_web(args.web_dir, words, [s.ayahs for s in surahs])

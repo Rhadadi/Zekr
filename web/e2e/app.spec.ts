@@ -1070,25 +1070,32 @@ test.describe('page view on a phone', () => {
     await expect(page.locator('.ayah-popup')).toContainText('1:3')
   })
 
-  test('the card never sits under the recitation bar, or under the app bar', async ({ page }) => {
+  test('held upright, the recitation is a strip under the top bar, and the card never sits under either', async ({ page }) => {
     await trackAudio(page)
     await useSettings(page, { lang: 'en', translationPlace: 'card' })
     await page.goto('/#/page/1')
     await settle(page)
     await page.locator('#page-1 .ay').nth(2).click()
     await page.locator('.ayah-popup').getByRole('button', { name: 'Play from here' }).click()
-    await expect(page.locator('.player')).toBeVisible()
-    await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--player-h'))).not.toBe('0px')
-    // an ayah low on the screen: the card goes above it rather than under the player bar
-    await page.locator('#page-1 .ay').nth(6).evaluate((el) => el.scrollIntoView({ block: 'end' }))
+    const strip = page.locator('.player')
+    await expect(strip).toHaveClass(/on-top/)
+    // just the controls: the surah and page are in the top bar already
+    await expect(strip.locator('.player-info')).toHaveCSS('width', '1px')
+    const css = (name: string) => page.evaluate((n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim(), name)
+    await expect.poll(() => css('--player-top')).not.toBe('0px')
+    expect(await css('--player-h')).toBe('0px') // the bottom of the screen is the page's
+    const top = (await page.locator('.appbar').boundingBox())!
+    const bar = (await strip.boundingBox())!
+    expect(Math.abs(bar.y - (top.y + top.height))).toBeLessThanOrEqual(1)
+    expect(bar.height).toBeLessThanOrEqual(48)
+    // an ayah high on the screen: its card is not hidden under the strip
+    await page.locator('#page-1 .ay').nth(6).evaluate((el) => el.scrollIntoView({ block: 'start' }))
     await page.locator('#page-1 .ay').nth(6).click()
     await expect(page.locator('.ayah-popup')).toContainText('1:7')
     await expect.poll(() => page.locator('.ayah-popup').evaluate((el) => (el as HTMLElement).style.top)).not.toBe('') // placed
     const card = (await page.locator('.ayah-popup').boundingBox())!
-    const bar = (await page.locator('.player').boundingBox())!
-    const top = (await page.locator('.appbar').boundingBox())!
-    expect(card.y + card.height).toBeLessThanOrEqual(bar.y + 1)
-    expect(card.y).toBeGreaterThanOrEqual(top.y + top.height - 1)
+    expect(card.y).toBeGreaterThanOrEqual(bar.y + bar.height - 1)
+    expect(card.y + card.height).toBeLessThanOrEqual(page.viewportSize()!.height)
   })
 
   test('one panel at the bottom: an open box takes the place of the recitation bar, with play and pause of its own', async ({ page }) => {
@@ -1104,8 +1111,10 @@ test.describe('page view on a phone', () => {
     await expect(box.getByRole('button', { name: /Play|Pause/ })).toBeVisible()
     await expect(page.getByTestId('sheet')).toHaveCSS('bottom', '0px')
     await box.getByRole('button', { name: 'Close' }).click()
+    // the bar comes back: on a phone held upright, as the strip under the top bar (it takes nothing from the bottom)
     await expect(page.locator('.player')).toBeVisible()
-    await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--player-h'))).not.toBe('0px')
+    await expect(page.locator('.player')).toHaveClass(/on-top/)
+    await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--player-top'))).not.toBe('0px')
   })
 
   test('with the translation on the page, playing from an ayah closes its box and leaves the recitation bar', async ({ page }) => {

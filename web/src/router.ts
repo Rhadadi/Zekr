@@ -3,7 +3,7 @@ import { signal } from '@preact/signals'
 /** The mushaf is the one reading screen and is always there. Everything else is a layer over it. */
 export type LayerName =
   | 'index' | 'today' | 'daily' | 'search' | 'saved' | 'settings' | 'about'
-  | 'study' | 'commentary' | 'intro' | 'tafsir'
+  | 'study' | 'commentary' | 'intro' | 'tafsir' | 'classic'
 
 export interface Layer {
   name: LayerName
@@ -40,6 +40,7 @@ export function parseRoute(hash: string): Route {
       return { base: { surah, ayah, select: ayah !== undefined }, layer: null, query }
     }
     case 'commentary':
+    case 'classic':
     case 'tafsir': {
       const surah = surahOf(parts[1])
       if (!surah) return index
@@ -120,6 +121,8 @@ export const href = {
   /** The Study Quran's introduction to a surah. */
   intro: (s: number) => `#/intro/${s}`,
   tafsir: (s: number, a: number) => `#/tafsir/${s}/${a}`,
+  /** The classical tafsirs (Tabari, Razi, Ibn Kathir ...) on an ayah. */
+  classic: (s: number, a: number) => `#/classic/${s}/${a}`,
 }
 
 /** Close the layer: back to the mushaf as it was. Goes back through the layers opened from it, or (a link that

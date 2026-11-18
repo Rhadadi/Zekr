@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks'
 import { audioProgress, loopAyah, looping, next, player, previous, seek, stop, toggle } from '../audio'
 import { type Meta, locate } from '../data'
-import { IN_BAR_QUERY, useMedia } from '../hooks'
+import { IN_BAR_QUERY, ON_TOP_QUERY, useMedia } from '../hooks'
 import { ayahRef, num, surahName, t } from '../i18n'
 import { href } from '../router'
 import { Icon } from './Icon'
@@ -18,19 +18,26 @@ export function PlayerBar({ meta, study = false }: { meta: Meta; study?: boolean
   const showing = !!p && !sheetOpen.value
   // a phone on its side: the controls sit in the top bar and take nothing from the bottom of the screen
   const inBar = useMedia(IN_BAR_QUERY) && !study
+  // held upright: just the controls, in a strip under the top bar, which already names the surah and page; the bottom
+  // of the screen is left to the page and the ayah's panel. A tafsir's recording keeps its seek bar and voice below.
+  const onTop = useMedia(ON_TOP_QUERY) && !inBar && !study && !p?.commentary
   useLayoutEffect(() => {
     const el = bar.current
     const root = document.documentElement
     if (!el) return
-    const set = () => root.style.setProperty('--player-h', inBar ? '0px' : `${el.offsetHeight}px`)
+    const set = () => {
+      root.style.setProperty('--player-h', inBar || onTop ? '0px' : `${el.offsetHeight}px`)
+      root.style.setProperty('--player-top', onTop ? `${el.offsetHeight}px` : '0px')
+    }
     set()
     const observer = new ResizeObserver(set)
     observer.observe(el)
     return () => {
       observer.disconnect()
       root.style.removeProperty('--player-h')
+      root.style.removeProperty('--player-top')
     }
-  }, [showing, inBar])
+  }, [showing, inBar, onTop])
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
@@ -45,7 +52,7 @@ export function PlayerBar({ meta, study = false }: { meta: Meta; study?: boolean
   const time = (n: number) => `${Math.floor(n / 60)}:${String(Math.floor(n % 60)).padStart(2, '0')}`
   return (
     <>
-      <div class={`player${entry ? ' has-commentary' : ''}${inBar ? ' in-bar' : ''}`} ref={bar} role="region" aria-label={label} data-status={p.status}>
+      <div class={`player${entry ? ' has-commentary' : ''}${inBar ? ' in-bar' : ''}${onTop ? ' on-top' : ''}`} ref={bar} role="region" aria-label={label} data-status={p.status}>
         <a class="player-info" href={entry ? href.commentary(surah, ayah) : study ? href.verse(surah, ayah) : href.ayah(surah, ayah)} aria-label={`${entry ? label : t('nowReciting')}: ${ayahRef(meta.surahs[surah - 1]!, ayah)}`}>
           <strong>{surahName(meta.surahs[surah - 1]!)} {num(surah)}:{num(ayah)}</strong>
           {p.status === 'error' || p.phase !== 'ayah' || entry ? (
@@ -69,6 +76,8 @@ export function PlayerBar({ meta, study = false }: { meta: Meta; study?: boolean
             value={Math.min(audioProgress.value.elapsed, audioProgress.value.duration)} onInput={(e) => seek(Number(e.currentTarget.value))} />
           <span>{time(audioProgress.value.duration)}</span>
         </div> : null}
+        {onTop ? <span class="player-progress" aria-hidden="true"
+          style={{ '--p': audioProgress.value.duration > 0 ? Math.min(1, audioProgress.value.elapsed / audioProgress.value.duration) : 0 }} /> : null}
       </div>
       {open ? (
         <div class="sheet-backdrop" onClick={() => setOpen(false)}>

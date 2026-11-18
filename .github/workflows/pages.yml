@@ -24,11 +24,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Build the data (downloads from Tanzil), with Al-Mizan and The Study Quran
+      - name: The classical tafsirs' texts (about 350 MB; downloaded once, then kept)
+        uses: actions/cache@v4
+        with:
+          path: data/raw/classical
+          key: classical-tafsir-${{ hashFiles('tools/classical_tafsir.py') }}
+      - name: Build the data (downloads from Tanzil), with Al-Mizan, The Study Quran and the classical tafsirs
         # The Study Quran is published with the owner's confirmation of permission (October 16, 2026).
         run: |
           gunzip -c assets/study-quran/study_quran.sqlite.gz > "$RUNNER_TEMP/study_quran.sqlite"
-          python3 tools/build_data.py --almizan-web --study-quran "$RUNNER_TEMP/study_quran.sqlite" \
+          python3 tools/build_data.py --almizan-web --classics --study-quran "$RUNNER_TEMP/study_quran.sqlite" \
             --study-quran-audio assets/study-quran-audio/yasin \
             --study-quran-audio assets/study-quran-audio/yusuf
       - name: Printed mushaf pages (published with the owner's confirmation of permission, October 15, 2026)

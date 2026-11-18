@@ -42,6 +42,8 @@ export function useWide(): boolean {
 
 /** A phone on its side: the screen is short, so the recitation is a few small buttons in the top bar, not a panel. */
 export const IN_BAR_QUERY = '(orientation: landscape) and (max-height: 600px)'
+/** A phone held upright (or a narrow window): the recitation is a slim strip under the top bar */
+export const ON_TOP_QUERY = '(max-width: 999px)'
 export function useMedia(query: string): boolean {
   const [on, setOn] = useState(() => matchMedia(query).matches)
   useEffect(() => {

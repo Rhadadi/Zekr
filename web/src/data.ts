@@ -43,6 +43,8 @@ export interface Meta {
   translations: TranslationInfo[]
   /** Tafsirs this build includes (private builds only). */
   tafsir?: string[]
+  /** The classical tafsirs (data/classics/, src/classics.ts): their ids. */
+  classics?: string[]
   studyQuran?: { id: string; name: string; pdfSha256: string; importVersion: string; audio?: { surahs: number[]; entries: number; bytes: number } }
   /** The owner's printed mushaf as page images (private builds only; tools/mushaf_pages.py). */
   mushaf?: { v: string; w: number; h: number }

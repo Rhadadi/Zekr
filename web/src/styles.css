@@ -276,6 +276,25 @@ input[type='checkbox'] { width: 20px; height: 20px; flex-shrink: 0; accent-color
 .player.in-bar :is(.player-repeat, .commentary-seek) { display: none; }
 .player.in-bar .player-controls .icon-btn { width: 44px; height: 44px; color: var(--ink); }
 .player.in-bar .icon-btn.big { width: 40px; height: 40px; margin: 2px; color: var(--accent-ink); }
+/* A phone held upright (hooks.ts ON_TOP_QUERY): the controls in a slim strip under the top bar, as part of it. The bar
+   names the surah and page already; the bottom of the screen is the page's and the ayah panel's. A hairline along its
+   foot fills as the ayah is recited. */
+.player.on-top {
+  top: var(--bar-base); bottom: auto; max-width: none; height: 46px; padding: 0 8px; justify-content: center;
+  background: var(--bg); border-top: 0; border-bottom: 1px solid var(--line); box-shadow: 0 8px 16px -14px rgb(0 0 0 / 0.35);
+}
+.player.on-top[data-status='error'] { border-bottom-color: #c0392b; justify-content: space-between; }
+.player.on-top .player-info strong { display: none; } /* the error alone, on one line */
+.player.on-top .player-info span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #c0392b; }
+.player.on-top:not([data-status='error']) .player-info { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.player.on-top .player-controls { gap: 10px; }
+.player.on-top .player-controls .icon-btn { width: 44px; height: 44px; color: var(--ink); }
+.player.on-top .icon-btn.big { width: 38px; height: 38px; margin: 3px; }
+.player-progress {
+  position: absolute; inset-inline: 0; bottom: -1px; height: 2px; background: var(--accent);
+  transform: scaleX(var(--p, 0)); transform-origin: right; transition: transform 0.25s linear;
+}
+:root[dir='ltr'] .player-progress { transform-origin: left; }
 /* a narrow phone on its side has room for play and "more" only, beside the surah and page in the bar's middle */
 @media (orientation: landscape) and (max-height: 600px) and (max-width: 799px) { .player.in-bar .player-step { display: none; } }
 .player-info { display: flex; flex-direction: column; min-width: 0; line-height: 1.4; font-size: 0.9rem; }
@@ -327,7 +346,7 @@ input[type='checkbox'] { width: 20px; height: 20px; flex-shrink: 0; accent-color
 .mb-jump input { -moz-appearance: textfield; appearance: textfield; }
 .mb-jump input::-webkit-inner-spin-button, .mb-jump input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 .mb-jump input { width: 64px; min-height: 40px; text-align: center; border-radius: 999px; border: 1.5px solid var(--gold); background: var(--surface); }
-.mushaf-flow { position: relative; padding: calc(var(--bar-h) + 4px) 0 12px; }
+.mushaf-flow { position: relative; padding: calc(var(--bar-base) + 4px) 0 12px; } /* still when the recitation strip comes */
 .flow {
   font-family: var(--font-quran); line-height: 2.15; text-align: justify; text-justify: inter-word; margin: 6px 0; word-spacing: 0.05em;
 }
@@ -400,6 +419,13 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .tf-h { font-size: 1.1em; color: var(--accent); margin: 22px 0 4px; scroll-margin-top: 70px; }
 .tf-t { font-size: 1em; margin: 14px 0 2px; scroll-margin-top: 70px; }
 .tf-p { margin: 0 0 10px; text-align: justify; }
+/* the classical tafsirs: a tab for each book (the ayah panel's tabs), then the text, long paragraphs as the books have them */
+.classic-tabs { display: flex; gap: 4px; margin: 0 0 10px; overflow-x: auto; border-bottom: 1px solid var(--line); scrollbar-width: none; }
+.classic-tabs button { flex: none; min-height: 44px; padding: 0 12px; white-space: nowrap; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; background: none; color: var(--muted); font: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+.classic-tabs button[aria-selected='true'] { color: var(--ink); border-bottom-color: var(--accent); }
+.classic-author { text-align: center; margin: -6px 0 14px; }
+.classic .tf-p { text-align: start; overflow-wrap: anywhere; }
+.classic[lang='ar'] { line-height: 2.1; }
 .tf-q { color: var(--accent); }
 .tf-d { color: var(--gold); }
 .tafsir sup.fn { font-size: 0.65em; color: var(--muted); margin-inline-start: 1px; }
@@ -620,7 +646,10 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .pg-no { position: absolute; left: 42%; width: 16%; bottom: 0; height: 6%; border: 0; background: none; cursor: pointer; padding: 0; }
 
 /* The bar: burger, centre, end. The same for the mushaf and every layer. */
-:root { --bar-h: calc(52px + env(safe-area-inset-top)); }
+:root {
+  --bar-base: calc(52px + env(safe-area-inset-top));
+  --bar-h: calc(var(--bar-base) + var(--player-top, 0px)); /* what covers the top: the bar, and the recitation strip under it */
+}
 .appbar { position: fixed; top: 0; inset-inline: 0; z-index: 5; padding-top: env(safe-area-inset-top); background: var(--bg); border-bottom: 1px solid var(--line); }
 .appbar.sticky { position: sticky; }
 .appbar-in {
@@ -654,7 +683,7 @@ a.player-info { color: var(--ink); text-decoration: none; }
   padding-bottom: calc(var(--player-h) + 24px + env(safe-area-inset-bottom));
 }
 .layer:focus { outline: none; }
-.layer-inner { max-width: 720px; margin-inline: auto; padding: 8px 16px 0; min-height: 100%; }
+.layer-inner { max-width: 720px; margin-inline: auto; padding: calc(8px + var(--player-top, 0px)) 16px 0; min-height: 100%; }
 
 /* The navigation drawer */
 .drawer-wrap { position: fixed; inset: 0; z-index: 20; }
@@ -775,26 +804,28 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .il .seg { position: absolute; display: block; cursor: pointer; border-radius: 5px; padding: 0; scroll-margin: calc(var(--bar-h) + 40px) 0 calc(var(--sheet-h, 0px) + 40px); }
 .il .seg.ay:not(.sel):not(.playing) { background: none; }
 /* The box under a line: the frame stretched down its sides, a plain light box inside it */
-.il-tr { position: relative; overflow: hidden; padding: 1px 10.65% 3px; color: #262624; font-family: var(--font-ui); }
-.mushaf-flow { --il-paper: #eaf7fc; --il-rule: #d8e8ef; }
-.mushaf-flow[data-color='green'] { --il-paper: #edf9ee; --il-rule: #dbeadd; }
-.mushaf-flow[data-color='purple'] { --il-paper: #f1edfc; --il-rule: #e2dcef; }
-.mushaf-flow[data-color='pink'] { --il-paper: #fcecf3; --il-rule: #eedce5; }
-.il-paper { position: absolute; inset: 0 10.4%; background: var(--il-paper); border-block: 1px solid var(--il-rule); }
+/* The translation is set on the page's own paper (the colour of the printed page between its lines), with no box or
+   rules of its own, in a deep ink of the mushaf's colour: one page, as in a printed mushaf with its translation */
+.il-tr { position: relative; overflow: hidden; padding: 0 10.65% 2px; color: var(--il-ink); font-family: var(--font-ui); }
+.mushaf-flow { --il-paper: #e7f8fe; --il-ink: #1d4352; }
+.mushaf-flow[data-color='green'] { --il-paper: #edf9ee; --il-ink: #1f4530; }
+.mushaf-flow[data-color='purple'] { --il-paper: #f1edfc; --il-ink: #382d58; }
+.mushaf-flow[data-color='pink'] { --il-paper: #fcecf3; --il-ink: #55263b; }
+.il-paper { position: absolute; inset: 0 10.4%; background: var(--il-paper); }
 .il-under { padding: 8px 6% 10px; background: var(--il-paper); }
 .il-under .il-p { font-size: inherit; }
-.il-p { position: relative; margin: 0; font-size: 14px; font-weight: 500; line-height: 1.45; text-align: justify; text-align-last: start; overflow-wrap: anywhere; }
+.il-p { position: relative; margin: 0; font-size: 14px; font-weight: 500; line-height: 1.28; text-align: justify; text-align-last: start; overflow-wrap: anywhere; }
 .il-p.measuring .il-t { white-space: nowrap; }
 .il-p .ay { cursor: pointer; background: none; } /* the Arabic above shows which ayah is chosen or recited */
-.il-tr:not(.il-under) .il-p { font-family: 'Zekr Translation', var(--font-ui); white-space: nowrap; overflow-wrap: normal; text-align: start; min-height: 1.5em; line-height: 1.5; word-spacing: -.02em; }
+.il-tr:not(.il-under) .il-p { font-family: 'Zekr Translation', var(--font-ui); white-space: nowrap; overflow-wrap: normal; text-align: start; min-height: 1.4em; line-height: 1.4; word-spacing: -.02em; }
 .il-tr:not(.il-under) .il-t { display: inline-block; white-space: nowrap; vertical-align: top; }
 .il-p .ay { padding: 0; border-radius: 0; }
 .il-mark { white-space: nowrap; font-size: .72em; font-weight: 500; padding-inline: .05em; }
 .il-measure { position: absolute; inset-inline-start: -100000px; top: 0; visibility: hidden; pointer-events: none; white-space: pre; font: 500 20px 'Zekr Translation', var(--font-ui); font-stretch: 75%; word-spacing: -.02em; }
 .il-measure > span { display: inline-block; white-space: pre; }
 .mushaf-flow[data-color='dark'] .mpage.il { background: #111; }
-.mushaf-flow[data-color='dark'] .il-tr { color: #e8e6df; }
-.mushaf-flow[data-color='dark'] :is(.il-paper, .il-under) { background: #102029; border-color: #23363d; }
+.mushaf-flow[data-color='dark'] .il-tr { color: #dfe8eb; }
+.mushaf-flow[data-color='dark'] :is(.il-paper, .il-under) { background: #102029; }
 
 /* A page turn: the new page slides in a little from the side the book advances from (the next page from the left) */
 .mushaf-flow[data-turn='next'] .mpage { animation: page-in-next 0.28s cubic-bezier(0.05, 0.7, 0.1, 1); }

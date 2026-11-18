@@ -8,6 +8,7 @@ import { href } from '../router'
 import { ayahLink, ayahText, copyText, shareText } from '../share'
 import { isBookmarked, settings, toggleBookmark } from '../store'
 import { sheetOpen } from '../ui'
+import { classicsIndex } from '../classics'
 import { tafsirIndex } from '../tafsir'
 import { Icon } from './Icon'
 import { StudyChips, StudyInline, StudyLink } from './StudyQuranPanel'
@@ -62,7 +63,7 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
   }, [id, menu])
   // the tabs beside the page: the translation, then what the reader has of the ayah's tafsir and its words
   type Tab = 'tr' | 'tafsir' | 'words'
-  const tabs: Tab[] = run ? ['tr', ...(meta.studyQuran || tafsirIndex.value ? ['tafsir' as const] : []), ...(meta.wbw ? ['words' as const] : [])] : []
+  const tabs: Tab[] = run ? ['tr', ...(meta.studyQuran || tafsirIndex.value || classicsIndex.value ? ['tafsir' as const] : []), ...(meta.wbw ? ['words' as const] : [])] : []
   const [tab, setTab] = useState<Tab>('tr')
   const shownTab: Tab = tabs.includes(tab) ? tab : 'tr'
   const wbw = useAsync(async () => (words || (run && shownTab === 'words') ? (await loadWbw(surah))[ayah - 1] ?? [] : null), [words, run, shownTab, surah, ayah])
@@ -120,6 +121,11 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
           {tafsirIndex.value ? (
             <a href={href.tafsir(surah, ayah)} aria-label={`${t('tafsir')}: ${t('almizan')}`}>
               <Icon name="book" size={18} /> {t('almizan')}
+            </a>
+          ) : null}
+          {classicsIndex.value ? (
+            <a href={href.classic(surah, ayah)}>
+              <Icon name="book" size={18} /> {t('classics')}
             </a>
           ) : null}
           {/* with nothing else in the box, its commentary is listed here rather than taking a row of its own */}
@@ -184,6 +190,9 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
               {meta.studyQuran ? <StudyInline meta={meta} ayahID={id} only={null} /> : null}
               {tafsirIndex.value ? (
                 <a class="mrow mlink" href={href.tafsir(surah, ayah)}>{t('tafsir')}: {t('almizan')}<span class="chev-fwd"><Icon name="chevron" size={16} /></span></a>
+              ) : null}
+              {classicsIndex.value ? (
+                <a class="mrow mlink" href={href.classic(surah, ayah)}>{t('classics')}<span class="chev-fwd"><Icon name="chevron" size={16} /></span></a>
               ) : null}
             </>
           ) : wbw.value ? (
