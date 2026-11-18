@@ -603,6 +603,7 @@ test.describe('what plays, and seeing it', () => {
   })
 
   test('the player bar takes you to the ayah being recited', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 }) // a phone held upright has only the controls in its strip, no label
     await trackAudio(page)
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/today')
