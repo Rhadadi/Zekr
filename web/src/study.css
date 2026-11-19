@@ -261,3 +261,13 @@
 .study-layer:has(.study-reader[data-focus='true']) { scroll-padding-top: max(40px, 12dvh); }
 .study-passage-picker header { position: sticky; top: -12px; z-index: 1; background: var(--study-surface); }
 .study-reader:focus { outline: none; }
+.study-zen-controls { direction: rtl; width: max-content; max-width: calc(100vw - 24px); }
+.study-zen-controls button { white-space: nowrap; font: inherit; font-size: .8rem; }
+.study-zen-controls button:last-child svg { transform: rotate(180deg); }
+@media (max-width: 380px) {
+  .study-toolbar .study-settings { display: none; }
+  .study-toolbar .study-modes { left: 108px; }
+}
+@media (max-width: 350px) {
+  .study-toolbar .study-modes [aria-current] { display: none; }
+}
