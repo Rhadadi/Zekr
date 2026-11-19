@@ -156,34 +156,91 @@ def first_words(rendering: str, letters: str, after: int) -> int | None:
     return None
 
 
+def quote_at(paragraph: str, letters: str, after: int, until: int) -> int | None:
+    """Where in the surah's letters a paragraph is about: the place of the first run of quoted (vowelled) words in it
+    that is found between `after` and `until`. None when there is none (the paragraph goes on with the one before)."""
+    words = paragraph.split()[:60]
+    runs: list[list[str]] = []
+    for w in words:
+        if VOWELS.search(w):
+            if runs and runs[-1][-1] is not None:
+                runs[-1].append(w)
+            else:
+                runs.append([w])
+        elif runs and runs[-1][-1] is not None:
+            runs[-1].append(None)  # a run ends at the first word that is not vowelled
+    for run in runs[:4]:
+        quoted = [bare(w) for w in run if w is not None]
+        key = "".join(quoted[:4])
+        if len(key) < 6:
+            continue
+        at = letters.find(key, after, until)
+        if at >= 0:
+            return at
+    return None
+
+
+def split_round(text: str, letters: str, owner: list[int], first: int, last: int) -> list[tuple[int, int, str]]:
+    """One round of a session (`first`..`last`: the ayahs of the session) cut into its paragraphs, each with the ayahs
+    it is about: from the ayah it begins at to the one before the next paragraph's. Paragraphs that do not begin at
+    a quoted ayah go on with the one before; the ayahs between two quoted ones are covered by the paragraph before."""
+    paragraphs = [p for p in text.split("\n") if p.strip()]
+    begin = owner.index(first)
+    end = len(owner) - owner[::-1].index(last)
+    pos, at_ayah = begin, first
+    starts = []
+    for para in paragraphs:
+        at = quote_at(para, letters, pos, end)
+        if at is not None and owner[at] >= at_ayah and owner[at] - at_ayah <= 25:
+            pos, at_ayah = at, owner[at]
+        starts.append(at_ayah)
+    out = []
+    for i, para in enumerate(paragraphs):
+        nxt = next((x for x in starts[i + 1:] if x > starts[i]), last + 1)
+        out.append((starts[i], nxt - 1, para))
+    return out
+
+
 def read_sessions(sections: list[list[str]], quran: list[str]) -> dict[int, str]:
-    """Every ayah of a surah (`quran`: its ayahs' text), the whole session it is in: "# <round>" lines, then the
-    round's paragraphs. A session that cannot be placed stays with the one before it."""
+    """Every ayah of a surah (`quran`: its ayahs' text), what the book says on it: for each of the three rounds of the
+    session it is in, "# <round>" and the paragraphs about the ayah (a paragraph about several ayahs is on each of
+    them). A session that cannot be placed stays with the one before it; an ayah the book passes over reads as the
+    one before it."""
     letters, owner = "", []
     for n, ayah in enumerate(quran, 1):
         b = bare(ayah)
         letters += b
         owner += [n] * len(b)
-    sessions: list[tuple[int, list[str]]] = []  # first ayah, parts
+    sessions: list[tuple[int, list[tuple[str | None, str]]]] = []  # first ayah, rounds
     after = 0
     for title, text in sections:
         round_ = next((k for k in ROUNDS if k in title.replace("ى", "ی")), None)  # spelt with either yeh
-        part = f"# النوبة {round_} — {ROUNDS[round_]}\n{text}" if round_ else text
         if round_ == "الاولی" or not sessions:
             at = first_words(text, letters, after) if sessions else 0
             start = owner[at] if at is not None and at < len(owner) else None
             if not sessions or (start is not None and start > sessions[-1][0]):
-                sessions.append((start or 1, [part]))
+                sessions.append((start or 1, [(round_, text)]))
                 after = (at or 0) + 1
                 continue
-        sessions[-1][1].append(part)
+        sessions[-1][1].append((round_, text))
     out: dict[int, str] = {}
-    for k, (start, parts) in enumerate(sessions):
+    for k, (start, rounds) in enumerate(sessions):
         end = sessions[k + 1][0] - 1 if k + 1 < len(sessions) else len(quran)
-        body = "\n".join(parts)
-        for n in range(start, end + 1):
-            out[n] = body
-    return out
+        per_ayah: dict[int, list[str]] = {n: [] for n in range(start, end + 1)}
+        for round_, text in rounds:
+            heading = f"# النوبة {round_} — {ROUNDS[round_]}" if round_ else ""
+            parts = split_round(text, letters, owner, start, end)
+            for n in range(start, end + 1):
+                mine = [para for lo, hi, para in parts if lo <= n <= hi]
+                if mine:
+                    per_ayah[n] += ([heading] if heading else []) + mine
+        for n, lines in per_ayah.items():
+            out[n] = "\n".join(lines)
+    # an ayah the book passes over reads as the one before it
+    for n in range(2, len(quran) + 1):
+        if not out.get(n) and out.get(n - 1):
+            out[n] = out[n - 1]
+    return {n: t for n, t in out.items() if t}
 
 
 def raw_file(edition: str, surah: int) -> Path:

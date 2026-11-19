@@ -263,7 +263,7 @@ test.describe('mushaf page view', () => {
     await expect(p305.locator('.ay').first()).toContainText(/هيع/) // the letters, whatever marks the script puts on them
     await expect(p305.locator('.mark').first()).toHaveText('﴿١﴾')
     await expect(p305.locator('.mark').last()).toHaveText('﴿١١﴾')
-    await expect(page.locator('.mb-page')).toHaveText('305')
+    await expect(page.locator('.mb-page')).toHaveText('p. 305')
     await expect(page.locator('.mb-juz')).toHaveText('Juz 16')
     await expect(page.locator('.mb-surah')).toContainText('مريم')
   })
@@ -275,12 +275,12 @@ test.describe('mushaf page view', () => {
     await page.locator('#page-305 .page-no').click() // the page number at the foot of the page
     await page.getByLabel('Go to page', { exact: true }).fill('284')
     await page.getByRole('button', { name: 'Go', exact: true }).click()
-    await expect(page.locator('.mb-page')).toHaveText('284')
+    await expect(page.locator('.mb-page')).toHaveText('p. 284')
     await expect(page.locator('#page-284 .ay').first()).toBeInViewport()
     await page.locator('#page-284 .page-no').click()
     await page.getByLabel('Go to page', { exact: true }).fill('300')
     await page.getByLabel('Go to page', { exact: true }).blur() // what Done on the iPhone keyboard does
-    await expect(page.locator('.mb-page')).toHaveText('300')
+    await expect(page.locator('.mb-page')).toHaveText('p. 300')
   })
 
   test('the page number in the bar opens the surah\'s ayahs to jump to', async ({ page }) => {
@@ -294,6 +294,10 @@ test.describe('mushaf page view', () => {
     await grid.getByRole('option', { name: /· 19:40$/ }).click()
     await expect(page).toHaveURL(/#\/ayah\/19\/40$/)
     await expect(page.getByTestId('ayah-panel')).toContainText('19:40')
+    // the bar names the ayah chosen beside its surah, the number in the ring is a page, and the ayah is brought into view
+    await expect(page.locator('.mb-surah')).toContainText('40')
+    await expect(page.locator('.mb-page')).toHaveText(/^p\. \d+$/)
+    await expect(page.locator('.ay.sel').first()).toBeInViewport()
   })
 
   test('the surah and the juz in the bar open a menu to pick from', async ({ page }) => {
@@ -306,14 +310,14 @@ test.describe('mushaf page view', () => {
     await expect(menu.getByRole('option', { selected: true })).toContainText('Maryam')
     await menu.getByRole('option', { name: /Al-Baqara/ }).click()
     await expect(menu).toHaveCount(0)
-    await expect(page.locator('.mb-page')).toHaveText('2')
+    await expect(page.locator('.mb-page')).toHaveText('p. 2')
     await expect(page.locator('.mb-surah')).toContainText('البقرة')
     await page.locator('.mb-juz').click()
     const juz = page.getByRole('listbox', { name: 'Juz' })
     await expect(juz.getByRole('option')).toHaveCount(30)
     await juz.getByRole('option', { name: /Juz 16/ }).click()
     await expect(page.locator('.mb-juz')).toHaveText('Juz 16')
-    await expect(page.locator('.mb-page')).toHaveText('302')
+    await expect(page.locator('.mb-page')).toHaveText('p. 302')
     await page.locator('.mb-surah').click()
     await page.keyboard.press('Escape')
     await expect(page.getByRole('listbox')).toHaveCount(0)
@@ -322,10 +326,10 @@ test.describe('mushaf page view', () => {
   test('the pages flow on: scrolling down reaches the next page, and the header follows', async ({ page }) => {
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/page/305')
-    await expect(page.locator('.mb-page')).toHaveText('305')
+    await expect(page.locator('.mb-page')).toHaveText('p. 305')
     await settle(page)
     await page.locator('#page-306').evaluate((el) => el.scrollIntoView({ block: 'start' }))
-    await expect(page.locator('.mb-page')).toHaveText('306')
+    await expect(page.locator('.mb-page')).toHaveText('p. 306')
     await expect(page.locator('#page-306 .ay').first().locator('.mark')).toHaveText('﴿١٢﴾')
     await expect(page.locator('#page-306 .banner')).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Next page' })).toHaveCount(0)
@@ -345,7 +349,7 @@ test.describe('mushaf page view', () => {
     await page.locator('#page-305 .page-no').click()
     await page.getByLabel('Go to page', { exact: true }).fill('284')
     await page.keyboard.press('Enter')
-    await expect(page.locator('.mb-page')).toHaveText('284')
+    await expect(page.locator('.mb-page')).toHaveText('p. 284')
     await expect(page.locator('.mb-surah')).toContainText('الإسراء')
     await expect(page.locator('#page-284 .ay').first()).toBeInViewport()
   })
@@ -486,7 +490,7 @@ test.describe('mushaf page view', () => {
     await expect(page.locator('.layer article.ayah').first()).toBeVisible()
     await page.locator('.layer-close').click()
     await expect(page.locator('.layer')).toHaveCount(0)
-    await expect(page.locator('.mb-page')).toHaveText('284')
+    await expect(page.locator('.mb-page')).toHaveText('p. 284')
   })
 
   test('verse links open the Study view as a layer over the mushaf', async ({ page }) => {
@@ -504,7 +508,7 @@ test.describe('layers over the mushaf', () => {
     await expect(page.locator('#page-305 .ay').first()).toBeVisible()
     await page.mouse.wheel(0, 4) // a reader's own scroll ends the view's holding of page 305 in place while the text settles
     await page.locator('#page-320').evaluate((el) => el.scrollIntoView({ block: 'start' }))
-    await expect(page.locator('.mb-page')).toHaveText('320')
+    await expect(page.locator('.mb-page')).toHaveText('p. 320')
     // where page 320 sits on the screen (the scroll offset itself moves when pages near the screen are laid out)
     const top = () => page.locator('#page-320').evaluate((el) => el.getBoundingClientRect().top)
     const before = await top()
@@ -516,7 +520,7 @@ test.describe('layers over the mushaf', () => {
     await expect(page.locator('.layer')).toHaveCount(0)
     expect(Math.abs((await top()) - before)).toBeLessThan(2)
     await expect(page).toHaveURL(/#\/page\/305$/)
-    await expect(page.locator('.mb-page')).toHaveText('320')
+    await expect(page.locator('.mb-page')).toHaveText('p. 320')
   })
 
   test('Back and Escape close a layer too', async ({ page }) => {
@@ -568,7 +572,7 @@ test.describe('layers over the mushaf', () => {
     await expect(page).toHaveURL(/#\/ayah\/17\/24$/)
     await expect(page.locator('.layer')).toHaveCount(0)
     await expect(page.locator('.ay.sel')).toHaveCount(1)
-    await expect(page.locator('.mb-page')).toHaveText('284')
+    await expect(page.locator('.mb-page')).toHaveText('p. 284')
   })
 })
 
@@ -790,7 +794,7 @@ test.describe('opening the app', () => {
     await useSettings(page, { lang: 'en', readMode: 'verse' }) // a retired setting: the Quran opens on the mushaf whatever it says
     await page.addInitScript(() => localStorage.setItem('zekr.lastRead', JSON.stringify({ surah: 19, ayah: 5 })))
     await page.goto('/')
-    await expect(page.locator('.mb-page')).toHaveText('305')
+    await expect(page.locator('.mb-page')).toHaveText('p. 305')
   })
 })
 
@@ -1304,6 +1308,8 @@ test.describe('The Study Quran (private content, made-up text here)', () => {
     await panel.locator('.run-pick').first().click()
     await expect(panel.locator('.run-ay.sel')).toHaveAttribute('data-id', '8')
     await panel.getByRole('tab', { name: 'Tafsir' }).click()
+    // the Tafsir tab opens on Al-Mizan when there is one; the Study Quran is in the same list
+    await panel.locator('select').selectOption('study')
     await expect(panel.locator('.study-inline')).toContainText('[Made-up note 1–5.]')
   })
 

@@ -1,9 +1,26 @@
 import { LoadError, Loading } from '../components/Page'
 import type { Meta } from '../data'
 import { useAsync } from '../hooks'
-import { classicBook, chooseClassicBook, booksFor, checkClassics, loadClassic } from '../classics'
+import { type ClassicBook, classicBook, chooseClassicBook, booksFor, checkClassics, classicsIndex, loadClassic } from '../classics'
 import { lang, num, t } from '../i18n'
 import { settings } from '../store'
+
+/** What one classical book says on an ayah: its name and author, the text in its own direction, where it is from. */
+export function ClassicText({ book, surah, ayah }: { book: ClassicBook; surah: number; ayah: number }) {
+  const data = useAsync(() => loadClassic(book, surah, ayah), [book.id, surah, ayah])
+  const l = lang.value
+  const index = classicsIndex.value
+  return (
+    <article class="tafsir classic" lang={book.lang} dir={book.lang === 'en' ? 'ltr' : 'rtl'} style={{ fontSize: `${settings.value.trSize}px` }}>
+      <h2 class="tf-title">{book.name[l]}</h2>
+      <p class="classic-author muted small">{book.author[l]}</p>
+      {data.error ? <LoadError retry={data.retry} /> : data.value === undefined ? <Loading /> : data.value ? data.value.split('\n').filter((p) => p.trim()).map((p, i) =>
+        // "# " begins the heading of a part of the text (Meybodi's three rounds)
+        p.startsWith('# ') ? <h3 key={i} class="classic-part">{p.slice(2)}</h3> : <p key={i} class="tf-p">{p}</p>) : <p class="status">{t('classicsNone')}</p>}
+      <p class="muted small" dir="ltr">{t('classicsSource', { source: book.source ?? (index ? index.source : '') })}</p>
+    </article>
+  )
+}
 
 /** What the classical tafsirs say on an ayah: one book at a time, picked from a list of the books that have something on this surah. */
 export function ClassicView({ surah, ayah }: { meta: Meta; surah: number; ayah: number }) {
@@ -11,9 +28,8 @@ export function ClassicView({ surah, ayah }: { meta: Meta; surah: number; ayah: 
     const index = await checkClassics()
     if (!index) return null
     const books = booksFor(index, surah)
-    const book = books.find((b) => b.id === classicBook.value) ?? books[0]
-    return { source: index.source, books, book, text: book ? await loadClassic(book, surah, ayah) : null }
-  }, [surah, ayah, classicBook.value])
+    return { books, book: books.find((b) => b.id === classicBook.value) ?? books[0] }
+  }, [surah, classicBook.value])
   const d = data.value
   const l = lang.value
   return (
@@ -29,13 +45,7 @@ export function ClassicView({ surah, ayah }: { meta: Meta; surah: number; ayah: 
               {d.books.map((b) => <option key={b.id} value={b.id}>{b.name[l]}</option>)}
             </select>
           </label>
-          <article class="tafsir classic" lang={d.book.lang} dir={d.book.lang === 'en' ? 'ltr' : 'rtl'} style={{ fontSize: `${settings.value.trSize}px` }}>
-            <p class="classic-author muted small">{d.book.author[l]}</p>
-            {d.text ? d.text.split('\n').filter((p) => p.trim()).map((p, i) =>
-              // "# " begins the heading of a part of the text (Meybodi's three rounds)
-              p.startsWith('# ') ? <h3 key={i} class="classic-part">{p.slice(2)}</h3> : <p key={i} class="tf-p">{p}</p>) : <p class="status">{t('classicsNone')}</p>}
-            <p class="muted small" dir="ltr">{t('classicsSource', { source: d.book.source ?? d.source })}</p>
-          </article>
+          <ClassicText book={d.book} surah={surah} ayah={ayah} />
         </>
       )}
     </>

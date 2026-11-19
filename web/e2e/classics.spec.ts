@@ -18,11 +18,18 @@ const chunks: Record<string, Record<string, string | number>> = {
   'demo-en': { '1': 'Made-up note on the first ayah.' },
 }
 
-async function serveClassics(page: Page) {
+async function serveClassics(page: Page, almizan = false) {
   await page.route('**/data/meta.json*', async (route) => {
     const res = await route.fetch()
-    await route.fulfill({ response: res, json: { ...(await res.json()), classics: ['demo', 'demo-en'] } })
+    await route.fulfill({ response: res, json: { ...(await res.json()), classics: ['demo', 'demo-en'], ...(almizan ? { tafsir: ['almizan'] } : {}) } })
   })
+  if (almizan) {
+    // a made-up Al-Mizan section on 1:1–7 (the real text is never in the public build)
+    await page.route('**/data/almizan/index.json*', (route) => route.fulfill({ json: { source: 'test', sections: [['1_1-7', 1, 7]] } }))
+    await page.route('**/data/almizan/1_1-7.json*', (route) => route.fulfill({
+      json: { id: '1_1-7', surah: 1, from: 1, to: 7, title: 'سورهٔ آزمایشی', blocks: [{ t: 'p', r: [['متن آزمایشی المیزان']] }], notes: [] },
+    }))
+  }
   await page.route('**/data/classics/index.json*', (route) => route.fulfill({ json: index }))
   // served as GitHub Pages does: a plain .gz file, which the page unpacks itself
   await page.route('**/data/classics/*/*.json.gz*', (route) => {
@@ -32,6 +39,7 @@ async function serveClassics(page: Page) {
 }
 
 test.describe('classical tafsirs (made-up books)', () => {
+  test.use({ serviceWorkers: 'block' })
   test('an ayah has a list of the books that have something on its surah, and the text, in its own direction', async ({ page }) => {
     await serveClassics(page)
     await page.addInitScript(() => { localStorage.setItem('zekr.settings', JSON.stringify({ lang: 'en' })); localStorage.setItem('zekr.inlineDefault', 'true') })
@@ -78,8 +86,30 @@ test.describe('classical tafsirs (made-up books)', () => {
     await page.goto('/#/page/1')
     await page.locator('#page-1 .ay').nth(2).click()
     const panel = page.getByTestId('ayah-panel')
-    await expect(panel.locator('.study-chip', { hasText: 'Classical tafsirs' })).toHaveAttribute('href', '#/classic/1/3')
+    await expect(panel.locator('.classic-chip', { hasText: 'Classical tafsirs' })).toHaveAttribute('href', '#/classic/1/3')
     await panel.getByRole('button', { name: 'More', exact: true }).click()
     await expect(panel.locator('.ayah-more').getByRole('link', { name: 'Classical tafsirs' })).toHaveAttribute('href', '#/classic/1/3')
+  })
+
+  test('the Tafsir tab opens on Al-Mizan, and the classical books and the rest are in the same list', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await serveClassics(page, true)
+    await page.addInitScript(() => { localStorage.setItem('zekr.settings', JSON.stringify({ lang: 'en' })) })
+    await page.goto('/#/page/1')
+    await page.locator('#page-1 .ay').nth(2).click()
+    const panel = page.getByTestId('side-panel')
+    await panel.getByRole('tab', { name: 'Tafsir' }).click()
+    const pick = panel.getByRole('combobox', { name: 'Tafsir' })
+    await expect(pick).toHaveValue('almizan') // not the English commentary, and not a classical book
+    await expect(pick.locator('option')).toHaveText(['Tafsir: Al-Mizan', 'Made-up commentary', 'Made-up English notes'])
+    await expect(panel.locator('article.tafsir')).toContainText('متن آزمایشی المیزان')
+    await pick.selectOption({ label: 'Made-up English notes' })
+    await expect(panel.locator('article.classic')).toContainText('This book has nothing on this ayah.')
+    // the choice is kept for the next ayah
+    await panel.getByRole('tab', { name: 'Translation' }).click()
+    await page.locator('#page-1 .ay').nth(0).click()
+    await panel.getByRole('tab', { name: 'Tafsir' }).click()
+    await expect(panel.getByRole('combobox', { name: 'Tafsir' })).toHaveValue('demo-en')
+    await expect(panel.getByRole('link', { name: 'Open on its own page' })).toHaveAttribute('href', '#/classic/1/1')
   })
 })

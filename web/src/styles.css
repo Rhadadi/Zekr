@@ -335,6 +335,7 @@ input[type='checkbox'] { width: 20px; height: 20px; flex-shrink: 0; accent-color
   overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-family: var(--font-quran); font-size: 1rem;
 }
 .mb-juz { color: var(--muted); font-family: var(--font-ui); font-size: 0.85rem; }
+.mb-ayah { color: var(--gold); font-family: var(--font-ui); font-size: 0.85em; font-weight: 700; }
 .mb-surah[aria-expanded='true'], .mb-juz[aria-expanded='true'] { background: var(--hl); }
 .mb-menu-backdrop { position: fixed; inset: 0; z-index: 5; border: 0; background: transparent; cursor: default; }
 .mb-menu {
@@ -589,8 +590,8 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .study-refs { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-bottom: 16px; }
 
 /* Study Quran: chips, introduction row and the commentary screen */
-.study-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 2px; }
-.study-chip {
+.study-chips, .classic-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 2px; }
+.study-chip, .classic-chip {
   display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border: 1px solid var(--line); border-radius: 999px;
   background: var(--surface); color: var(--accent); font-size: 0.9rem; font-weight: 600; text-decoration: none;
 }

@@ -11,6 +11,7 @@ import { sheetOpen } from '../ui'
 import { classicsIndex } from '../classics'
 import { tafsirIndex } from '../tafsir'
 import { Icon } from './Icon'
+import { TafsirTab } from './TafsirTab'
 import { StudyChips, StudyInline, StudyLink } from './StudyQuranPanel'
 
 interface Props {
@@ -186,15 +187,7 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
               })}
             </div>
           ) : shownTab === 'tafsir' ? (
-            <>
-              {meta.studyQuran ? <StudyInline meta={meta} ayahID={id} only={null} /> : null}
-              {tafsirIndex.value ? (
-                <a class="mrow mlink" href={href.tafsir(surah, ayah)}>{t('tafsir')}: {t('almizan')}<span class="chev-fwd"><Icon name="chevron" size={16} /></span></a>
-              ) : null}
-              {classicsIndex.value ? (
-                <a class="mrow mlink" href={href.classic(surah, ayah)}>{t('classics')}<span class="chev-fwd"><Icon name="chevron" size={16} /></span></a>
-              ) : null}
-            </>
+            <TafsirTab meta={meta} id={id} surah={surah} ayah={ayah} />
           ) : wbw.value ? (
             <p class="panel-wbw" lang="ar" dir="rtl">
               {wbw.value.map(([w, fa], k) => (
@@ -227,8 +220,8 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
           : null}
         {inlineStudy && study ? <StudyInline meta={meta} ayahID={id} only={typeof study === 'string' ? study : null} /> : null}
         {classicsIndex.value ? (
-          <div class="study-chips">
-            <a class="study-chip" href={href.classic(surah, ayah)}><Icon name="book" size={16} /> {t('classics')}</a>
+          <div class="classic-chips">
+            <a class="classic-chip" href={href.classic(surah, ayah)}><Icon name="book" size={16} /> {t('classics')}</a>
           </div>
         ) : null}
       </div>

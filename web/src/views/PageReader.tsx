@@ -199,6 +199,10 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   // One highlight at a time: the ayah being shown, otherwise the one being recited.
   const highlight = selected ?? playingId
   const highlightKind = selected !== undefined ? 'sel' : 'playing'
+  const highlightRef = useRef(highlight)
+  highlightRef.current = highlight
+  const metaRef = useRef(meta)
+  metaRef.current = meta
   const size = Math.round(s.arabicSize * 0.85)
 
   /** Pages away from the screen are not laid out until needed, so their heights are estimates and the target
@@ -239,8 +243,12 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
     if (single) {
       // one page at a time: show the page of the requested ayah, or the requested page
       setCurrent(focusId !== undefined ? pageOf(meta, focusId) : wanted.current)
-      if (focusId !== undefined) setPanel({ kind: 'ayah', id: focusId })
       window.scrollTo(0, 0)
+      if (focusId !== undefined) {
+        setPanel({ kind: 'ayah', id: focusId })
+        // a page is taller than the screen: the ayah chosen is brought into view, once the page has been laid out
+        scrollTo(() => ayahEl(focusId), 'center')
+      }
       setJumping(false)
       return
     }
@@ -276,6 +284,10 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
     let frame = 0
     const look = () => {
       frame = 0
+      // the ayah that is chosen, while it is on the screen, says which page this is (a page is taller than the screen, so
+      // the page at 30% down may be the one before it)
+      const lit = highlightRef.current !== undefined ? ayahEl(highlightRef.current)?.getBoundingClientRect() : undefined
+      if (lit && lit.bottom > 0 && lit.top < window.innerHeight) { setCurrent(pageOf(metaRef.current, highlightRef.current!)); return }
       const el = document.elementFromPoint(window.innerWidth / 2, window.innerHeight * 0.3)?.closest<HTMLElement>('.mpage')
       if (el?.dataset.page) setCurrent(Number(el.dataset.page))
     }
@@ -454,6 +466,8 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   // (or being recited) when it is on this page, otherwise the surah the page starts in
   const barAyah = highlight !== undefined && pageOf(meta, highlight) === current ? highlight : pageRange(meta, current).first
   const surahOfPage = meta.surahs[locate(meta, barAyah).surah - 1]!
+  // the ayah that is chosen (or being recited), when it is on this page: "Al-Haqqa 52"; the number beside it is the page
+  const barAyahNo = highlight !== undefined && pageOf(meta, highlight) === current ? locate(meta, highlight).ayah : undefined
   // a layout effect, so Escape works as soon as the menu is on screen
   useLayoutEffect(() => {
     if (!menu) return
@@ -509,15 +523,15 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
                 <Icon name="chevron" size={20} />
               </button>
             ) : null}
-            <button class="mb-surah" lang="ar" aria-haspopup="listbox" aria-expanded={menu === 'surah'} aria-label={`${t('surahs')}: ${surahName(surahOfPage)}`} onClick={() => setMenu(menu === 'surah' ? null : 'surah')}>
-              <span>{surahOfPage.ar}</span>
+            <button class="mb-surah" lang="ar" aria-haspopup="listbox" aria-expanded={menu === 'surah'} aria-label={`${t('surahs')}: ${surahName(surahOfPage)}${barAyahNo ? ` ${num(barAyahNo)}` : ''}`} onClick={() => setMenu(menu === 'surah' ? null : 'surah')}>
+              <span>{surahOfPage.ar}</span>{barAyahNo ? <span class="mb-ayah"> {num(barAyahNo)}</span> : null}
             </button>
             {jumping ? (
               jumpForm
             ) : (
               // the page number opens the surah's ayahs to jump to; typing a page is the page number at the foot of the page
               <button class="mb-page" aria-haspopup="listbox" aria-expanded={menu === 'ayah'} onClick={() => setMenu(menu === 'ayah' ? null : 'ayah')} aria-label={`${t('goToAyah')}: ${t('pageN', { n: current })}`}>
-                {num(current)}
+                {t('pageShort')} {num(current)}
               </button>
             )}
             <button class="mb-juz" aria-haspopup="listbox" aria-expanded={menu === 'juz'} onClick={() => setMenu(menu === 'juz' ? null : 'juz')}>

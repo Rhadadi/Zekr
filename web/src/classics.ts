@@ -14,7 +14,7 @@ export interface ClassicBook {
   chunks: Record<string, number[]>
 }
 
-interface ClassicsIndex {
+export interface ClassicsIndex {
   source: string
   books: ClassicBook[]
 }
@@ -32,6 +32,21 @@ export const classicBook = signal<string>(((): string => {
 export function chooseClassicBook(id: string) {
   classicBook.value = id
   try { localStorage.setItem(BOOK_KEY, id) } catch { /* not kept */ }
+}
+
+/** What the Tafsir tab beside an ayah shows: Al-Mizan (until the reader picks something else), the classical book
+ * chosen above, or the Study Quran. Kept on this device. */
+export type TafsirPick = 'almizan' | 'classic' | 'study'
+const PICK_KEY = 'zekr.tafsirPick'
+export const tafsirPick = signal<TafsirPick>(((): TafsirPick => {
+  try {
+    const v = localStorage.getItem(PICK_KEY)
+    return v === 'classic' || v === 'study' ? v : 'almizan'
+  } catch { return 'almizan' }
+})())
+export function chooseTafsirPick(v: TafsirPick) {
+  tafsirPick.value = v
+  try { localStorage.setItem(PICK_KEY, v) } catch { /* not kept */ }
 }
 
 let checking: Promise<ClassicsIndex | false> | null = null
