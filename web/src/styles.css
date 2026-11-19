@@ -441,9 +441,6 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .classic-part { margin: 22px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--line); font-size: 0.95em; color: var(--accent); }
 .tf-q { color: var(--accent); }
 .tf-d { color: var(--gold); }
-.tafsir sup.fn { font-size: 0.65em; color: var(--muted); margin-inline-start: 1px; }
-.tf-notes { border-top: 1px solid var(--line); margin-top: 18px; font-size: 0.8em; color: var(--muted); }
-.tf-notes h3 { font-size: 1em; color: var(--ink); }
 
 /* Page view: Zekr's own menus instead of the browser's text-selection menu */
 .mushaf-flow { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }

@@ -153,8 +153,6 @@ const strings = {
     classicsNone: 'This book has nothing on this ayah.',
     classicsBook: 'Commentary ({n} books)',
     openFull: 'Open on its own page',
-    classicsSource: 'Text: {source}.',
-    almizanCredit: 'Al-Mizan by Allameh Tabatabaei, Persian translation by Mousavi Hamadani. Text from the Zolal project (CRCIS Noor), for personal use.',
     arabicSize: 'Arabic size',
     trSize: 'Translation size',
     trSmaller: 'Smaller translation',
@@ -214,7 +212,7 @@ const strings = {
     aboutText:
       'Ayesheno is a personal Quran app. It has no account, no ads and no tracking; your settings and saved ayahs stay in this browser.',
     creditsText:
-      'Quran text and translations: Tanzil Project (tanzil.net). The text is unchanged; translations are for non-commercial use. Recitation: EveryAyah.com. Fonts: KFGQPC Hafs and Naskh (King Fahd Complex), Me-Quran (Meor Ridzuan), Scheherazade New, Amiri Quran and Vazirmatn (SIL Open Font License).',
+      'Quran text and translations: Tanzil Project (tanzil.net). The text is unchanged; translations are for non-commercial use. Recitation: EveryAyah.com. Tafsir: Al-Mizan by Allameh Tabatabaei, Persian translation by Mousavi Hamadani (text from the Zolal project, CRCIS Noor, for personal use). Classical tafsirs: texts from github.com/spa5k/tafsir_api (altafsir.com, Shamela and others) and, for the Kashf al-Asrar of Meybodi, ganjoor.net. Fonts: KFGQPC Hafs and Naskh (King Fahd Complex), Me-Quran (Meor Ridzuan), Scheherazade New, Amiri Quran and Vazirmatn (SIL Open Font License).',
     now: 'now',
     min: '{n} min',
     hours: '{n} h',
@@ -400,8 +398,6 @@ const strings = {
     classicsNone: 'این کتاب دربارهٔ این آیه چیزی ندارد.',
     classicsBook: 'تفسیر ({n} کتاب)',
     openFull: 'باز کردن در صفحهٔ خودش',
-    classicsSource: 'متن: {source}.',
-    almizanCredit: 'تفسیر المیزان، علامه طباطبایی، ترجمهٔ سید محمدباقر موسوی همدانی. متن از پروژهٔ زلال (مرکز نور)، برای استفادهٔ شخصی.',
     arabicSize: 'اندازهٔ متن عربی',
     trSize: 'اندازهٔ ترجمه',
     trSmaller: 'ترجمهٔ کوچک‌تر',
@@ -460,7 +456,7 @@ const strings = {
     aboutText:
       'آیه شنو یک برنامهٔ شخصی قرآن است. حساب کاربری، تبلیغ و ردیابی ندارد؛ تنظیمات و آیه‌های نشان‌شده فقط در همین مرورگر می‌مانند.',
     creditsText:
-      'متن قرآن و ترجمه‌ها: پروژهٔ تنزیل (tanzil.net). متن بدون تغییر است و ترجمه‌ها برای استفادهٔ غیرتجاری‌اند. قرائت: EveryAyah.com. قلم‌ها: حفص و نسخ مجمع ملک فهد، می‌قرآن (معیر رضوان)، شهرزاد، امیری قرآن و وزیرمتن (مجوز SIL Open Font License).',
+      'متن قرآن و ترجمه‌ها: پروژهٔ تنزیل (tanzil.net). متن بدون تغییر است و ترجمه‌ها برای استفادهٔ غیرتجاری‌اند. قرائت: EveryAyah.com. تفسیر: المیزان علامه طباطبایی، ترجمهٔ موسوی همدانی (متن از پروژهٔ زلال، مرکز نور، برای استفادهٔ شخصی). تفاسیر کلاسیک: متن‌ها از github.com/spa5k/tafsir_api (altafsir.com، شاملیا و دیگران) و برای کشف‌الاسرار میبدی از گنجور. قلم‌ها: حفص و نسخ مجمع ملک فهد، می‌قرآن (معیر رضوان)، شهرزاد، امیری قرآن و وزیرمتن (مجوز SIL Open Font License).',
     now: 'اکنون',
     min: '{n} دقیقه',
     hours: '{n} ساعت',

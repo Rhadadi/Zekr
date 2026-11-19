@@ -761,8 +761,8 @@ test.describe('Al-Mizan tafsir', () => {
       await expect(article.getByRole('heading', { name: 'بحث روایتی', level: 3 })).toBeVisible()
       await expect(article.locator('.tf-q')).toHaveText('کهیعص')
       await expect(article.locator('.tf-d')).toHaveText('متن حدیث')
-      await expect(article.locator('sup.fn')).toHaveText('۱')
-      await expect(article.locator('.tf-notes li')).toHaveText('مجمع البیان، ج ۶')
+      await expect(article.locator('sup.fn')).toHaveCount(0)
+      await expect(article.locator('.tf-notes')).toHaveCount(0) // the citations are not shown
       await expect(article.getByRole('navigation', { name: 'Parts' }).getByRole('link')).toHaveCount(2)
     })
 

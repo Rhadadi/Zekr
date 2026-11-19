@@ -97,12 +97,11 @@ function StudyClassic({ source, surah, ayah }: { source: string; surah: number; 
     const index = await checkClassics()
     if (!index) return null
     const book = index.books.find(x => x.id === source)
-    return book ? { book, source: book.source ?? index.source, text: await loadClassic(book, surah, ayah) } : null
+    return book ? { book, text: await loadClassic(book, surah, ayah) } : null
   }, [source, surah, ayah])
   const d = data.value
   return data.error ? <LoadError retry={data.retry} /> : data.loading ? <Loading /> : !d ? <p>{t('classicsMissing')}</p> : <div lang={d.book.lang} dir={d.book.lang === 'en' ? 'ltr' : 'rtl'}>
     <p class="small muted">{d.book.author[lang.value]}</p>
     {d.text ? d.text.split('\n').filter(x => x.trim()).map((text, i) => text.startsWith('# ') ? <h3 class="classic-part" key={i}>{text.slice(2)}</h3> : <p key={i}>{text}</p>) : <p>{t('classicsNone')}</p>}
-    <p class="small muted" dir="ltr">{t('classicsSource', { source: d.source })}</p>
   </div>
 }

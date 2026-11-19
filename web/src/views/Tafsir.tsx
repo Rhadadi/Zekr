@@ -5,13 +5,11 @@ import { t } from '../i18n'
 import { settings } from '../store'
 import { type TafsirBlock, checkTafsir, loadSection, sectionIdFor } from '../tafsir'
 
-const faDigits = (n: number) => String(n).replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)] as string)
-
 function Runs({ block }: { block: TafsirBlock }) {
   return (
     <>
       {block.r.map((run, i) => {
-        if (run[1] === 'n') return <sup key={i} class="fn">{faDigits(run[0] as number)}</sup>
+        if (run[1] === 'n') return null // the number of a footnote: the notes are citations, not shown
         const text = run[0] as string
         switch (run[1]) {
           case 'q': return <span key={i} class="tf-q">{text}</span>
@@ -54,13 +52,6 @@ export function TafsirView({ meta, surah, ayah, idPrefix = 'tf' }: { meta: Meta;
               default: return <p key={i} class="tf-p"><Runs block={b} /></p>
             }
           })}
-          {sec.notes.length ? (
-            <section class="tf-notes">
-              <h3>{t('sources')}</h3>
-              <ol>{sec.notes.map((n, i) => <li key={i}>{n}</li>)}</ol>
-            </section>
-          ) : null}
-          <p class="muted small">{t('almizanCredit')}</p>
         </article>
       )}
     </>

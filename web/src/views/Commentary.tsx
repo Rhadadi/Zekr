@@ -51,7 +51,6 @@ export function IntroView({ meta, surah }: { meta: Meta; surah: number }) {
         <article class="commentary">
           <div lang="en" dir="ltr">
             <Paragraphs text={data.value.text} />
-            <p class="muted small">PDF {data.value.pages.length === 1 ? 'page' : 'pages'} {data.value.pages.join(', ')}</p>
           </div>
           <a class="btn primary comm-start" href={href.verse(surah, 1)}>{t('startReadingAt')} {num(`${surah}:1`)}</a>
         </article>

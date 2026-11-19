@@ -1,7 +1,7 @@
 import { LoadError, Loading } from '../components/Page'
 import type { Meta } from '../data'
 import { useAsync } from '../hooks'
-import { type ClassicBook, classicBook, chooseClassicBook, booksFor, checkClassics, classicsIndex, loadClassic } from '../classics'
+import { type ClassicBook, classicBook, chooseClassicBook, booksFor, checkClassics, loadClassic } from '../classics'
 import { lang, num, t } from '../i18n'
 import { settings } from '../store'
 
@@ -9,7 +9,6 @@ import { settings } from '../store'
 export function ClassicText({ book, surah, ayah }: { book: ClassicBook; surah: number; ayah: number }) {
   const data = useAsync(() => loadClassic(book, surah, ayah), [book.id, surah, ayah])
   const l = lang.value
-  const index = classicsIndex.value
   return (
     <article class="tafsir classic" lang={book.lang} dir={book.lang === 'en' ? 'ltr' : 'rtl'} style={{ fontSize: `${settings.value.trSize}px` }}>
       <h2 class="tf-title">{book.name[l]}</h2>
@@ -17,7 +16,6 @@ export function ClassicText({ book, surah, ayah }: { book: ClassicBook; surah: n
       {data.error ? <LoadError retry={data.retry} /> : data.value === undefined ? <Loading /> : data.value ? data.value.split('\n').filter((p) => p.trim()).map((p, i) =>
         // "# " begins the heading of a part of the text (Meybodi's three rounds)
         p.startsWith('# ') ? <h3 key={i} class="classic-part">{p.slice(2)}</h3> : <p key={i} class="tf-p">{p}</p>) : <p class="status">{t('classicsNone')}</p>}
-      <p class="muted small" dir="ltr">{t('classicsSource', { source: book.source ?? (index ? index.source : '') })}</p>
     </article>
   )
 }

@@ -26,7 +26,6 @@ export function Note({ meta, entry, queue }: { meta: Meta; entry: StudyEntry; qu
       <span class="muted small">{t('commentaryAudio')} · {entry.audio.voice} · {t('aiVoice')}</span>
     </div> : null}
     <Paragraphs text={entry.text} />
-    <p class="muted small">The Study Quran · PDF {entry.pages.length === 1 ? 'page' : 'pages'} {entry.pages.join(', ')}</p>
     {entry.references.length ? <nav class="study-refs" aria-label="Quran cross-references">
       {entry.references.map((r, i) => {
         const x = referenceTarget(meta, r)
