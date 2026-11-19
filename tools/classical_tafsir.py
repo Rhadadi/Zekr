@@ -73,6 +73,18 @@ BOOKS = [
     ("alusi", "tafsir-al-alusi", "ar",
      ("Ruh al-Ma'ani, al-Alusi", "روح‌المعانی، آلوسی"),
      ("al-Alusi (d. 1270/1854)", "آلوسی (د. ۱۲۷۰)")),
+    ("baghawi", "ar-tafsir-al-baghawi", "ar",
+     ("Ma'alim al-Tanzil, al-Baghawi", "معالم‌التنزیل، بغوی"),
+     ("al-Baghawi (d. 516/1122)", "بغوی (د. ۵۱۶)")),
+    ("durr", "al-durr-al-manthur", "ar",
+     ("al-Durr al-Manthur, al-Suyuti", "الدر المنثور، سیوطی"),
+     ("al-Suyuti (d. 911/1505)", "جلال‌الدین سیوطی (د. ۹۱۱)")),
+    ("shawkani", "fath-al-qadir-al-shawkani", "ar",
+     ("Fath al-Qadir, al-Shawkani", "فتح‌القدیر، شوکانی"),
+     ("al-Shawkani (d. 1250/1834)", "شوکانی (د. ۱۲۵۰)")),
+    ("ibn-juzay", "tafsir-ibn-juzay", "ar",
+     ("al-Tashil li-Ulum al-Tanzil, Ibn Juzay", "التسهیل لعلوم التنزیل، ابن‌جزی"),
+     ("Ibn Juzay al-Kalbi (d. 741/1340)", "ابن‌جزی کلبی (د. ۷۴۱)")),
 ]
 SOURCE = "github.com/spa5k/tafsir_api (the texts of altafsir.com, Shamela and others)"
 PAGE_MARK = re.compile(r"\(p-\d+\)\s*")  # where a page of the printed book began, left in some of the texts
