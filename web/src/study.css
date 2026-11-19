@@ -225,3 +225,39 @@
   .study-position-track, .study-marker { border: 1px solid CanvasText; }
   .study-modes [aria-current], .study-source-filters [aria-pressed='true'] { outline: 1px solid Highlight; }
 }
+
+/* Match the printed reader's surah, page medallion and juz navigation. */
+.study-toolbar .study-nav-surah { font-family: var(--font-quran); font-size: 1.25rem; padding-inline: 6px; max-width: 140px; overflow: hidden; white-space: nowrap; }
+.study-toolbar .study-nav-page { border: 1.5px solid var(--study-accent); border-radius: 999px; min-width: 56px; color: var(--study-accent); font-weight: 600; }
+.study-toolbar .study-nav-juz { white-space: nowrap; font-size: .8rem; padding-inline: 5px; }
+.study-passage-picker { width: min(420px, calc(100vw - 24px)); max-height: min(560px, 75dvh); padding: 12px; border: 1px solid var(--study-line); border-radius: 14px; background: var(--study-surface); color: var(--study-ink); }
+.study-passage-picker::backdrop { background: rgb(0 0 0 / .25); }
+.study-passage-picker header { display: flex; align-items: center; justify-content: space-between; }
+.study-passage-picker h2 { font-size: 1rem; }
+.study-passage-picker button { min-height: 44px; min-width: 44px; border: 0; border-radius: 8px; background: none; color: inherit; font: inherit; cursor: pointer; }
+.study-passage-list button { display: flex; align-items: center; gap: 12px; width: 100%; padding: 6px 12px; text-align: start; }
+.study-passage-list button span { margin-inline-start: auto; font-family: var(--font-quran); }
+.study-passage-list button[aria-current] { background: var(--study-wash); }
+.study-passage-list small { color: var(--study-muted); }
+.study-passage-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 4px; }
+.study-passage-grid button { justify-content: center; }
+.study-reader[data-focus='true'] .study-toolbar,
+.study-reader[data-focus='true'] :is(.study-ayah-tools,.study-more,.study-marker,.study-added-source,.study-source-heading,.tr-label,.study-surah-nav,.study-follow) { display: none; }
+.app.study-active:has(.study-reader[data-focus='true']) .player { display: none; }
+.study-layer:has(.study-reader[data-focus='true']) { --study-header: 0px; scroll-padding-top: 32px; }
+.study-reader[data-focus='true'] .study-content { padding-block: clamp(40px, 12dvh, 120px) 60px; }
+.study-reader[data-focus='true'] .study-ayah.focused::before,
+.study-reader[data-focus='true'] .study-ayah.focused::after { display: none; }
+.study-reader[data-focus='true'] .study-ayah.ayah { border: 0; }
+.study-zen-controls { position: fixed; z-index: 10; bottom: max(16px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 999px; background: var(--study-surface); opacity: 0; pointer-events: none; transition: opacity .2s; }
+.study-zen-controls button { min-width: 44px; min-height: 44px; border: 0; background: none; color: var(--study-muted); cursor: pointer; }
+.study-zen-controls:focus-within, .study-reader[data-zen-controls='true'] .study-zen-controls { opacity: 1; pointer-events: auto; }
+@media (max-width: 899px) {
+  .study-location { grid-column: 1 / -1; justify-self: center; }
+  .study-toolbar .study-modes { grid-row: auto; grid-column: auto; position: absolute; top: 13px; left: 152px; border: 0; }
+  .study-toolbar .study-modes :is(a,span) { min-width: 44px; padding-inline: 5px; font-size: .65rem; }
+  .study-toolbar-start .study-edition-menu { position: absolute; top: 64px; left: 12px; }
+}
+.study-layer:has(.study-reader[data-focus='true']) { scroll-padding-top: max(40px, 12dvh); }
+.study-passage-picker header { position: sticky; top: -12px; z-index: 1; background: var(--study-surface); }
+.study-reader:focus { outline: none; }

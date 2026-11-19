@@ -4,6 +4,7 @@ import { Icon } from '../components/Icon'
 import brandMark from '../assets/ayesheno-logo.png'
 import brandWaves from '../assets/ayesheno-waves.png'
 import { LoadError, Loading } from '../components/Page'
+import { StudyNavigation } from '../components/StudyNavigation'
 import { StudyVerse } from '../components/StudyVerse'
 import { StudyIntroLink } from '../components/StudyQuranPanel'
 import { TranslationAudioToggle } from '../components/TranslationAudioToggle'
@@ -12,7 +13,7 @@ import { useAsync } from '../hooks'
 import { lang, num, surahName, t } from '../i18n'
 import { closeLayer, href } from '../router'
 import { setLastRead, settings } from '../store'
-import { drawerOpen, openDrawer, gotoOpen } from '../ui'
+import { drawerOpen, openDrawer } from '../ui'
 
 /** A continuous edition; listening follows ayahs without changing the text's geometry. */
 export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number; ayah?: number }) {
@@ -22,6 +23,7 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
   const [following, setFollowing] = useState(true)
   const [options, setOptions] = useState(false)
   const [focusMode, setFocusMode] = useState(false)
+  const [zenControls, setZenControls] = useState(false)
   const reader = useRef<HTMLDivElement>(null)
   const layoutEpoch = useRef(0)
   const positioning = useRef(false)
@@ -124,11 +126,15 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
   }, [current])
   const changeFocus = () => {
     setFocusMode(!focusMode)
+    setZenControls(false)
+    requestAnimationFrame(() => reader.current?.focus({ preventScroll: true }))
     move(current)
   }
   useEffect(() => {
     const layer = reader.current?.closest<HTMLElement>('.layer')
     const shortcut = (e: KeyboardEvent) => {
+      if (focusMode && e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); changeFocus(); return }
+      if (focusMode && ['ArrowLeft', 'ArrowRight'].includes(e.key) && !(e.target instanceof Element && e.target.closest('input,textarea,select,dialog'))) { e.preventDefault(); navigate(Math.max(1, Math.min(surah.ayahs, current + (e.key === 'ArrowLeft' ? 1 : -1)))); return }
       if (e.repeat || e.key.toLowerCase() !== 'f' || e.ctrlKey || e.metaKey || e.altKey || (e.target instanceof Element && e.target.closest('input,textarea,select,dialog,[contenteditable="true"]'))) return
       e.preventDefault()
       changeFocus()
@@ -144,7 +150,7 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
   }
   const resume = () => { setFollowing(true); if (playing !== undefined) { setCurrent(playing); move(playing) } }
   const followRecitation = () => { setFollowing(true) }
-  return <div class="study-reader" ref={reader} data-focus={focusMode} data-following={following && playing !== undefined} style={{ '--study-ar-size': `${s.arabicSize}px`, '--study-tr-size': `${s.trSize}px`, '--study-progress': current / surah.ayahs }}>
+  return <div class="study-reader" ref={reader} tabIndex={-1} data-focus={focusMode} data-zen-controls={zenControls} onClick={e => { if (focusMode && !(e.target instanceof Element && e.target.closest('button,a'))) setZenControls(!zenControls) }} data-following={following && playing !== undefined} style={{ '--study-ar-size': `${s.arabicSize}px`, '--study-tr-size': `${s.trSize}px`, '--study-progress': current / surah.ayahs }}>
     <header class="study-toolbar">
       <div class="study-toolbar-start">
         <button class="study-menu" aria-label={t('menu')} aria-haspopup="dialog" aria-expanded={drawerOpen.value} onClick={e => openDrawer(e.currentTarget)}><Icon name="list" /></button>
@@ -155,14 +161,11 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
           {options ? <div class="study-edition"><StudyIntroLink meta={meta} surah={surahId} /><button onClick={() => { followRecitation(); playSurah(surahId) }}><Icon name="play" size={16} />{t('playSurah')}</button><TranslationAudioToggle /></div> : null}
         </div>
       </div>
-      <div class="study-location">
-        <button class="study-prev" aria-label={t('previous')} disabled={current <= 1} onClick={() => navigate(current - 1)}><Icon name="chevron" size={17} /></button>
-        <button class="study-location-pick" onClick={() => { gotoOpen.value = true }} aria-label={t('goTo')}><h1>{surahName(surah)}<span class="study-location-ayah">{num(current)} <small>/ {num(surah.ayahs)}</small></span></h1><span class="study-position-track" aria-hidden="true"><span /></span></button>
-        <button aria-label={t('next')} disabled={current >= surah.ayahs} onClick={() => navigate(current + 1)}><Icon name="chevron" size={17} /></button>
-      </div>
+      <StudyNavigation meta={meta} surahId={surahId} current={current} navigate={navigate} />
       <nav class="study-modes" aria-label={t('readerMode')} dir={lang.value === 'fa' ? 'rtl' : 'ltr'}><a href={href.ayah(surahId, current)}>{t('navReading')}</a><span aria-current="page">{t('navStudy')}</span></nav>
       <div class="study-toolbar-end"><button class="study-brand" aria-label={`${t('appName')} · ${t('navIndex')}`} onClick={closeLayer}><span class="study-brand-symbol"><img class="study-brand-mark" src={brandMark} alt={t('appName')} /><img class="study-brand-waves" src={brandWaves} alt="" /></span><span class="study-brand-caption" lang="en" dir="ltr">AYESHENO</span></button><button class="layer-close" aria-label={t('close')} onClick={closeLayer}><Icon name="close" size={19} /></button></div>
     </header>
+    {focusMode ? <nav class="study-zen-controls" aria-label={t('navStudy')}><button aria-label={t('previous')} disabled={current <= 1} onClick={() => navigate(current - 1)}><Icon name="chevron" size={18} /></button><button onClick={changeFocus}>{t('studyExitFocus')}</button><button aria-label={t('next')} disabled={current >= surah.ayahs} onClick={() => navigate(current + 1)}><Icon name="chevron" size={18} /></button></nav> : null}
     <div class="study-content">
       {data.error ? <LoadError retry={data.retry} /> : !data.value ? <Loading /> : <div class="ayahs">
         {surahId !== 1 && surahId !== 9 ? <p class="basmala" lang="ar" dir="rtl">{meta.basmala[s.script]}</p> : null}
