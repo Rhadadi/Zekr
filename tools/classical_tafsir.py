@@ -29,6 +29,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 RAW = ROOT / "data" / "raw" / "classical"
 URL = "https://cdn.jsdelivr.net/gh/spa5k/tafsir_api@main/tafsir/{edition}/{surah}.json"
+# jsDelivr refuses a package over 50 MB, which some of the larger editions are: GitHub itself has the same files
+URL_RAW = "https://raw.githubusercontent.com/spa5k/tafsir_api/main/tafsir/{edition}/{surah}.json"
 
 # id, source edition, language, name and author (en, fa); the first is the one shown until the reader picks another
 BOOKS = [
@@ -59,6 +61,18 @@ BOOKS = [
     ("zamakhshari", "al-kashshaf-al-zamakhshari", "ar",
      ("al-Kashshaf, al-Zamakhshari", "الکشّاف، زمخشری"),
      ("al-Zamakhshari (d. 538/1144)", "زمخشری (د. ۵۳۸)")),
+    ("ibn-atiyya", "al-muharrar-al-wajiz-ibn-atiyyah", "ar",
+     ("al-Muharrar al-Wajiz, Ibn Atiyya", "المحرّر الوجیز، ابن‌عطیه"),
+     ("Ibn Atiyya al-Andalusi (d. 542/1147)", "ابن‌عطیهٔ اندلسی (د. ۵۴۲)")),
+    ("abu-hayyan", "al-bahr-al-muhit", "ar",
+     ("al-Bahr al-Muhit, Abu Hayyan", "البحر المحیط، ابوحیان"),
+     ("Abu Hayyan al-Andalusi (d. 745/1344)", "ابوحیان اندلسی (د. ۷۴۵)")),
+    ("nasafi", "tafsir-al-nasafi", "ar",
+     ("Madarik al-Tanzil, al-Nasafi", "مدارک‌التنزیل، نسفی"),
+     ("al-Nasafi (d. 710/1310)", "نسفی (د. ۷۱۰)")),
+    ("alusi", "tafsir-al-alusi", "ar",
+     ("Ruh al-Ma'ani, al-Alusi", "روح‌المعانی، آلوسی"),
+     ("al-Alusi (d. 1270/1854)", "آلوسی (د. ۱۲۷۰)")),
 ]
 SOURCE = "github.com/spa5k/tafsir_api (the texts of altafsir.com, Shamela and others)"
 PAGE_MARK = re.compile(r"\(p-\d+\)\s*")  # where a page of the printed book began, left in some of the texts
@@ -79,7 +93,7 @@ def fetch_one(job):
     out = RAW / edition / f"{surah}.json"
     if out.exists():
         return 0
-    data = get(URL.format(edition=edition, surah=surah))
+    data = get(URL.format(edition=edition, surah=surah)) or get(URL_RAW.format(edition=edition, surah=surah))
     if data is None:
         return 1
     out.parent.mkdir(parents=True, exist_ok=True)
