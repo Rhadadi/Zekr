@@ -2,7 +2,7 @@ import { wordGestureActive } from '../wordSelection'
 import { memo } from 'preact/compat'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { player, playFrom } from '../audio'
-import { drawerOpen, pageOptionsAsked } from '../ui'
+import { SIDE_MIN, drawerOpen, pageOptionsAsked, setSideWidth, sideMax, sideOpen, winWidth, zenMode } from '../ui'
 import { AppBar, Logo } from '../components/AppBar'
 import { AyahPanel } from '../components/AyahPanel'
 import { Icon } from '../components/Icon'
@@ -86,6 +86,58 @@ const MushafPage = memo(function MushafPage({ meta, n, ar, basmala, size, highli
   )
 })
 
+/** The inner edge of the panel beside the page: drag it (or use the arrow keys on it) to make the panel wider or narrower;
+ * a double click puts it back. The page moves aside as it widens, and the menu at the left steps aside when the page
+ * would be squeezed. */
+function SideResize({ panel }: { panel: { current: HTMLElement | null } }) {
+  const handle = useRef<HTMLDivElement>(null)
+  // as tall as the panel, which is as tall as what it holds
+  useLayoutEffect(() => {
+    const el = panel.current
+    const h = handle.current
+    if (!el || !h) return
+    const fit = () => { h.style.height = `${el.offsetHeight}px` }
+    fit()
+    const ro = new ResizeObserver(fit)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  const width = () => panel.current?.offsetWidth ?? SIDE_MIN
+  const w = winWidth.value
+  return (
+    <div
+      ref={handle} class="side-resize" role="separator" aria-orientation="vertical" tabIndex={0} aria-label={t('resizePanel')} title={t('resizePanel')}
+      aria-valuemin={SIDE_MIN} aria-valuemax={sideMax(w)} aria-valuenow={width()}
+      onPointerDown={(e) => {
+        if (e.button !== 0) return
+        e.preventDefault()
+        const el = e.currentTarget
+        el.setPointerCapture(e.pointerId)
+        const x0 = e.clientX
+        const w0 = width()
+        document.documentElement.dataset.resizing = ''
+        // the panel is at the right: dragging to the left makes it wider
+        const move = (m: PointerEvent) => setSideWidth(w0 + x0 - m.clientX)
+        const up = () => {
+          el.removeEventListener('pointermove', move)
+          el.removeEventListener('pointerup', up)
+          el.removeEventListener('pointercancel', up)
+          delete document.documentElement.dataset.resizing
+        }
+        el.addEventListener('pointermove', move)
+        el.addEventListener('pointerup', up)
+        el.addEventListener('pointercancel', up)
+      }}
+      onDblClick={() => setSideWidth(null)}
+      onKeyDown={(e) => {
+        const by = e.key === 'ArrowLeft' ? 24 : e.key === 'ArrowRight' ? -24 : 0
+        if (by) { e.preventDefault(); setSideWidth(width() + by) }
+        else if (e.key === 'Home' || e.key === 'Enter') { e.preventDefault(); setSideWidth(null) }
+      }}
+    />
+  )
+}
+
 /** Where an ayah is on screen: the line rectangles on a printed page, or the lines of its text. */
 const rootPx = (name: string) => parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 0
 /** Where the page shows from: below the top bar, and below the recitation strip when it sits under the bar */
@@ -166,8 +218,10 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   const ready = !!data.value && (!printed || !!map.value)
 
   const [panel, setPanel] = useState<Panel>(focusId ? { kind: 'ayah', id: focusId } : null)
-  // Zen: the bars are put away and the page has the whole screen; a small button (or Escape) brings them back
-  const [zen, setZen] = useState(false)
+  // Zen: the bars and the panels each side are put away and the page has the whole screen, in the middle; a small
+  // button (or Escape) brings them back
+  const zen = zenMode.value
+  const setZen = (on: boolean) => { zenMode.value = on }
   useEffect(() => {
     if (!zen) return
     const root = document.documentElement
@@ -176,6 +230,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
     document.addEventListener('keydown', key)
     return () => { delete root.dataset.zen; document.removeEventListener('keydown', key) }
   }, [zen])
+  useEffect(() => () => { zenMode.value = false }, [])
   const [hoverId, setHoverId] = useState<number | undefined>(undefined)
   const [current, setCurrent] = useState(pageNo)
   const [jumping, setJumping] = useState(false)
@@ -430,8 +485,13 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   // On a phone the sheet covers the lower part of the screen. It is not hidden while a layer is open (the layer
   // covers the mushaf), and the ayah is kept clear of it by scroll-margin rather than by padding or jumping.
   const bottomBox = box !== null && !wide && !paused
-  const sideBox = box !== null && wide
+  // in Zen the panel is put away (the ayah chosen is still lit); it comes back with the bars
+  const sideBox = box !== null && wide && !zen
   boxBottomRef.current = bottomBox
+  useLayoutEffect(() => {
+    sideOpen.value = sideBox
+  }, [sideBox])
+  useEffect(() => () => { sideOpen.value = false }, [])
   useLayoutEffect(() => {
     if (!bottomBox || selected === undefined) return
     const id = selected
@@ -477,8 +537,10 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   // a page can hold the end of one surah and the start of the next: the bar names the surah of the ayah that is chosen
   // (or being recited) when it is on this page, otherwise the surah the page starts in
   const barAyah = highlight !== undefined && pageOf(meta, highlight) === current ? highlight : pageRange(meta, current).first
-  // Tafsir from the bar: for the ayah chosen (or the first of the page), the panel opens on it
-  const openTafsir = () => setPanel({ kind: 'ayah', id: barAyah, tafsir: true })
+  // The bar's panel button shows and hides the ayah's panel: for the ayah chosen (or the first of the page). On a
+  // computer it is the translation and tafsir panel beside the page; on a phone it opens on the tafsir.
+  const ayahOpen = panel?.kind === 'ayah'
+  const togglePanel = () => setPanel(ayahOpen ? null : { kind: 'ayah', id: barAyah, tafsir: !wide })
   const surahOfPage = meta.surahs[locate(meta, barAyah).surah - 1]!
   // the ayah that is chosen (or being recited), when it is on this page: "Al-Haqqa 52"; the number beside it is the page
   const barAyahNo = highlight !== undefined && pageOf(meta, highlight) === current ? locate(meta, highlight).ayah : undefined
@@ -548,7 +610,8 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
                 {t('pageShort')} {num(current)}
               </button>
             )}
-            <button class="icon-btn small bar-act bar-tafsir" onClick={openTafsir} aria-label={t('tabTafsir')} title={t('tabTafsir')}><Icon name="book" size={20} /></button>
+            <button class="icon-btn small bar-act bar-tafsir" onClick={togglePanel} aria-pressed={ayahOpen}
+              aria-label={wide ? t('sidePanel') : t('tabTafsir')} title={wide ? t('sidePanel') : t('tabTafsir')}><Icon name={wide ? 'panel' : 'book'} size={20} /></button>
             <button class="icon-btn small bar-act bar-zen" onClick={() => setZen(true)} aria-label={t('studyFocus')} title={t('studyFocus')}><Icon name="focus" size={20} /></button>
             {turnButtons ? (
               <button class="icon-btn small turn-next" onClick={() => turnTo(current + 1)} disabled={current >= PAGES} aria-label={t('nextPage')}>
@@ -598,9 +661,12 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
       {/* fitted: the printed page whole, sized to the window; the other modes are a column that scrolls */}
       <div class={`mushaf-layout${printed && !lineTr && !words ? ' fitted' : ''}${sideBox ? ' side-open' : ''}`}>
         {sideBox ? (
-          <aside class="side-panel" ref={sideRef} aria-label={t('inspectorLabel')} data-testid="side-panel">
-            {box}
-          </aside>
+          <>
+            <aside class="side-panel" ref={sideRef} aria-label={t('inspectorLabel')} data-testid="side-panel">
+              {box}
+            </aside>
+            <SideResize panel={sideRef} />
+          </>
         ) : null}
         {wide && single ? (
           // beside the page, for the mouse; the bar's buttons and the arrow keys do the same for everyone

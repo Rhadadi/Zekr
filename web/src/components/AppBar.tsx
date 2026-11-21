@@ -1,7 +1,7 @@
 import type { ComponentChildren } from 'preact'
 import { useDocked } from '../hooks'
 import { lang, t } from '../i18n'
-import { dockOpen, drawerOpen, openDrawer, setDock } from '../ui'
+import { dockCrowded, dockOpen, drawerOpen, fitSideToDock, openDrawer, setDock } from '../ui'
 import { Icon } from './Icon'
 
 /** The one bar for the mushaf and every layer. It is the same way round in both languages: the burger that opens the
@@ -9,9 +9,12 @@ import { Icon } from './Icon'
 export function AppBar({ start, centre, sticky = false }: { start?: ComponentChildren; centre?: ComponentChildren; sticky?: boolean }) {
   // in a wide window the menu is a panel beside the page that the burger shows and hides; otherwise a drawer over it
   const docked = useDocked()
+  // while the panel at the right crowds the menu out, asking for the menu narrows that panel to make room
+  const crowded = docked && dockOpen.value && dockCrowded.value
   const burger = (
     <button class="icon-btn burger" aria-label={t('menu')} aria-haspopup={docked ? undefined : 'dialog'} aria-controls={docked ? 'dock' : undefined}
-      aria-expanded={docked ? dockOpen.value : drawerOpen.value} onClick={e => (docked ? setDock(!dockOpen.value) : openDrawer(e.currentTarget))}>
+      aria-expanded={docked ? dockOpen.value && !crowded : drawerOpen.value}
+      onClick={e => (crowded ? fitSideToDock() : docked ? setDock(!dockOpen.value) : openDrawer(e.currentTarget))}>
       <Icon name="list" size={22} />
     </button>
   )

@@ -19,6 +19,7 @@ const stroked = {
   goto: 'M5 12h13M13 6l6 6-6 6M3 5v14',
   book: 'M4 4h6a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4zM20 4h-6a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h6z',
   focus: 'M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5M8 12h8',
+  panel: 'M4 4h16v16H4zM14 4v16M16.5 8h1M16.5 11h1',
 } as const
 
 const filled = {

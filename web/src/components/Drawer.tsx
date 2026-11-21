@@ -4,7 +4,7 @@ import { t } from '../i18n'
 import { type LayerName, href, mushafAt } from '../router'
 import { lastRead } from '../store'
 import { useDocked } from '../hooks'
-import { dockOpen, drawerOpen, drawerSection, gotoOpen, pageOptionsAsked, setDock, takeDrawerOpener } from '../ui'
+import { dockCrowded, dockOpen, drawerOpen, drawerSection, gotoOpen, pageOptionsAsked, setDock, takeDrawerOpener, zenMode } from '../ui'
 import { Logo } from './AppBar'
 import { Icon } from './Icon'
 import { MenuSettings } from './MenuSettings'
@@ -26,7 +26,8 @@ export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active
   const readingHref = onMushaf ? location.hash || href.start : href.ayah(studyAt.surah, studyAt.ayah)
   // in a wide window the menu is a panel docked beside the page instead: not modal, the page stays in use beside it
   const docked = useDocked()
-  const dockShown = docked && dockOpen.value
+  // put away in Zen, and while the panel at the right has been made too wide to leave the page room for both
+  const dockShown = docked && dockOpen.value && !zenMode.value && !dockCrowded.value
   const settingsOnly = open && !dockShown && drawerSection.value === 'settings'
   useEffect(() => {
     document.documentElement.toggleAttribute('data-dock', dockShown)

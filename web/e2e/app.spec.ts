@@ -416,11 +416,16 @@ test.describe('mushaf page view', () => {
 
   test('on a wide window the menu is a panel docked at the left, beside the page: nothing dims, the page stays in use', async ({ page }) => {
     await useSettings(page, { lang: 'en', translationPlace: 'panel' })
+    // the first time, the menu is open
     await page.goto('/#/page/305')
+    await page.evaluate(() => localStorage.removeItem('zekr.dock'))
+    await page.reload()
     await settle(page)
-    await expect(page.locator('#dock')).toHaveCount(0) // closed until asked for
-    await menu(page).click()
     const dock = page.locator('#dock')
+    await expect(dock).toBeVisible()
+    await menu(page).click()
+    await expect(dock).toHaveCount(0)
+    await menu(page).click()
     await expect(dock).toBeVisible()
     await expect(menu(page)).toHaveAttribute('aria-expanded', 'true')
     await expect(page.locator('.drawer-backdrop')).toHaveCount(0)
@@ -445,6 +450,62 @@ test.describe('mushaf page view', () => {
     await menu(page).click()
     await menu(page).click()
     await expect(page.locator('#dock')).toHaveCount(0)
+  })
+
+  test('on a computer the bar shows and hides the translation panel, Zen puts both panels away with the page in the middle, and the panel can be made wider', async ({ page }) => {
+    await useSettings(page, { lang: 'en', translationPlace: 'panel' })
+    await page.addInitScript(() => localStorage.setItem('zekr.dock', '1'))
+    await page.goto('/#/page/305')
+    await settle(page)
+    const dock = page.locator('#dock')
+    const side = page.getByTestId('side-panel')
+    await expect(dock).toBeVisible()
+    // the bar's panel button: shows the panel, then hides it
+    const toggle = page.getByRole('button', { name: 'Translation and tafsir' })
+    await toggle.click()
+    await expect(side.getByTestId('ayah-panel')).toBeVisible()
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    await toggle.click()
+    await expect(side).toHaveCount(0)
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false')
+    // Zen: no bar, no menu, no panel, the page in the middle of the window
+    await page.locator('#page-305 .ay').nth(1).click()
+    await expect(side).toBeVisible()
+    await page.getByRole('button', { name: 'Zen mode' }).click()
+    await expect(dock).toHaveCount(0)
+    await expect(side).toHaveCount(0)
+    await expect(page.locator('.appbar')).toBeHidden()
+    await page.waitForTimeout(400)
+    const flow = (await page.locator('.mushaf-flow').boundingBox())!
+    expect(Math.abs(flow.x + flow.width / 2 - 640)).toBeLessThanOrEqual(2)
+    await page.keyboard.press('Escape')
+    await expect(dock).toBeVisible()
+    await expect(side).toBeVisible()
+    // dragging the panel's inner edge to the left widens it; when the page would be squeezed, the menu steps aside
+    const before = (await side.boundingBox())!
+    const edge = page.getByRole('separator', { name: 'Resize the panel' })
+    const e = (await edge.boundingBox())!
+    await page.mouse.move(e.x + e.width / 2, e.y + 40)
+    await page.mouse.down()
+    await page.mouse.move(e.x - 200, e.y + 40, { steps: 5 })
+    await page.mouse.up()
+    const after = (await side.boundingBox())!
+    expect(after.width).toBeGreaterThan(before.width + 150)
+    await expect(dock).toHaveCount(0)
+    const page2 = (await page.locator('.mushaf-flow').boundingBox())!
+    expect(page2.x + page2.width).toBeLessThanOrEqual(after.x)
+    // the menu asked for: the panel narrows to make room for both
+    await menu(page).click()
+    await expect(dock).toBeVisible()
+    const fit = (await side.boundingBox())!
+    expect(fit.x).toBeGreaterThan((await dock.boundingBox())!.x + (await dock.boundingBox())!.width)
+    // remembered; a double click on the edge puts it back
+    await page.reload()
+    await settle(page)
+    await page.locator('#page-305 .ay').nth(1).click()
+    expect(Math.round((await side.boundingBox())!.width)).toBe(Math.round(fit.width))
+    await edge.dblclick()
+    await expect.poll(async () => Math.round((await side.boundingBox())!.width)).toBe(Math.round(before.width))
   })
 
   test('in Persian the panel is at the right too, and stays in view while the page scrolls', async ({ page }) => {

@@ -13,6 +13,9 @@ export default defineConfig({
     locale: 'en-US',
     timezoneId: 'UTC',
     serviceWorkers: 'allow',
+    // the menu docks open beside the page in a wide window the first time; the tests start with it closed (the one about
+    // the menu clears this)
+    storageState: { cookies: [], origins: [{ origin: 'http://localhost:4173', localStorage: [{ name: 'zekr.dock', value: '0' }] }] },
     launchOptions: process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH, args: ['--no-sandbox'] } : { args: ['--no-sandbox'] },
   },
   webServer: {
