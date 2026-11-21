@@ -927,9 +927,9 @@ a.player-info { color: var(--ink); text-decoration: none; }
 
 /* Word tools are delegated to selected text; printed images keep their ayah gestures. */
 [data-word-source], .mushaf-flow .ay:not(.seg), .fl-t, .wb-ar, .wb-fa { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
-.word-toolbar { position: fixed; z-index: 35; display: flex; align-items: center; width: min(280px, calc(100vw - 24px)); padding: 4px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); box-shadow: 0 5px 20px #0002; }
+.word-toolbar { position: fixed; z-index: 35; display: flex; align-items: center; width: min(360px, calc(100vw - 24px)); padding: 4px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); box-shadow: 0 5px 20px #0002; }
 .word-toolbar button { min-height: 44px; min-width: 44px; border: 0; border-radius: 7px; background: none; color: inherit; font: inherit; font-size: .85rem; cursor: pointer; }
-.word-toolbar button:first-child { flex: 1; }
+.word-toolbar button:not(:last-child) { flex: 1; }
 .word-dialog { width: min(420px, calc(100vw - 24px)); max-height: 80dvh; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); }
 .word-dialog::backdrop { background: #0004; }
 .word-dialog header { display: flex; align-items: center; justify-content: space-between; position: sticky; top: -16px; background: var(--surface); z-index: 1; }
@@ -949,3 +949,13 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .word-roots button, .word-forms button { padding-inline: 10px; border: 1px solid var(--line); font-family: var(--font-quran); font-size: 1.2rem; }
 .word-roots button[aria-pressed='true'] { background: var(--hl); border-color: var(--accent); }
 .word-verses a { display: inline-flex; align-items: center; min-height: 44px; padding-inline: 6px; color: var(--accent); font-size: .85rem; }
+
+.word-dialog button.word-choice { width: 100%; text-align: start; border-radius: 0; }
+.word-saved-tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--line); margin-block-end: 12px; }
+.word-saved-tabs a { display: flex; align-items: center; min-height: 44px; padding: 6px 12px; color: var(--ink); text-decoration: none; }
+.word-saved-tabs a[aria-current] { border-bottom: 2px solid var(--accent); }
+.saved-word { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--line); padding-block: 8px; }
+.saved-word > button:first-child { flex: 1; text-align: start; border: 0; background: none; color: var(--ink); min-height: 48px; font: inherit; cursor: pointer; }
+.saved-word b { display: block; font-size: 1.2rem; font-weight: 500; }
+.saved-word small { display: block; color: var(--muted); }
+.word-card-preview { display: block; max-width: 100%; max-height: 220px; margin: 12px auto; border: 1px solid var(--line); border-radius: 8px; object-fit: contain; }

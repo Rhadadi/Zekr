@@ -4,6 +4,7 @@ import { useAsync } from '../hooks'
 import { ayahRef, lang, num, t } from '../i18n'
 import { loadWordIndex } from '../wordData'
 import { WordMeaning } from './WordMeaning'
+import { WordSharing } from './WordSharing'
 import { href, route } from '../router'
 import { installWordSelection, selectedWord, wordChooser, wordSegments, type WordSelection } from '../wordSelection'
 
@@ -16,7 +17,7 @@ export function wordSearchLink(word: WordSelection, mode = word.source === 'ar' 
 export function WordActions({ meta }: { meta: Meta }) {
   const word = selectedWord.value
   const chooser = wordChooser.value
-  const [sheet, setSheet] = useState<'find' | 'meaning' | null>(null)
+  const [sheet, setSheet] = useState<'find' | 'meaning' | 'copy' | 'share' | null>(null)
   const [anchor, setAnchor] = useState({ x: 16, y: 80 })
   useEffect(installWordSelection, [])
   useLayoutEffect(() => {
@@ -24,8 +25,8 @@ export function WordActions({ meta }: { meta: Meta }) {
     const position = () => {
       if (word.range && !word.range.startContainer.isConnected) { selectedWord.value = null; return }
       const box = word.range?.getBoundingClientRect()
-      const width = Math.min(280, innerWidth - 24)
-      setAnchor({ x: Math.max(12, Math.min(innerWidth - width - 12, (box ? box.left + box.width / 2 : word.x) - width / 2)), y: Math.max(8, Math.min(innerHeight - 60, (box?.top ?? word.y) > 100 ? (box?.top ?? word.y) - 58 : (box?.bottom ?? word.y) + 12)) })
+      const width = Math.min(360, innerWidth - 24)
+      setAnchor({ x: Math.max(12, Math.min(innerWidth - width - 12, (box ? box.left + box.width / 2 : word.x) - width / 2)), y: Math.max(8, Math.min(innerHeight - 60, (box?.top ?? word.y) > 100 ? (box?.top ?? word.y) - 66 : (box?.bottom ?? word.y) + 12)) })
     }
     const key = (e: KeyboardEvent) => { if (e.key === 'Escape' && !sheet) { e.preventDefault(); e.stopImmediatePropagation(); selectedWord.value = null; getSelection()?.removeAllRanges() } }
     position(); document.addEventListener('scroll', position, true); window.addEventListener('resize', position); document.addEventListener('keydown', key, true)
@@ -33,11 +34,13 @@ export function WordActions({ meta }: { meta: Meta }) {
   }, [word, sheet])
   return <>
     {word && !sheet ? <div class="word-toolbar" data-word-ui role="toolbar" aria-label={wordLabel('Word actions', 'گزینه‌های واژه')} style={{ left: anchor.x, top: anchor.y }}>
-      <button onClick={() => setSheet('find')}>{wordLabel('Find in the Quran', 'یافتن در قرآن')}</button>
+      <button aria-label={wordLabel('Find in the Quran', 'یافتن در قرآن')} onClick={() => setSheet('find')}>{wordLabel('Find', 'جستجو')}</button>
       <button onClick={() => setSheet('meaning')}>{wordLabel('Meaning', 'معنی')}</button>
+      <button onClick={() => setSheet('copy')}>{wordLabel('Copy', 'کپی')}</button>
+      <button onClick={() => setSheet('share')}>{wordLabel('Share', 'اشتراک')}</button>
       <button aria-label={t('close')} onClick={() => { selectedWord.value = null }}>×</button>
     </div> : null}
-    {word && sheet ? <WordDialog label={wordLabel('Word actions', 'گزینه‌های واژه')} close={() => setSheet(null)}>{sheet === 'find' ? <WordSearch meta={meta} word={word} close={() => { setSheet(null); selectedWord.value = null }} /> : <><p class="word-display" lang={word.language} dir="auto">{word.text}</p><WordMeaning meta={meta} word={word} close={() => { setSheet(null); selectedWord.value = null }} /></>}</WordDialog> : null}
+    {word && sheet ? <WordDialog label={wordLabel('Word actions', 'گزینه‌های واژه')} close={() => setSheet(null)}>{sheet === 'find' ? <WordSearch meta={meta} word={word} close={() => { setSheet(null); selectedWord.value = null }} /> : sheet === 'copy' || sheet === 'share' ? <WordSharing meta={meta} word={word} kind={sheet} /> : <><p class="word-display" lang={word.language} dir="auto">{word.text}</p><WordMeaning meta={meta} word={word} close={() => { setSheet(null); selectedWord.value = null }} /></>}</WordDialog> : null}
     {chooser ? <ChooseWords meta={meta} id={chooser} close={() => { wordChooser.value = null }} /> : null}
   </>
 }
