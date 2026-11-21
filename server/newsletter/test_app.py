@@ -201,7 +201,10 @@ class FlowTest(Base):
         self.assertEqual(len(self.mail.sent), 3)
 
     def test_weekly_comes_on_friday(self):
-        self.svc.subscribe("w@example.com", "weekly", "en", tz="UTC", verified=True)
+        # Keep the welcome issue before the Thursday/Friday being tested.
+        with mock.patch.object(app, "datetime", wraps=datetime) as clock:
+            clock.now.return_value = datetime(2026, 11, 18, 7, tzinfo=timezone.utc)
+            self.svc.subscribe("w@example.com", "weekly", "en", tz="UTC", verified=True)
         sent = len(self.mail.sent)
         with mock.patch.object(app.time, "sleep"):
             self.svc.tick(datetime(2026, 11, 19, 7, tzinfo=timezone.utc))  # Thursday
