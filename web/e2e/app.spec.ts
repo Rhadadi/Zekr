@@ -650,7 +650,7 @@ test.describe('what plays, and seeing it', () => {
     await expect(first.getByRole('button', { name: 'Copy' })).toHaveCount(0)
     await first.getByRole('button', { name: 'More' }).click()
     await expect(first.getByRole('button', { name: 'Copy' })).toBeVisible()
-    await expect(first.getByRole('button', { name: 'Share' })).toBeVisible()
+    await expect(first.getByRole('button', { name: 'Share', exact: true })).toBeVisible()
   })
 })
 
@@ -921,7 +921,7 @@ test.describe('page view: recitation, tapping and pressing', () => {
     await expect(options.getByRole('combobox')).toHaveCount(0)
     await expect(options.getByRole('checkbox')).toHaveCount(0)
     await options.getByRole('button', { name: 'Smaller translation' }).click()
-    await expect(options).toContainText('Translation size 16')
+    await expect(options).toContainText('Translation size 15') // one step down from the default 16
     await expect(options.getByRole('link', { name: 'All settings' })).toBeVisible()
     await page.locator('#page-305 .banner').click()
     await expect(options).toHaveCount(0)
@@ -1541,7 +1541,7 @@ test.describe('The printed mushaf as pictures (private build, made-up pictures h
     await pg.locator('.il-tr .ay[data-id="14"]').first().click()
     await expect(page.getByTestId('ayah-panel')).toContainText('۲:۷')
     await expect(page.getByTestId('ayah-panel').locator('.tr')).not.toBeEmpty()
-    await expect(page.getByTestId('ayah-panel').locator('.tr').first()).toHaveCSS('font-size', '17px')
+    await expect(page.getByTestId('ayah-panel').locator('.tr').first()).toHaveCSS('font-size', '16px')
     // the Arabic shows which ayah is chosen; its translation is not marked as well
     await expect(pg.locator('.il-strip .seg.sel').first()).toBeVisible()
     await expect(pg.locator('.il-tr .ay.sel')).toHaveCount(0)
