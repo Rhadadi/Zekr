@@ -13,6 +13,7 @@ import './study.css'
 effect(() => {
   const root = document.documentElement
   root.setAttribute('data-theme', settings.value.theme)
+  root.toggleAttribute('data-tr-bg', settings.value.trBackground)
   root.style.setProperty('--font-quran', quranFontStack(settings.value.quranFont))
   root.lang = lang.value
   root.dir = lang.value === 'fa' ? 'rtl' : 'ltr'

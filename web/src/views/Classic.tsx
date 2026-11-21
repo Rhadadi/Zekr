@@ -1,21 +1,26 @@
 import { LoadError, Loading } from '../components/Page'
 import type { Meta } from '../data'
 import { useAsync } from '../hooks'
-import { type ClassicBook, classicBook, chooseClassicBook, booksFor, checkClassics, loadClassic } from '../classics'
+import { type ClassicBook, classicBook, chooseClassicBook, booksFor, checkClassics, loadClassicRange } from '../classics'
 import { lang, num, t } from '../i18n'
 import { settings } from '../store'
 
 /** What one classical book says on an ayah: its name and author, the text in its own direction, where it is from. */
 export function ClassicText({ book, surah, ayah }: { book: ClassicBook; surah: number; ayah: number }) {
-  const data = useAsync(() => loadClassic(book, surah, ayah), [book.id, surah, ayah])
+  const data = useAsync(() => loadClassicRange(book, surah, ayah), [book.id, surah, ayah])
   const l = lang.value
   return (
     <article class="tafsir classic" lang={book.lang} dir={book.lang === 'en' ? 'ltr' : 'rtl'} style={{ fontSize: `${settings.value.trSize}px` }}>
       <h2 class="tf-title">{book.name[l]}</h2>
       <p class="classic-author muted small">{book.author[l]}</p>
-      {data.error ? <LoadError retry={data.retry} /> : data.value === undefined ? <Loading /> : data.value ? data.value.split('\n').filter((p) => p.trim()).map((p, i) =>
-        // "# " begins the heading of a part of the text (Meybodi's three rounds)
-        p.startsWith('# ') ? <h3 key={i} class="classic-part">{p.slice(2)}</h3> : <p key={i} class="tf-p">{p}</p>) : <p class="status">{t('classicsNone')}</p>}
+      {data.error ? <LoadError retry={data.retry} /> : data.value === undefined ? <Loading /> : data.value ? (
+        <>
+          {data.value.from < data.value.to ? <p class="classic-covers muted small">{t('coversAyahs', { from: num(data.value.from), to: num(data.value.to) })}</p> : null}
+          {data.value.text.split('\n').filter((p) => p.trim()).map((p, i) =>
+            // "# " begins the heading of a part of the text (Meybodi's three rounds)
+            p.startsWith('# ') ? <h3 key={i} class="classic-part">{p.slice(2)}</h3> : <p key={i} class="tf-p">{p}</p>)}
+        </>
+      ) : <p class="status">{t('classicsNone')}</p>}
     </article>
   )
 }

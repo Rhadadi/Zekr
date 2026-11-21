@@ -25,15 +25,21 @@ export function PlayerBar({ meta, study = false }: { meta: Meta; study?: boolean
     const el = bar.current
     const root = document.documentElement
     if (!el) return
+    let was = 0
     const set = () => {
       root.style.setProperty('--player-h', inBar || onTop ? '0px' : `${el.offsetHeight}px`)
-      root.style.setProperty('--player-top', onTop ? `${el.offsetHeight}px` : '0px')
+      const top = onTop ? el.offsetHeight : 0
+      root.style.setProperty('--player-top', `${top}px`)
+      // the page begins under the strip (the layout follows it): scrolled down, what is read stays where it is
+      if (top !== was && window.scrollY > 0) window.scrollBy(0, top - was)
+      was = top
     }
     set()
     const observer = new ResizeObserver(set)
     observer.observe(el)
     return () => {
       observer.disconnect()
+      if (was && window.scrollY > 0) window.scrollBy(0, -was)
       root.style.removeProperty('--player-h')
       root.style.removeProperty('--player-top')
     }

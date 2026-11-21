@@ -25,7 +25,7 @@ const ARABIC_INDIC = '٠١٢٣٤٥٦٧٨٩'
 const marker = (n: number) => String(n).replace(/\d/g, (d) => ARABIC_INDIC[Number(d)] as string)
 const PAGES = 604
 
-type Panel = { kind: 'ayah'; id: number; menu?: boolean } | { kind: 'options' } | null
+type Panel = { kind: 'ayah'; id: number; menu?: boolean; tafsir?: boolean } | { kind: 'options' } | null
 
 interface PageProps {
   meta: Meta
@@ -166,6 +166,16 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   const ready = !!data.value && (!printed || !!map.value)
 
   const [panel, setPanel] = useState<Panel>(focusId ? { kind: 'ayah', id: focusId } : null)
+  // Zen: the bars are put away and the page has the whole screen; a small button (or Escape) brings them back
+  const [zen, setZen] = useState(false)
+  useEffect(() => {
+    if (!zen) return
+    const root = document.documentElement
+    root.dataset.zen = '1'
+    const key = (e: KeyboardEvent) => { if (e.key === 'Escape' && !e.defaultPrevented) setZen(false) }
+    document.addEventListener('keydown', key)
+    return () => { delete root.dataset.zen; document.removeEventListener('keydown', key) }
+  }, [zen])
   const [hoverId, setHoverId] = useState<number | undefined>(undefined)
   const [current, setCurrent] = useState(pageNo)
   const [jumping, setJumping] = useState(false)
@@ -400,6 +410,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
         variant={variant}
         showTranslations={place === 'panel' || place === 'card' || place === 'words' || !!lineTr}
         menu={panel?.kind === 'ayah' && panel.id === id && !!panel.menu}
+        tafsir={panel?.kind === 'ayah' && panel.id === id && !!panel.tafsir}
         offerWords={!words}
         inlineStudy={variant === 'box' && wide}
         run={variant === 'box' && wide && place !== 'off' ? pageRun(id) : undefined}
@@ -466,6 +477,8 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   // a page can hold the end of one surah and the start of the next: the bar names the surah of the ayah that is chosen
   // (or being recited) when it is on this page, otherwise the surah the page starts in
   const barAyah = highlight !== undefined && pageOf(meta, highlight) === current ? highlight : pageRange(meta, current).first
+  // Tafsir from the bar: for the ayah chosen (or the first of the page), the panel opens on it
+  const openTafsir = () => setPanel({ kind: 'ayah', id: barAyah, tafsir: true })
   const surahOfPage = meta.surahs[locate(meta, barAyah).surah - 1]!
   // the ayah that is chosen (or being recited), when it is on this page: "Al-Haqqa 52"; the number beside it is the page
   const barAyahNo = highlight !== undefined && pageOf(meta, highlight) === current ? locate(meta, highlight).ayah : undefined
@@ -535,9 +548,8 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
                 {t('pageShort')} {num(current)}
               </button>
             )}
-            <button class="mb-juz" aria-haspopup="listbox" aria-expanded={menu === 'juz'} onClick={() => setMenu(menu === 'juz' ? null : 'juz')}>
-              {t('juzN', { n: juzOfPage })}
-            </button>
+            <button class="icon-btn small bar-act bar-tafsir" onClick={openTafsir} aria-label={t('tabTafsir')} title={t('tabTafsir')}><Icon name="book" size={20} /></button>
+            <button class="icon-btn small bar-act bar-zen" onClick={() => setZen(true)} aria-label={t('studyFocus')} title={t('studyFocus')}><Icon name="focus" size={20} /></button>
             {turnButtons ? (
               <button class="icon-btn small turn-next" onClick={() => turnTo(current + 1)} disabled={current >= PAGES} aria-label={t('nextPage')}>
                 <Icon name="chevron" size={20} />
@@ -546,9 +558,17 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
           </div>
         }
       />
+      {zen ? <button class="zen-exit" onClick={() => setZen(false)} aria-label={t('studyExitFocus')} title={t('studyExitFocus')}><Icon name="close" size={18} /></button> : null}
       {menu ? (
         <>
           <button class="mb-menu-backdrop" aria-label={t('close')} tabIndex={-1} onClick={() => setMenu(null)} />
+          <div class="mb-menu-wrap">
+          {menu === 'ayah' ? <p class="mb-where">{t('pageN', { n: current })} · {t('juzN', { n: juzOfPage })}</p> : (
+            <div role="group" class="mb-switch" aria-label={t('surahs')}>
+              <button aria-pressed={menu === 'surah'} class={menu === 'surah' ? 'on' : ''} onClick={() => setMenu('surah')}>{t('surahs')}</button>
+              <button aria-pressed={menu === 'juz'} class={menu === 'juz' ? 'on' : ''} onClick={() => setMenu('juz')}>{t('juz')}</button>
+            </div>
+          )}
           <div class={`mb-menu${menu === 'ayah' ? ' mb-ayahs' : ''}`} role="listbox" aria-label={menu === 'surah' ? t('surahs') : menu === 'ayah' ? `${t('goToAyah')}: ${surahName(surahOfPage)}` : t('juz')}>
             {menu === 'ayah'
               ? Array.from({ length: surahOfPage.ayahs }, (_, i) => i + 1).map((a) => {
@@ -571,6 +591,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
                     <span class="mb-n">{num(j.n)}</span> {t('juzN', { n: j.n })} <span class="muted small">{t('pageN', { n: pageOf(meta, j.id) })}</span>
                   </button>
                 ))}
+          </div>
           </div>
         </>
       ) : null}

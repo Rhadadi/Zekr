@@ -35,6 +35,8 @@ export interface Settings {
   pageColor: PageColor
   arabicSize: number
   trSize: number
+  /** A soft panel behind the translations. */
+  trBackground: boolean
   /** Translation ids shown in the reader, in order. */
   translations: string[]
   reciter: string
@@ -58,8 +60,9 @@ export const defaultSettings: Settings = {
   translationPlace: 'inline',
   pageStyle: 'printed',
   pageColor: 'blue',
-  arabicSize: 30,
-  trSize: 17,
+  arabicSize: 26,
+  trSize: 16,
+  trBackground: false,
   translations: ['fa.safavi'],
   reciter: 'minshawi-murattal',
   speed: 1,
@@ -104,6 +107,13 @@ function loadSettings(): Settings {
   const firstFa = read<boolean>('zekr.persianDefault') === undefined
   const firstInline = read<boolean>('zekr.inlineDefault') === undefined
   const saved = migrateSettings(read<Record<string, unknown>>('zekr.settings') ?? {}, firstFa, firstInline)
+  // the sizes were smaller by default from here on: a size that is still the old default follows the new one, once
+  const firstSize = read<boolean>('zekr.sizesV2') === undefined
+  if (firstSize) {
+    if (saved.arabicSize === 30) delete saved.arabicSize
+    if (saved.trSize === 17) delete saved.trSize
+    write('zekr.sizesV2', true)
+  }
   if (firstFa) write('zekr.persianDefault', true)
   if (firstInline) write('zekr.inlineDefault', true)
   return { ...defaultSettings, ...saved, daily: { ...defaultSettings.daily, ...saved.daily } }

@@ -338,10 +338,11 @@ input[type='checkbox'] { width: 20px; height: 20px; flex-shrink: 0; accent-color
 .mb-ayah { color: var(--gold); font-family: var(--font-ui); font-size: 0.85em; font-weight: 700; }
 .mb-surah[aria-expanded='true'], .mb-juz[aria-expanded='true'] { background: var(--hl); }
 .mb-menu-backdrop { position: fixed; inset: 0; z-index: 5; border: 0; background: transparent; cursor: default; }
-.mb-menu {
+.mb-menu-wrap {
   position: fixed; z-index: 6; top: calc(var(--bar-h) + 4px); inset-inline: 8px; margin-inline: auto; max-width: 420px; max-height: min(65dvh, 520px);
-  overflow-y: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 8px 24px rgb(0 0 0 / 0.18); padding: 6px;
+  display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 8px 24px rgb(0 0 0 / 0.18); overflow: hidden;
 }
+.mb-menu { flex: 1; min-height: 0; overflow-y: auto; padding: 6px; }
 .mb-menu button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: none; color: var(--ink); text-align: start; cursor: pointer; }
 .mb-menu button.on { background: var(--hl); font-weight: 700; }
 .mb-menu .mb-n { min-width: 2.2em; color: var(--muted); font-size: 0.85rem; }
@@ -358,7 +359,7 @@ input[type='checkbox'] { width: 20px; height: 20px; flex-shrink: 0; accent-color
 .mb-jump input { -moz-appearance: textfield; appearance: textfield; }
 .mb-jump input::-webkit-inner-spin-button, .mb-jump input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 .mb-jump input { width: 64px; min-height: 40px; text-align: center; border-radius: 999px; border: 1.5px solid var(--gold); background: var(--surface); }
-.mushaf-flow { position: relative; padding: calc(var(--bar-base) + 4px) 0 12px; } /* still when the recitation strip comes */
+.mushaf-flow { position: relative; padding: calc(var(--bar-h) + 4px) 0 12px; } /* the recitation strip has its place under the bar: the top of the page is never under it */
 .flow {
   font-family: var(--font-quran); line-height: 2.15; text-align: justify; text-justify: inter-word; margin: 6px 0; word-spacing: 0.05em;
 }
@@ -959,3 +960,26 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .saved-word b { display: block; font-size: 1.2rem; font-weight: 500; }
 .saved-word small { display: block; color: var(--muted); }
 .word-card-preview { display: block; max-width: 100%; max-height: 220px; margin: 12px auto; border: 1px solid var(--line); border-radius: 8px; object-fit: contain; }
+
+/* The reading bar: the surah and ayah, the page small, and the two things asked for most (tafsir, Zen) */
+.bar-act { flex: none; color: var(--muted); }
+.mushaf-id .mb-page { font-size: 0.8rem; font-weight: 500; border-width: 0; background: none; color: var(--muted); padding-inline: 6px; min-width: 0; }
+.mb-where { margin: 0; padding: 10px 12px 4px; color: var(--muted); font-size: 0.85rem; text-align: center; }
+.mb-switch { display: flex; gap: 6px; padding: 8px 8px 2px; }
+.mb-switch button { flex: 1; padding: 6px 10px; border: 1px solid var(--line); border-radius: 999px; background: none; color: var(--ink); font: inherit; cursor: pointer; justify-content: center; }
+.mb-switch button.on, .mb-switch button[aria-pressed='true'] { background: var(--gold); border-color: var(--gold); color: var(--bg); }
+.zen-exit { position: fixed; z-index: 7; top: max(10px, env(safe-area-inset-top)); inset-inline-end: 10px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: color-mix(in srgb, var(--bg) 85%, transparent); color: var(--muted); display: grid; place-items: center; cursor: pointer; }
+:root[data-zen] .appbar, :root[data-zen] .player.on-top { display: none; }
+:root[data-zen] { --bar-base: 8px; --player-top: 0px !important; }
+
+/* A soft background behind the translation (Settings): the reading view's lines, the study view, the panels and the sample */
+:root { --tr-bg: rgb(133 100 49 / 0.09); }
+:root[data-theme='dark'] { --tr-bg: rgb(255 255 255 / 0.07); }
+:root[data-theme='sepia'] { --tr-bg: rgb(127 93 42 / 0.1); }
+:root[data-tr-bg] .tr-inline .tr,
+:root[data-tr-bg] .il-under,
+:root[data-tr-bg] .study-translation,
+:root[data-tr-bg] .ayah-panel .tr-block,
+:root[data-tr-bg] .tr-run .run-ay.sel,
+:root[data-tr-bg] .sample .tr { background: var(--tr-bg); border-radius: 12px; padding: 8px 14px; }
+:root[data-tr-bg] .tr-inline .tr { margin-block: 4px; }

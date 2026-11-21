@@ -264,8 +264,11 @@ test.describe('mushaf page view', () => {
     await expect(p305.locator('.mark').first()).toHaveText('﴿١﴾')
     await expect(p305.locator('.mark').last()).toHaveText('﴿١١﴾')
     await expect(page.locator('.mb-page')).toHaveText('p. 305')
-    await expect(page.locator('.mb-juz')).toHaveText('Juz 16')
+    await expect(page.locator('.mb-juz')).toHaveCount(0) // the bar is the surah, the ayah, the page: the juz is in the lists
     await expect(page.locator('.mb-surah')).toContainText('مريم')
+    await page.locator('.mb-page').click()
+    await expect(page.locator('.mb-where')).toHaveText('Page 305 · Juz 16')
+    await page.keyboard.press('Escape')
   })
 
   test('the page number field has a Go button, and leaving the field goes there too (the iPhone number pad has no Go key)', async ({ page }) => {
@@ -281,6 +284,16 @@ test.describe('mushaf page view', () => {
     await page.getByLabel('Go to page', { exact: true }).fill('300')
     await page.getByLabel('Go to page', { exact: true }).blur() // what Done on the iPhone keyboard does
     await expect(page.locator('.mb-page')).toHaveText('p. 300')
+  })
+
+  test('a soft background behind the translation is a setting, and the sizes begin smaller', async ({ page }) => {
+    await useSettings(page, { lang: 'en' })
+    await page.goto('/#/settings')
+    await expect(page.locator('html')).not.toHaveAttribute('data-tr-bg', '')
+    await page.getByLabel('A soft background behind the translation').check()
+    await expect(page.locator('html')).toHaveAttribute('data-tr-bg', '')
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('zekr.settings') ?? '{}').trBackground)).toBe(true)
+    await expect(page.getByLabel('Translation size')).toHaveValue('16')
   })
 
   test('the page number in the bar opens the surah\'s ayahs to jump to', async ({ page }) => {
@@ -312,11 +325,11 @@ test.describe('mushaf page view', () => {
     await expect(menu).toHaveCount(0)
     await expect(page.locator('.mb-page')).toHaveText('p. 2')
     await expect(page.locator('.mb-surah')).toContainText('البقرة')
-    await page.locator('.mb-juz').click()
+    await page.locator('.mb-surah').click()
+    await page.locator('.mb-switch').getByRole('button', { name: 'Juz', exact: true }).click() // the juz are in the same list
     const juz = page.getByRole('listbox', { name: 'Juz' })
     await expect(juz.getByRole('option')).toHaveCount(30)
     await juz.getByRole('option', { name: /Juz 16/ }).click()
-    await expect(page.locator('.mb-juz')).toHaveText('Juz 16')
     await expect(page.locator('.mb-page')).toHaveText('p. 302')
     await page.locator('.mb-surah').click()
     await page.keyboard.press('Escape')

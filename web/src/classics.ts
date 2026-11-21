@@ -92,6 +92,11 @@ async function unpack(res: Response): Promise<Chunk> {
 
 /** What the book says on the ayah, or null where it has nothing on it. */
 export async function loadClassic(book: ClassicBook, surah: number, ayah: number): Promise<string | null> {
+  return (await loadClassicRange(book, surah, ayah))?.text ?? null
+}
+
+/** The same, with the ayahs the text is about: an author who discusses several together has one text for them all. */
+export async function loadClassicRange(book: ClassicBook, surah: number, ayah: number): Promise<{ text: string; from: number; to: number } | null> {
   const k = chunkNumber(book, surah, ayah)
   if (!k) return null
   const meta = await loadMeta()
@@ -105,7 +110,13 @@ export async function loadClassic(book: ClassicBook, surah: number, ayah: number
     chunk.catch(() => chunks.delete(url)) // try again next time
     chunks.set(url, chunk)
   }
-  const value = (await chunk)[String(ayah)]
+  const rows = await chunk
+  const value = rows[String(ayah)]
   // an ayah the author discusses with its neighbours has the number of the ayah that holds the text
-  return typeof value === 'number' ? ((await chunk)[String(value)] as string | undefined) ?? null : value ?? null
+  const from = typeof value === 'number' ? value : ayah
+  const text = typeof value === 'number' ? (rows[String(value)] as string | undefined) : value
+  if (!text) return null
+  let to = from
+  while (rows[String(to + 1)] === from) to++
+  return { text, from, to }
 }

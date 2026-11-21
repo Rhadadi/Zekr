@@ -1,9 +1,9 @@
 import { LoadError, Loading } from '../components/Page'
-import { type Meta, ayahIdOf } from '../data'
+import { type Meta, ayahIdOf, locate } from '../data'
 import { useAsync } from '../hooks'
-import { t } from '../i18n'
+import { num, t } from '../i18n'
 import { settings } from '../store'
-import { type TafsirBlock, checkTafsir, loadSection, sectionIdFor } from '../tafsir'
+import { type TafsirBlock, checkTafsir, loadSection, sectionIdFor, sectionRangeFor } from '../tafsir'
 
 function Runs({ block }: { block: TafsirBlock }) {
   return (
@@ -29,9 +29,12 @@ export function TafsirView({ meta, surah, ayah, idPrefix = 'tf' }: { meta: Meta;
     const index = await checkTafsir()
     if (!index) return null
     const sid = sectionIdFor(index, id)
-    return sid ? loadSection(sid) : null
+    const range = sectionRangeFor(index, id)
+    return sid ? { sec: await loadSection(sid), range } : null
   }, [id])
-  const sec = data.value
+  const sec = data.value?.sec
+  const range = data.value?.range
+  const covers = range && locate(meta, range[0]).ayah < locate(meta, range[1]).ayah ? [locate(meta, range[0]).ayah, locate(meta, range[1]).ayah] : null
   return (
     <>
       {data.error ? <LoadError retry={data.retry} /> : data.value === undefined ? <Loading /> : !sec ? (
@@ -39,6 +42,7 @@ export function TafsirView({ meta, surah, ayah, idPrefix = 'tf' }: { meta: Meta;
       ) : (
         <article class="tafsir" lang="fa" dir="rtl" style={{ fontSize: `${settings.value.trSize}px` }}>
           <h2 class="tf-title">{sec.title}</h2>
+          {covers ? <p class="classic-covers muted small">{t('coversAyahs', { from: num(covers[0]!), to: num(covers[1]!) })}</p> : null}
           {sec.blocks.some((b) => b.t === 'h') ? (
             <nav class="tf-parts" aria-label={t('tafsirParts')}>
               {sec.blocks.map((b, i) => (b.t === 'h' ? <a key={i} href={`#${idPrefix}-${i}`} onClick={(e) => { e.preventDefault(); document.getElementById(`${idPrefix}-${i}`)?.scrollIntoView({ behavior: 'smooth' }) }}><Runs block={b} /></a> : null))}

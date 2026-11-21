@@ -65,6 +65,8 @@ test.describe('classical tafsirs (made-up books)', () => {
     await page.addInitScript(() => { localStorage.setItem('zekr.settings', JSON.stringify({ lang: 'fa' })); localStorage.setItem('zekr.classicBook', 'demo') })
     await page.goto('/#/classic/1/3')
     await expect(page.locator('article.classic')).toContainText('نص ساختگي للآيتين معا.')
+    // it says which ayahs the text is about, so it is not taken for the commentary of one of them alone
+    await expect(page.locator('.classic-covers')).toContainText('۲ تا ۳')
     await expect(page.getByRole('combobox').locator('option:checked')).toHaveText('تفسیر ساختگی') // names in the app's language
   })
 
@@ -111,5 +113,23 @@ test.describe('classical tafsirs (made-up books)', () => {
     await panel.getByRole('tab', { name: 'Tafsir' }).click()
     await expect(panel.getByRole('combobox', { name: 'Tafsir' })).toHaveValue('demo-en')
     await expect(panel.getByRole('link', { name: 'Open on its own page' })).toHaveAttribute('href', '#/classic/1/1')
+  })
+
+  test('the Tafsir button in the bar opens the ayah panel on the tafsir, Al-Mizan first, and Zen puts the bars away', async ({ page }) => {
+    await serveClassics(page, true)
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.addInitScript(() => { localStorage.setItem('zekr.settings', JSON.stringify({ lang: 'en' })); localStorage.setItem('zekr.inlineDefault', 'true') })
+    await page.goto('/#/page/1')
+    await expect(page.locator('#page-1')).toBeVisible()
+    await page.getByRole('button', { name: 'Tafsir', exact: true }).click()
+    const panel = page.getByTestId('ayah-panel')
+    await expect(panel).toContainText('متن آزمایشی المیزان')
+    await expect(panel.getByRole('combobox')).toHaveValue('almizan')
+    await panel.getByRole('button', { name: 'Close' }).click()
+    // Zen: the bar is away, a small button brings it back
+    await page.getByRole('button', { name: 'Zen mode' }).click()
+    await expect(page.locator('.appbar')).toBeHidden()
+    await page.getByRole('button', { name: 'Exit Zen mode' }).click()
+    await expect(page.locator('.appbar')).toBeVisible()
   })
 })

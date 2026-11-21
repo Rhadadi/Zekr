@@ -4,10 +4,12 @@ import { loopAyah, looping, toggleAyah } from '../audio'
 import { type Meta, type TranslationInfo } from '../data'
 import { lang, num, t } from '../i18n'
 import { href } from '../router'
-import { ayahLink, ayahText, copyText, shareText } from '../share'
+import { ayahLink, ayahText, copyText, shareImage, shareText } from '../share'
 import { isBookmarked, toggleBookmark } from '../store'
 import { tafsirIndex } from '../tafsir'
+import { classicsIndex } from '../classics'
 import { Icon } from './Icon'
+import { TafsirTab } from './TafsirTab'
 import { StudyChips } from './StudyQuranPanel'
 import { readStudySources, saveStudySources, studySourceName, StudyAddedContent, StudyAddedTranslation, StudySourcePicker } from './StudySources'
 export function StudyVerse({ meta, surah, n, ar, translations, active, playing, paused, focused, onSelect, onPlay }: {
@@ -35,6 +37,9 @@ export function StudyVerse({ meta, surah, n, ar, translations, active, playing, 
   }
   const remove = (source: string) => <button class="study-remove-source" aria-label={t('studyRemoveSource', { name: studySourceName(meta, source) })} onClick={e => { e.stopPropagation(); removeSource(source) }}><Icon name="close" size={14} /></button>
   const text = () => ayahText(meta, id, ar, translations.map(x => x.text))
+  // the tafsir: one tap under the ayah (Al-Mizan first, the classical books and the Study Quran in the same list)
+  const [tafsirOpen, setTafsirOpen] = useState(false)
+  const hasTafsir = !!(meta.studyQuran || tafsirIndex.value || classicsIndex.value)
   return <article class={`ayah study-ayah${playing ? ' playing' : ''}${focused ? ' focused' : ''}`} aria-label={t('ayahN', { n })} id={`a-${n}`} data-ayah={n} data-id={id} onClick={onSelect}>
     <p class="ar study-ar" lang="ar" dir="rtl">{ar}<button class="study-marker" lang={lang.value} aria-label={t('more')} title={t('more')} aria-expanded={more} onClick={() => setMore(!more)}>{num(n)}</button></p>
     {more ? <div class="study-more">
@@ -44,6 +49,7 @@ export function StudyVerse({ meta, surah, n, ar, translations, active, playing, 
       <button onClick={() => chooseAyahWords(id)}>{t('words')}</button>
       <button onClick={() => copyText(text())}>{t('copy')}</button>
       <button onClick={() => shareText(text(), ayahLink(meta, id))}>{t('share')}</button>
+      <button onClick={() => shareImage(meta, id, ar, translations[0]?.text || undefined, translations[0]?.info.dir ?? 'rtl', ayahLink(meta, id))}>{t('shareImage')}</button>
       {tafsirIndex.value ? <a href={href.tafsir(surah, n)}>{t('tafsir')}: {t('almizan')}</a> : null}
       {meta.studyQuran ? <StudyChips meta={meta} ayahID={id} /> : null}
     </div> : null}
@@ -59,12 +65,14 @@ export function StudyVerse({ meta, surah, n, ar, translations, active, playing, 
         </div>)}
       </div>
     <div class="study-ayah-tools">
+      {hasTafsir ? <button class="study-tafsir-toggle" aria-expanded={tafsirOpen} aria-controls={`tafsir-${n}`} onClick={e => { e.stopPropagation(); onSelect(); setTafsirOpen(!tafsirOpen) }}><Icon name="book" size={15} />{t('tabTafsir')}</button> : null}
       <button class="study-add-source" aria-haspopup="dialog" aria-expanded={picker} onClick={e => { e.stopPropagation(); onSelect(); setPicker(true) }}><span aria-hidden="true">+</span>{t('studyAddSources')}</button>
       {active ? <button class="study-listen" aria-label={sounding ? t('pause') : t('playFromHere')} onClick={e => {
         e.stopPropagation(); onSelect(); if (!sounding) onPlay(); toggleAyah(id)
         if (!sounding && e.detail === 0) requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.player-controls .big')?.focus({ preventScroll: true }))
       }}><Icon name={sounding ? 'pause' : 'play'} size={15} /></button> : null}
     </div>
+      {tafsirOpen ? <div class="study-tafsir" id={`tafsir-${n}`}><TafsirTab meta={meta} id={id} surah={surah} ayah={n} /></div> : null}
       {extraNotes.map(source => <StudyAddedNote meta={meta} surah={surah} ayah={n} id={id} source={source} onRemove={() => removeSource(source)} key={source} />)}
     </div>
     {picker ? <StudySourcePicker meta={meta} surah={surah} ayah={n} defaults={defaults} selected={sources} onChange={changeSource} onClose={() => setPicker(false)} /> : null}

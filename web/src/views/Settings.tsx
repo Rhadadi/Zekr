@@ -121,6 +121,10 @@ export function SettingsView({ meta }: { meta: Meta }) {
           <span>{t('trSize')}</span>
           <input type="range" min={TR_MIN} max={TR_MAX} step={1} value={s.trSize} onInput={(e) => updateSettings({ trSize: Number(e.currentTarget.value) })} />
         </label>
+        <label class="field row">
+          <input type="checkbox" checked={s.trBackground} onChange={(e) => updateSettings({ trBackground: e.currentTarget.checked })} />
+          <span>{t('trBackground')}</span>
+        </label>
       </div>
       <div class="sample card">
         <p class="ar" lang="ar" dir="rtl" style={{ fontSize: `${s.arabicSize}px` }}>{meta.basmala[s.script]}</p>

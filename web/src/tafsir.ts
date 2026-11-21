@@ -57,6 +57,12 @@ export function sectionIdFor(index: TafsirIndex, ayahId: number): string | undef
   return index.sections.find(([, first, last]) => first <= ayahId && ayahId <= last)?.[0]
 }
 
+/** The first and last ayah numbers of the section that explains an ayah (a section can take several together). */
+export function sectionRangeFor(index: TafsirIndex, ayahId: number): [number, number] | undefined {
+  const s = index.sections.find(([, first, last]) => first <= ayahId && ayahId <= last)
+  return s ? [s[1], s[2]] : undefined
+}
+
 export async function loadSection(id: string): Promise<TafsirSection> {
   const meta = await loadMeta()
   const res = await fetch(`${base}data/almizan/${id}.json?v=${meta.version}`)

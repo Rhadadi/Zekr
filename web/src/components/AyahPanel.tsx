@@ -6,7 +6,7 @@ import { type Meta, type TranslationInfo, loadWbw, locate } from '../data'
 import { useAsync } from '../hooks'
 import { ayahRef, num, t } from '../i18n'
 import { href } from '../router'
-import { ayahLink, ayahText, copyText, shareText } from '../share'
+import { ayahLink, ayahText, copyText, shareImage, shareText } from '../share'
 import { isBookmarked, settings, toggleBookmark } from '../store'
 import { sheetOpen } from '../ui'
 import { classicsIndex } from '../classics'
@@ -26,6 +26,8 @@ interface Props {
   showTranslations?: boolean
   /** Opened by a long press: the list of what can be done with the ayah is open at once. */
   menu?: boolean
+  /** Asked for from the bar: open on the tafsir. */
+  tafsir?: boolean
   /** False when the page already shows each word's meaning. */
   offerWords?: boolean
   /** Beside the page (a computer): the commentary opens under the translation, here, not on a screen of its own. */
@@ -39,7 +41,7 @@ interface Props {
 }
 
 /** Translation and actions for an ayah on a mushaf page. */
-export function AyahPanel({ meta, id, ar, translations, variant, showTranslations = true, menu = false, offerWords = true, inlineStudy = false, style, panelRef, run, onClose }: Props) {
+export function AyahPanel({ meta, id, ar, translations, variant, showTranslations = true, menu = false, tafsir = false, offerWords = true, inlineStudy = false, style, panelRef, run, onClose }: Props) {
   const { surah, ayah } = locate(meta, id)
   const saved = isBookmarked(id)
   const texts = translations.map((x) => x.text || t('mergedTranslation'))
@@ -66,7 +68,10 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
   // the tabs beside the page: the translation, then what the reader has of the ayah's tafsir and its words
   type Tab = 'tr' | 'tafsir' | 'words'
   const tabs: Tab[] = run ? ['tr', ...(meta.studyQuran || tafsirIndex.value || classicsIndex.value ? ['tafsir' as const] : []), ...(meta.wbw ? ['words' as const] : [])] : []
-  const [tab, setTab] = useState<Tab>('tr')
+  const [tab, setTab] = useState<Tab>(tafsir ? 'tafsir' : 'tr')
+  // on the phone's sheet (no tabs) the tafsir opens under the translation
+  const [tafsirOpen, setTafsirOpen] = useState(tafsir)
+  useEffect(() => { if (tafsir) { setTab('tafsir'); setTafsirOpen(true) } }, [tafsir, id])
   const shownTab: Tab = tabs.includes(tab) ? tab : 'tr'
   const wbw = useAsync(async () => (words || (run && shownTab === 'words') ? (await loadWbw(surah))[ayah - 1] ?? [] : null), [words, run, shownTab, surah, ayah])
   const showTr = showTranslations || fullTr
@@ -141,6 +146,9 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
           </button>
           <button onClick={() => { shareText(text(), ayahLink(meta, id)); setMore(false) }}>
             <Icon name="share" size={18} /> {t('share')}
+          </button>
+          <button onClick={() => { shareImage(meta, id, ar, translations[0]?.text || undefined, translations[0]?.info.dir ?? 'rtl', ayahLink(meta, id)); setMore(false) }}>
+            <Icon name="share" size={18} /> {t('shareImage')}
           </button>
         </div>
       ) : null}
@@ -221,11 +229,13 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
               onOpen={inlineStudy ? (entry) => setStudy(study === entry ? false : entry) : undefined} />
           : null}
         {inlineStudy && study ? <StudyInline meta={meta} ayahID={id} only={typeof study === 'string' ? study : null} /> : null}
-        {classicsIndex.value ? (
+        {meta.studyQuran || tafsirIndex.value || classicsIndex.value ? (
           <div class="classic-chips">
-            <a class="classic-chip" href={href.classic(surah, ayah)}><Icon name="book" size={16} /> {t('classics')}</a>
+            <button class="classic-chip tafsir-chip" aria-expanded={tafsirOpen} onClick={() => setTafsirOpen(!tafsirOpen)}><Icon name="book" size={16} /> {t('tabTafsir')}</button>
+            {classicsIndex.value ? <a class="classic-chip" href={href.classic(surah, ayah)}><Icon name="book" size={16} /> {t('classics')}</a> : null}
           </div>
         ) : null}
+        {tafsirOpen ? <TafsirTab meta={meta} id={id} surah={surah} ayah={ayah} /> : null}
       </div>
       )}
     </div>
