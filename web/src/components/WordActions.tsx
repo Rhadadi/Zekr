@@ -1,8 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks'
-import { type Meta, loadMorphology, loadText, loadTranslation, locate } from '../data'
+import { type Meta, loadText, locate } from '../data'
 import { useAsync } from '../hooks'
 import { ayahRef, lang, num, t } from '../i18n'
-import { SearchEngine } from '../smartSearch'
+import { loadWordIndex } from '../wordData'
+import { WordMeaning } from './WordMeaning'
 import { href, route } from '../router'
 import { installWordSelection, selectedWord, wordChooser, wordSegments, type WordSelection } from '../wordSelection'
 
@@ -15,7 +16,7 @@ export function wordSearchLink(word: WordSelection, mode = word.source === 'ar' 
 export function WordActions({ meta }: { meta: Meta }) {
   const word = selectedWord.value
   const chooser = wordChooser.value
-  const [sheet, setSheet] = useState(false)
+  const [sheet, setSheet] = useState<'find' | 'meaning' | null>(null)
   const [anchor, setAnchor] = useState({ x: 16, y: 80 })
   useEffect(installWordSelection, [])
   useLayoutEffect(() => {
@@ -32,20 +33,17 @@ export function WordActions({ meta }: { meta: Meta }) {
   }, [word, sheet])
   return <>
     {word && !sheet ? <div class="word-toolbar" data-word-ui role="toolbar" aria-label={wordLabel('Word actions', 'گزینه‌های واژه')} style={{ left: anchor.x, top: anchor.y }}>
-      <button onClick={() => setSheet(true)}>{wordLabel('Find in the Quran', 'یافتن در قرآن')}</button>
+      <button onClick={() => setSheet('find')}>{wordLabel('Find in the Quran', 'یافتن در قرآن')}</button>
+      <button onClick={() => setSheet('meaning')}>{wordLabel('Meaning', 'معنی')}</button>
       <button aria-label={t('close')} onClick={() => { selectedWord.value = null }}>×</button>
     </div> : null}
-    {word && sheet ? <WordDialog label={wordLabel('Word actions', 'گزینه‌های واژه')} close={() => setSheet(false)}><WordSearch meta={meta} word={word} close={() => { setSheet(false); selectedWord.value = null }} /></WordDialog> : null}
+    {word && sheet ? <WordDialog label={wordLabel('Word actions', 'گزینه‌های واژه')} close={() => setSheet(null)}>{sheet === 'find' ? <WordSearch meta={meta} word={word} close={() => { setSheet(null); selectedWord.value = null }} /> : <><p class="word-display" lang={word.language} dir="auto">{word.text}</p><WordMeaning meta={meta} word={word} close={() => { setSheet(null); selectedWord.value = null }} /></>}</WordDialog> : null}
     {chooser ? <ChooseWords meta={meta} id={chooser} close={() => { wordChooser.value = null }} /> : null}
   </>
 }
 
 function WordSearch({ meta, word, close }: { meta: Meta; word: WordSelection; close: () => void }) {
-  const data = useAsync(async () => {
-    const texts = word.source === 'ar' ? await loadText('clean') : await loadTranslation(word.source)
-    const morphology = word.source === 'ar' && meta.morphology ? await loadMorphology() : null
-    return new SearchEngine([{ key: word.source, texts }], morphology)
-  }, [word.source, meta.version])
+  const data = useAsync(() => loadWordIndex(meta, word.source), [word.source, meta.version])
   const at = locate(meta, word.ayah)
   return <>
     <p class="word-display" lang={word.language} dir="auto">{word.text}</p>
@@ -55,7 +53,7 @@ function WordSearch({ meta, word, close }: { meta: Meta; word: WordSelection; cl
     {data.error ? <p role="alert">{wordLabel('Search data could not be loaded.', 'داده‌های جستجو بارگیری نشد.')} <button onClick={data.retry}>{t('retry')}</button></p> : null}
   </>
   function SearchChoice({ mode, title, available }: { mode: 'root' | 'exact'; title: string; available: boolean }) {
-    const result = available ? data.value?.search(word.text, { mode }) : null
+    const result = available ? data.value?.engine.search(word.text, { mode }) : null
     return <a class="word-choice" aria-disabled={!available} href={available ? wordSearchLink(word, mode) : undefined} onClick={e => {
       e.preventDefault(); if (!available) return
       if (route.peek().layer?.name === 'study') history.replaceState(history.state, '', href.verse(at.surah, at.ayah))

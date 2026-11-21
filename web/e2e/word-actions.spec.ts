@@ -12,10 +12,10 @@ async function fixture(page: Page, language = 'en') {
     const response = await r.fetch(), meta = await response.json()
     first = meta.surahs[111].first
     delete meta.mushaf
-    await r.fulfill({ response, json: { ...meta, morphology: { version: 'word-fixture', source: 'Invented morphology' } } })
+    await r.fulfill({ response, json: { ...meta, wbw: 'fa', morphology: { version: 'word-fixture', source: 'Invented morphology' } } })
   })
   await page.route('**/data/text/*.json*', async r => {
-    const response = await r.fetch(), text = await response.json()
+    const response = await r.fetch(), text = (await response.json()).map(() => 'نص تجريبي')
     text[first - 1] = 'وَكَتَبَ سليم كِتَابًا'; text[first] = 'يَكْتُبُ سليم'
     await r.fulfill({ response, json: text })
   })
@@ -24,6 +24,7 @@ async function fixture(page: Page, language = 'en') {
     text[first - 1] = 'ایمان در یک متن ساختگی'; text[first] = 'ایمان برای آزمون'
     await r.fulfill({ response, json: text })
   })
+  await page.route('**/data/wbw/112.json*', r => r.fulfill({ json: [[['وَكَتَبَ', 'نوشت'], ['سليم', 'نمونه'], ['كِتَابًا', 'کتابی']], [['يَكْتُبُ', 'می‌نویسد'], ['سليم', 'نمونه']], [], []] }))
   await page.route('**/data/search/morphology.json*', r => r.fulfill({ json: { version: 'fixture', source: 'Invented morphology', roots: ['كتب'], forms: { 'وكتب': [0], 'كتابا': [0], 'يكتب': [0] }, ayahs: Array.from({ length: 6236 }, (_, i) => i === first - 1 || i === first ? [0] : []) } }))
 }
 async function point(page: Page, selector: string, word: string) {
@@ -108,3 +109,35 @@ test('a phone long press selects a word; movement cancels it', async ({ page, co
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
   await expect(page.getByRole('toolbar')).toHaveCount(0)
 })
+
+
+test('meaning shows a gloss, exact counts, attested forms and an ayah jump', async ({ page }) => {
+  await fixture(page)
+  await page.goto('/#/verse/112/1')
+  const p = await point(page, '.study-reader #a-1 .ar', 'وَكَتَبَ')
+  await page.mouse.click(p.x, p.y, { button: 'right' })
+  await page.getByRole('toolbar').getByRole('button', { name: 'Meaning', exact: true }).click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog.locator('.word-gloss')).toHaveText('نوشت')
+  await expect(dialog.locator('.word-count')).toHaveText('This form: 1 occurrence in 1 ayah')
+  await expect(dialog.getByRole('button', { name: 'كتب', exact: true })).toBeVisible()
+  await dialog.getByRole('button', { name: 'يَكْتُبُ', exact: true }).click()
+  await expect(dialog.locator('.word-gloss')).toHaveText('می‌نویسد')
+  await dialog.locator('.word-verses a').click()
+  await expect(page).toHaveURL(/verse\/112\/2/)
+  await expect(dialog).toHaveCount(0)
+})
+
+for (const language of ['en', 'fa']) for (const theme of ['light', 'sepia', 'dark']) {
+  test(`word sheet is accessible and fits: ${language}, ${theme}`, async ({ page }) => {
+    await fixture(page, language)
+    await page.addInitScript(theme => { const s = JSON.parse(localStorage.getItem('zekr.settings')!); s.theme = theme; localStorage.setItem('zekr.settings', JSON.stringify(s)) }, theme)
+    await page.goto('/#/verse/112/1')
+    const p = await point(page, '.study-reader #a-1 .ar', 'وَكَتَبَ')
+    await page.mouse.click(p.x, p.y, { button: 'right' })
+    await page.getByRole('toolbar').getByRole('button', { name: language === 'fa' ? 'معنی' : 'Meaning', exact: true }).click()
+    await expect(page.locator('.word-gloss')).toHaveText('نوشت')
+    expect((await new AxeBuilder({ page }).exclude('.mushaf-host').analyze()).violations).toEqual([])
+    expect(await page.getByRole('dialog').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
+  })
+}
