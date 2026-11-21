@@ -11,6 +11,13 @@ export interface WordSelection {
   y: number
 }
 export const selectedWord = signal<WordSelection | null>(null)
+/** The word's sheet that is open (its search, meaning, copy or share), or none: the toolbar. */
+export const wordSheet = signal<'find' | 'meaning' | 'copy' | 'share' | null>(null)
+/** Open a word's sheet straight away (from the mushaf's ayah menu). */
+export function openWordSheet(word: WordSelection, sheet: 'find' | 'meaning' | 'copy' | 'share') { selectedWord.value = word; wordSheet.value = sheet }
+/** On the mushaf's page a right click, a long press and a double click belong to the ayah (its menu, which has the word
+ * at its head, and playing it); the word toolbar is for the other texts, and for the card over the page. */
+export const onMushaf = (target: EventTarget | null) => target instanceof Element && !!target.closest('.mushaf-flow') && !target.closest('.ayah-popup')
 export const wordChooser = signal<number | null>(null)
 let heldUntil = 0
 export const wordGestureActive = () => Date.now() < heldUntil
@@ -103,17 +110,17 @@ export function installWordSelection() {
   let timer = 0, settle = 0, touch: { x: number; y: number } | null = null, recentTouch = 0, cancelled = false, adjusting = false
   const show = (word: WordSelection) => { heldUntil = Date.now() + 900; const selection = getSelection(); if (word.range) { selection?.removeAllRanges(); selection?.addRange(word.range) }; selectedWord.value = word }
   const context = (e: MouseEvent) => {
-    if ((e.target as Element)?.closest('[data-word-ui]')) return
+    if ((e.target as Element)?.closest('[data-word-ui]') || onMushaf(e.target)) return
     if (Date.now() - recentTouch < 1200 && cancelled) { e.stopImmediatePropagation(); return }
     const word = e.clientX || e.clientY ? wordAtPoint(e.clientX, e.clientY) : selectionWord()
     if (!word) return
     if (Date.now() - recentTouch > 1200) e.preventDefault()
     e.stopImmediatePropagation(); show(word)
   }
-  const double = (e: MouseEvent) => { const word = wordAtPoint(e.clientX, e.clientY); if (word) { e.stopImmediatePropagation(); show(word) } }
+  const double = (e: MouseEvent) => { if (onMushaf(e.target)) return; const word = wordAtPoint(e.clientX, e.clientY); if (word) { e.stopImmediatePropagation(); show(word) } }
   const start = (e: TouchEvent) => {
     clearTimeout(timer); recentTouch = Date.now(); touch = null; cancelled = false; adjusting = !!getSelection()?.toString()
-    if (e.touches.length !== 1 || (e.target as Element)?.closest('[data-word-ui]')) return
+    if (e.touches.length !== 1 || (e.target as Element)?.closest('[data-word-ui]') || onMushaf(e.target)) return
     const p = e.touches[0]!; touch = { x: p.clientX, y: p.clientY }
     const word = wordAtPoint(p.clientX, p.clientY)
     if (word) timer = window.setTimeout(() => show(word), 470)

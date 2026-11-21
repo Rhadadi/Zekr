@@ -26,6 +26,8 @@ interface Props {
   showTranslations?: boolean
   /** Opened by a long press: the list of what can be done with the ayah is open at once. */
   menu?: boolean
+  /** Changes when the translation is asked for (from the ayah's menu): its tab is shown. */
+  trAsked?: number
   /** Asked for from the bar: open on the tafsir. */
   tafsir?: boolean
   /** False when the page already shows each word's meaning. */
@@ -41,7 +43,7 @@ interface Props {
 }
 
 /** Translation and actions for an ayah on a mushaf page. */
-export function AyahPanel({ meta, id, ar, translations, variant, showTranslations = true, menu = false, tafsir = false, offerWords = true, inlineStudy = false, style, panelRef, run, onClose }: Props) {
+export function AyahPanel({ meta, id, ar, translations, variant, showTranslations = true, menu = false, tafsir = false, trAsked, offerWords = true, inlineStudy = false, style, panelRef, run, onClose }: Props) {
   const { surah, ayah } = locate(meta, id)
   const saved = isBookmarked(id)
   const texts = translations.map((x) => x.text || t('mergedTranslation'))
@@ -72,6 +74,7 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
   // on the phone's sheet (no tabs) the tafsir opens under the translation
   const [tafsirOpen, setTafsirOpen] = useState(tafsir)
   useEffect(() => { if (tafsir) { setTab('tafsir'); setTafsirOpen(true) } }, [tafsir, id])
+  useEffect(() => { if (trAsked) setTab('tr') }, [trAsked])
   const shownTab: Tab = tabs.includes(tab) ? tab : 'tr'
   const wbw = useAsync(async () => (words || (run && shownTab === 'words') ? (await loadWbw(surah))[ayah - 1] ?? [] : null), [words, run, shownTab, surah, ayah])
   const showTr = showTranslations || fullTr

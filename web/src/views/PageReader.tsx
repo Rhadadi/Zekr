@@ -1,4 +1,5 @@
-import { wordGestureActive } from '../wordSelection'
+import { wordAtPoint, wordGestureActive } from '../wordSelection'
+import { AyahMenu, type AyahMenuAt } from '../components/AyahMenu'
 import { memo } from 'preact/compat'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { player, playFrom } from '../audio'
@@ -25,7 +26,7 @@ const ARABIC_INDIC = '٠١٢٣٤٥٦٧٨٩'
 const marker = (n: number) => String(n).replace(/\d/g, (d) => ARABIC_INDIC[Number(d)] as string)
 const PAGES = 604
 
-type Panel = { kind: 'ayah'; id: number; menu?: boolean; tafsir?: boolean } | { kind: 'options' } | null
+type Panel = { kind: 'ayah'; id: number; menu?: boolean; tafsir?: boolean; trAsked?: number } | { kind: 'options' } | null
 
 interface PageProps {
   meta: Meta
@@ -237,6 +238,10 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   // which way the last page turn went, so the new page comes in from that side
   const [turned, setTurned] = useState<'next' | 'prev'>()
   const [menu, setMenu] = useState<'surah' | 'juz' | 'ayah' | null>(null)
+  // the surah whose ayahs the bar's menu lists: the one picked from the surahs, otherwise the page's
+  const [pickSurah, setPickSurah] = useState<number | null>(null)
+  // the ayah's menu at the pointer (a right click or a long press on an ayah)
+  const [ctx, setCtx] = useState<AyahMenuAt | null>(null)
   const popRef = useRef<HTMLDivElement>(null)
   const touch = useRef<{ x: number; y: number; at: number; timer?: number; long?: boolean } | null>(null)
   const playingId = player.value?.ayahId
@@ -438,9 +443,23 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   const pressAt = (target: EventTarget | null, toggle: boolean) => {
     const el = target instanceof Element ? target.closest<HTMLElement>('.ay') : null
     const id = el ? Number(el.dataset.id) : undefined
-    // a long press (no toggle) opens the ayah with its list of actions
-    if (id) setPanel(toggle && selected === id ? null : { kind: 'ayah', id, menu: !toggle })
+    if (id) setPanel(toggle && selected === id ? null : { kind: 'ayah', id })
     else setPanel(toggle && panel ? null : { kind: 'options' })
+  }
+  /** A right click or a long press: on an ayah its menu at that point, with the word there (if the page shows text) at
+   * its head; elsewhere on the page the reading options. */
+  const menuAt = (target: EventTarget | null, x: number, y: number) => {
+    const el = target instanceof Element ? target.closest<HTMLElement>('.ay') : null
+    const id = el ? Number(el.dataset.id) : undefined
+    if (!id) return setPanel({ kind: 'options' })
+    // a menu key, or an event with no pointer: at the ayah, without a word
+    if (!Number.isFinite(x) || !Number.isFinite(y) || (x === 0 && y === 0)) {
+      const r = el!.getBoundingClientRect()
+      return setCtx({ id, x: r.left + r.width / 2, y: r.bottom, word: null })
+    }
+    let word: ReturnType<typeof wordAtPoint> = null
+    try { word = wordAtPoint(x, y) } catch { /* no word there */ }
+    setCtx({ id, x, y, word: word && word.ayah === id ? word : null })
   }
 
   // beside the page, the translation of the whole page the ayah is on, as one text; a click opens another ayah
@@ -466,6 +485,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
         showTranslations={place === 'panel' || place === 'card' || place === 'words' || !!lineTr}
         menu={panel?.kind === 'ayah' && panel.id === id && !!panel.menu}
         tafsir={panel?.kind === 'ayah' && panel.id === id && !!panel.tafsir}
+        trAsked={panel?.kind === 'ayah' && panel.id === id ? panel.trAsked : undefined}
         offerWords={!words}
         inlineStudy={variant === 'box' && wide}
         run={variant === 'box' && wide && place !== 'off' ? pageRun(id) : undefined}
@@ -504,7 +524,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   useLayoutEffect(() => {
     if (!sideBox) return
     const key = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !e.defaultPrevented && !drawerOpen.peek() && !document.querySelector('.mb-menu')) setPanel(null)
+      if (e.key === 'Escape' && !e.defaultPrevented && !drawerOpen.peek() && !document.querySelector('.mb-menu, .ayah-menu')) setPanel(null)
     }
     document.addEventListener('keydown', key)
     const el = sideRef.current
@@ -552,6 +572,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
     return () => document.removeEventListener('keydown', key)
   }, [menu])
   const juzOfPage = juzOf(meta, pageRange(meta, current).first)
+  const listed = pickSurah ? meta.surahs[pickSurah - 1]! : surahOfPage
   /** The surah and juz menus, and "go to page", all end here. */
   const goPage = (n: number) => {
     setMenu(null)
@@ -599,14 +620,14 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
                 <Icon name="chevron" size={20} />
               </button>
             ) : null}
-            <button class="mb-surah" lang="ar" aria-haspopup="listbox" aria-expanded={menu === 'surah'} aria-label={`${t('surahs')}: ${surahName(surahOfPage)}${barAyahNo ? ` ${num(barAyahNo)}` : ''}`} onClick={() => setMenu(menu === 'surah' ? null : 'surah')}>
+            <button class="mb-surah" lang="ar" aria-haspopup="listbox" aria-expanded={menu === 'surah'} aria-label={`${t('surahs')}: ${surahName(surahOfPage)}${barAyahNo ? ` ${num(barAyahNo)}` : ''}`} onClick={() => { setPickSurah(null); setMenu(menu === 'surah' ? null : 'surah') }}>
               <span>{surahOfPage.ar}</span>{barAyahNo ? <span class="mb-ayah"> {num(barAyahNo)}</span> : null}
             </button>
             {jumping ? (
               jumpForm
             ) : (
               // the page number opens the surah's ayahs to jump to; typing a page is the page number at the foot of the page
-              <button class="mb-page" aria-haspopup="listbox" aria-expanded={menu === 'ayah'} onClick={() => setMenu(menu === 'ayah' ? null : 'ayah')} aria-label={`${t('goToAyah')}: ${t('pageN', { n: current })}`}>
+              <button class="mb-page" aria-haspopup="listbox" aria-expanded={menu === 'ayah'} onClick={() => { setPickSurah(null); setMenu(menu === 'ayah' ? null : 'ayah') }} aria-label={`${t('goToAyah')}: ${t('pageN', { n: current })}`}>
                 {t('pageShort')} {num(current)}
               </button>
             )}
@@ -626,26 +647,33 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
         <>
           <button class="mb-menu-backdrop" aria-label={t('close')} tabIndex={-1} onClick={() => setMenu(null)} />
           <div class="mb-menu-wrap">
-          {menu === 'ayah' ? <p class="mb-where">{t('pageN', { n: current })} · {t('juzN', { n: juzOfPage })}</p> : (
+          {menu === 'ayah' ? (
+            // the ayahs of a surah: back to all the surahs, and where this page is
+            <div class="mb-ayah-head">
+              <button class="mb-back" onClick={() => setMenu('surah')}><Icon name="chevron" size={16} /> {t('allSurahs')}</button>
+              <strong lang="ar">{listed.ar}</strong>
+              <span class="mb-where">{t('pageN', { n: current })} · {t('juzN', { n: juzOfPage })}</span>
+            </div>
+          ) : (
             <div role="group" class="mb-switch" aria-label={t('surahs')}>
               <button aria-pressed={menu === 'surah'} class={menu === 'surah' ? 'on' : ''} onClick={() => setMenu('surah')}>{t('surahs')}</button>
               <button aria-pressed={menu === 'juz'} class={menu === 'juz' ? 'on' : ''} onClick={() => setMenu('juz')}>{t('juz')}</button>
             </div>
           )}
-          <div class={`mb-menu${menu === 'ayah' ? ' mb-ayahs' : ''}`} role="listbox" aria-label={menu === 'surah' ? t('surahs') : menu === 'ayah' ? `${t('goToAyah')}: ${surahName(surahOfPage)}` : t('juz')}>
+          <div class={`mb-menu${menu === 'ayah' ? ' mb-ayahs' : ''}`} role="listbox" aria-label={menu === 'surah' ? t('surahs') : menu === 'ayah' ? `${t('goToAyah')}: ${surahName(listed)}` : t('juz')}>
             {menu === 'ayah'
-              ? Array.from({ length: surahOfPage.ayahs }, (_, i) => i + 1).map((a) => {
-                  const here = pageOf(meta, surahOfPage.first + a - 1) === current
+              ? Array.from({ length: listed.ayahs }, (_, i) => i + 1).map((a) => {
+                  const here = pageOf(meta, listed.first + a - 1) === current
                   return (
-                    <button key={a} role="option" aria-selected={here} class={here ? 'on' : ''} aria-label={ayahRef(surahOfPage, a)}
-                      onClick={() => { setMenu(null); location.hash = href.ayah(surahOfPage.id, a) }}>
+                    <button key={a} role="option" aria-selected={here} class={here ? 'on' : ''} aria-label={ayahRef(listed, a)}
+                      onClick={() => { setMenu(null); location.hash = href.ayah(listed.id, a) }}>
                       {num(a)}
                     </button>
                   )
                 })
               : menu === 'surah'
               ? meta.surahs.map((x) => (
-                  <button key={x.id} role="option" aria-selected={x.id === surahOfPage.id} class={x.id === surahOfPage.id ? 'on' : ''} ref={x.id === surahOfPage.id ? (el) => el?.scrollIntoView({ block: 'center' }) : undefined} onClick={() => goPage(pageOf(meta, x.first))}>
+                  <button key={x.id} role="option" aria-selected={x.id === surahOfPage.id} class={x.id === surahOfPage.id ? 'on' : ''} ref={x.id === surahOfPage.id ? (el) => el?.scrollIntoView({ block: 'center' }) : undefined} onClick={() => { goPage(pageOf(meta, x.first)); setPickSurah(x.id); setMenu('ayah') }}>
                     <span class="mb-n">{num(x.id)}</span> {surahName(x)} <span class="mb-ar" lang="ar">{x.ar}</span>
                   </button>
                 ))
@@ -682,15 +710,30 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
           data-color={printed ? s.pageColor : undefined}
           onClick={(e) => {
             if (touch.current?.long) return
+            // the second click of a double click: that plays the ayah (below), it does not close what the first opened
+            if (e.detail > 1) return
             // the page number at the foot of a page opens "go to page"
             if ((e.target as Element).closest('.page-no')) return setJumping(true)
             if ((e.target as Element).closest('.ayah-popup')) return
             pressAt(e.target, true)
           }}
+          // a double click on an ayah plays from it (and does not select a word)
+          onMouseDown={(e) => { if (e.detail > 1 && (e.target as Element).closest('.ay')) e.preventDefault() }}
+          onDblClick={(e) => {
+            const el = (e.target as Element).closest<HTMLElement>('.ay')
+            if (!el || (e.target as Element).closest('.ayah-popup')) return
+            e.preventDefault()
+            playFrom(Number(el.dataset.id))
+          }}
           onKeyDown={(e) => {
-            if ((e.key === 'Enter' || e.key === ' ') && (e.target as Element).classList.contains('ay')) {
+            const on = (e.target as Element).classList.contains('ay')
+            if ((e.key === 'Enter' || e.key === ' ') && on) {
               e.preventDefault()
               pressAt(e.target, true)
+            } else if (on && (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10'))) {
+              e.preventDefault()
+              const r = (e.target as Element).getBoundingClientRect()
+              menuAt(e.target, r.left + r.width / 2, r.bottom)
             }
           }}
           // Over the ayah: a mouse shows it on hover.
@@ -704,8 +747,11 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
           onMouseLeave={() => setHoverId(undefined)}
           // A long press (or right click) opens Zekr's own panel instead of the browser's menu.
           onContextMenu={(e) => {
+            if ((e.target as Element).closest('.ayah-popup')) return
             e.preventDefault()
-            pressAt(e.target, false)
+            // a long press already opened it (some phones send this too)
+            if (touch.current?.long) return
+            menuAt(e.target, e.clientX, e.clientY)
           }}
           onTouchStart={(e) => {
             const p = e.touches[0]
@@ -719,6 +765,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
               return
             }
             const target = e.target
+            if ((target as Element).closest('.ayah-popup')) return
             touch.current = {
               x: p.clientX,
               y: p.clientY,
@@ -726,7 +773,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
               timer: window.setTimeout(() => {
                 if (touch.current) touch.current.long = true
                 if (wordGestureActive()) return
-                pressAt(target, false)
+                menuAt(target, p.clientX, p.clientY)
               }, 500),
             }
           }}
@@ -738,6 +785,8 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
           onTouchEnd={(e) => {
             const start = touch.current
             if (start) clearTimeout(start.timer)
+            // the finger lifted after a long press: no click on the menu that has opened under it
+            if (start?.long && e.cancelable) e.preventDefault()
             // one page at a time: a quick sideways swipe turns the page. The book is right to left, so the next page
             // comes in from the left, as with a printed mushaf: swipe to the right for the next, to the left for the
             // previous. Not while pinch-zoomed (the finger is moving around the page then).
@@ -778,6 +827,17 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
           )}
           {popupId !== undefined ? ayahPanel(popupId, 'popup') : null}
         </div>
+        {ctx && data.value ? (
+          <AyahMenu
+            meta={meta}
+            at={ctx}
+            ar={data.value.ar[ctx.id - 1] as string}
+            translations={data.value.ids.map((trId, k) => ({ text: data.value!.trs[k]![ctx.id - 1] as string, dir: meta.translations.find((x) => x.id === trId)!.dir }))}
+            onPanel={(tafsir) => { setZen(false); setPanel({ kind: 'ayah', id: ctx.id, tafsir, trAsked: tafsir ? undefined : Date.now() }) }}
+            onOptions={() => { setZen(false); setPanel({ kind: 'options' }) }}
+            onClose={() => setCtx(null)}
+          />
+        ) : null}
         {bottomBox ? <Sheet onClose={() => setPanel(null)}>{box}</Sheet> : null}
       </div>
     </>

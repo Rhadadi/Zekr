@@ -47,6 +47,17 @@ export function describeWord(index: WordIndex, word: Pick<WordSelection, 'text' 
   return { occurrences, ayahs, roots, forms, glosses: [], glossUnavailable: false }
 }
 
+/** The word-by-word meanings of an ayah's word. The word-by-word list keeps the pause marks after a space ("رَيْبَ ۛ")
+ * and joins a few pairs into one entry ("بَعْدَ مَا"): compare without spaces, then within such a pair. */
+export function glossesFor(words: [string, string][], text: string): string[] {
+  const key = (s: string) => fold(s).replace(/\s+/g, '')
+  const want = key(text)
+  if (!want) return []
+  let hits = words.filter(([ar]) => key(ar) === want)
+  if (!hits.length) hits = words.filter(([ar]) => wordSegments(ar).some(w => key(w.text) === want))
+  return [...new Set(hits.map(([, fa]) => fa).filter(Boolean))]
+}
+
 const detailsCache = new Map<string, Promise<WordDetails>>()
 export function loadWordDetails(meta: Meta, word: WordSelection, refresh = false): Promise<WordDetails> {
   const key = `${meta.version}:${word.source}:${word.ayah}:${word.text}`
@@ -58,8 +69,7 @@ export function loadWordDetails(meta: Meta, word: WordSelection, refresh = false
       if (word.source === 'ar' && meta.wbw && wordSegments(word.text).length === 1) {
         const at = locate(meta, word.ayah)
         try {
-          const words = (await loadWbw(at.surah))[at.ayah - 1] ?? []
-          result.glosses = [...new Set(words.filter(([ar]) => fold(ar) === fold(word.text)).map(([, fa]) => fa))]
+          result.glosses = glossesFor((await loadWbw(at.surah))[at.ayah - 1] ?? [], word.text)
         } catch { result.glossUnavailable = true; detailsCache.delete(key) }
       }
       return result

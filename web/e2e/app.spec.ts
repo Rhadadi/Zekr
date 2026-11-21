@@ -325,6 +325,17 @@ test.describe('mushaf page view', () => {
     await expect(menu).toHaveCount(0)
     await expect(page.locator('.mb-page')).toHaveText('p. 2')
     await expect(page.locator('.mb-surah')).toContainText('البقرة')
+    // a surah picked goes to its start and lists its ayahs, to go on to one: Al-Baqara 25 in two clicks
+    const ayahs = page.getByRole('listbox', { name: /Go to an ayah: Al-Baqara/ })
+    await expect(ayahs.getByRole('option')).toHaveCount(286)
+    await ayahs.getByRole('option', { name: /· 2:25$/ }).click()
+    await expect(page).toHaveURL(/#\/ayah\/2\/25$/)
+    await expect(page.getByTestId('ayah-panel')).toContainText('2:25')
+    // and back from the ayahs to all the surahs
+    await page.locator('.mb-page').click()
+    await page.getByRole('button', { name: 'All surahs' }).click()
+    await expect(page.getByRole('listbox', { name: 'Surahs' }).getByRole('option')).toHaveCount(114)
+    await page.keyboard.press('Escape')
     await page.locator('.mb-surah').click()
     await page.locator('.mb-switch').getByRole('button', { name: 'Juz', exact: true }).click() // the juz are in the same list
     const juz = page.getByRole('listbox', { name: 'Juz' })
@@ -988,16 +999,56 @@ test.describe('page view: recitation, tapping and pressing', () => {
     await expect(options).toHaveCount(0)
 
     await page.locator('#page-305 .ay').nth(2).dispatchEvent('contextmenu')
+    await expect(page.getByTestId('ayah-menu')).toBeVisible()
+    await page.getByTestId('ayah-menu').getByRole('menuitem', { name: 'Translation', exact: true }).click()
     await expect(page.getByTestId('ayah-panel')).toContainText('19:3')
   })
 
-  test('a long press on an ayah lists what can be done with it; beside the page its translation is in the text and its words a tab', async ({ page }) => {
+  test('a right click on an ayah opens its menu at the pointer: the word there with its meaning, the ayah, the reading options', async ({ page }) => {
     await useSettings(page, { lang: 'en', translations: ['en.sahih'] })
     await page.goto('/#/page/305')
     await settle(page)
-    await page.locator('#page-305 .ay').nth(2).dispatchEvent('contextmenu')
+    const ay = page.locator('#page-305 .ay').nth(2)
+    const r = (await ay.boundingBox())!
+    await page.mouse.click(r.x + r.width - 12, r.y + r.height / 2, { button: 'right' })
+    const m = page.getByTestId('ayah-menu')
+    await expect(m).toBeVisible()
+    await expect(m).toHaveAccessibleName(/19:3/)
+    const mb = (await m.boundingBox())!
+    expect(Math.abs(mb.x - (r.x + r.width - 12))).toBeLessThan(320) // at the pointer, kept on the screen
+    // the word under the pointer heads the menu with its Persian meaning
+    await expect(m.locator('.am-word-text')).not.toBeEmpty()
+    await expect(m.locator('.am-gloss')).not.toHaveText('…')
+    await expect(m.locator('.am-gloss .muted')).toHaveCount(0)
+    for (const name of ['Play from here', 'Repeat this ayah', 'Translation', 'Open in Study view', 'Save ayah', 'Copy', 'Share', 'Share as a picture', 'Reading options']) {
+      await expect(m.getByRole('menuitem', { name, exact: true })).toBeVisible()
+    }
+    await expect(m.getByRole('menuitem').first()).toBeFocused()
+    // the meaning and forms open from it
+    await m.getByRole('menuitem', { name: 'Meaning and forms' }).click()
+    await expect(page.getByRole('dialog', { name: 'Word actions' }).locator('.word-gloss').first()).not.toBeEmpty()
+    await page.keyboard.press('Escape')
+    await page.keyboard.press('Escape')
+    // Escape closes the menu and leaves the panel; the reading options are in it too
+    await ay.dispatchEvent('contextmenu')
+    await page.keyboard.press('Escape')
+    await expect(m).toHaveCount(0)
+    await ay.dispatchEvent('contextmenu')
+    await m.getByRole('menuitem', { name: 'Reading options' }).click()
+    await expect(page.getByTestId('page-options')).toBeVisible()
+    // a double click plays from the ayah, and keeps its panel open
+    await page.locator('#page-305 .ay').nth(1).dblclick()
+    await expect(page.locator('.player')).toBeVisible()
+    await expect(page.getByTestId('ayah-panel')).toContainText('19:2')
+  })
+
+  test('beside the page an ayah\'s translation is in the text and its words a tab', async ({ page }) => {
+    await useSettings(page, { lang: 'en', translations: ['en.sahih'] })
+    await page.goto('/#/page/305')
+    await settle(page)
+    await page.locator('#page-305 .ay').nth(2).click()
     const box = page.getByTestId('ayah-panel')
-    await expect(box.getByRole('button', { name: 'More' })).toHaveAttribute('aria-expanded', 'true')
+    await box.getByRole('button', { name: 'More' }).click()
     for (const name of ['Repeat this ayah', 'Copy', 'Share']) {
       await expect(box.getByRole('button', { name, exact: true })).toBeVisible()
     }

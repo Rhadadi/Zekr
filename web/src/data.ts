@@ -99,6 +99,15 @@ export function loadMeta(): Promise<Meta> {
 
 const arrays = new Map<string, Promise<string[]>>()
 
+const SINGLE: Record<string, string> = { '\u064B': '\u064E', '\u064C': '\u064F', '\u064D': '\u0650' }
+/** The Uthmani text (Tanzil) marks a tanween that merges into the next letter with a small low meem after it, and an
+ * iqlab with a small high meem after the tanween. The Quran fonts draw that low meem as a letter of its own (an extra
+ * "م" under the word), and the printed mushaf writes an iqlab as one vowel with the small meem. So: the tanween alone,
+ * and the iqlab as printed. (Search and word lookups fold these marks away, so they are unaffected.) */
+export function printedTanween(text: string): string {
+  return text.replace(/([\u064B-\u064D])\u06ED/g, '$1').replace(/([\u064B-\u064D])\u06E2/g, (_, t: string) => `${SINGLE[t]}\u06E2`)
+}
+
 function loadArray(path: string, refresh = false): Promise<string[]> {
   if (refresh) arrays.delete(path)
   let p = arrays.get(path)
@@ -108,7 +117,7 @@ function loadArray(path: string, refresh = false): Promise<string[]> {
       .then((m) => getJson<string[]>(`${path}?v=${m.version}`))
       .then((a) => {
         if (a.length !== TOTAL_AYAHS) throw new Error(`${path} has ${a.length} ayahs`)
-        return a
+        return path.startsWith('text/uthmani') ? a.map(printedTanween) : a
       })
       .catch((e) => {
         arrays.delete(path)
@@ -145,6 +154,7 @@ export function loadPageLines(meta: Meta, n: number): Promise<PageLine[]> {
   let p = linesCache.get(n)
   if (!p) {
     p = getJson<PageLine[]>(`lines/${String(n).padStart(3, '0')}.json?v=${meta.version}`)
+      .then((lines) => lines.map((line) => line.map((w) => (typeof w === 'string' ? printedTanween(w) : w))))
     p.catch(() => linesCache.delete(n))
     linesCache.set(n, p)
   }
@@ -155,6 +165,7 @@ export function loadWbw(surah: number): Promise<[string, string][][]> {
   let p = wbwCache.get(surah)
   if (!p) {
     p = loadMeta().then((m) => getJson<[string, string][][]>(`wbw/${surah}.json?v=${m.version}`))
+      .then((ayahs) => ayahs.map((words) => words.map(([ar, fa]) => [printedTanween(ar), fa] as [string, string])))
     p.catch(() => wbwCache.delete(surah))
     wbwCache.set(surah, p)
   }

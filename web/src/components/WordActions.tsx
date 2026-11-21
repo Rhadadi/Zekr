@@ -6,7 +6,7 @@ import { loadWordIndex } from '../wordData'
 import { WordMeaning } from './WordMeaning'
 import { WordSharing } from './WordSharing'
 import { href, route } from '../router'
-import { installWordSelection, selectedWord, wordChooser, wordSegments, type WordSelection } from '../wordSelection'
+import { installWordSelection, selectedWord, wordChooser, wordSegments, wordSheet, type WordSelection } from '../wordSelection'
 
 export const wordLabel = (en: string, fa: string) => lang.value === 'fa' ? fa : en
 
@@ -17,7 +17,8 @@ export function wordSearchLink(word: WordSelection, mode = word.source === 'ar' 
 export function WordActions({ meta }: { meta: Meta }) {
   const word = selectedWord.value
   const chooser = wordChooser.value
-  const [sheet, setSheet] = useState<'find' | 'meaning' | 'copy' | 'share' | null>(null)
+  const sheet = wordSheet.value
+  const setSheet = (v: typeof sheet) => { wordSheet.value = v }
   const [anchor, setAnchor] = useState({ x: 16, y: 80 })
   useEffect(installWordSelection, [])
   useLayoutEffect(() => {

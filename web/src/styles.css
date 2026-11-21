@@ -1001,3 +1001,34 @@ a.player-info { color: var(--ink); text-decoration: none; }
 :root[data-tr-bg] .tr-run .run-ay.sel,
 :root[data-tr-bg] .sample .tr { background: var(--tr-bg); border-radius: 12px; padding: 8px 14px; }
 :root[data-tr-bg] .tr-inline .tr { margin-block: 4px; }
+
+/* The bar's ayahs of a surah: back to all the surahs, the surah's name, and where this page is */
+.mb-ayah-head { display: flex; align-items: center; gap: 8px; padding: 8px 8px 2px; }
+.mb-ayah-head strong { font-family: var(--font-quran); font-size: 1.15rem; font-weight: 400; }
+.mb-ayah-head .mb-where { margin-inline-start: auto; padding: 0 4px; }
+.mb-back { display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 12px 0 8px; border: 1px solid var(--line); border-radius: 999px; background: none; color: var(--ink); font: inherit; font-size: 0.85rem; cursor: pointer; }
+.mb-back svg { transform: scaleX(-1); }
+[dir='rtl'] .mb-back svg, :root[lang='fa'] .mb-back svg { transform: none; }
+
+/* An ayah's menu at the pointer (a right click or a long press on the mushaf): the word and its meaning, the ayah, the
+   reading options */
+.ayah-menu-backdrop { position: fixed; inset: 0; z-index: 30; border: 0; background: transparent; cursor: default; }
+.ayah-menu {
+  position: fixed; z-index: 31; width: min(300px, calc(100vw - 16px)); max-height: calc(100dvh - 16px); overflow-y: auto; overscroll-behavior: contain;
+  padding: 6px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface, var(--panel)); color: var(--ink);
+  box-shadow: 0 18px 48px -12px rgb(30 25 10 / 0.35); animation: menu-in 0.14s ease-out;
+}
+:root[data-theme='dark'] .ayah-menu { box-shadow: 0 0 0 1px rgb(255 255 255 / 0.05), 0 18px 48px -12px rgb(0 0 0 / 0.8); }
+@keyframes menu-in { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ayah-menu { animation: none; } }
+.ayah-menu > button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 40px; padding: 0 10px; border: 0; border-radius: 8px; background: none; color: var(--ink); font: inherit; font-size: 0.92rem; text-align: start; cursor: pointer; }
+.ayah-menu > button svg { flex: none; color: var(--muted); }
+.ayah-menu button:is(:hover, :focus-visible) { background: var(--hl); outline: none; }
+.ayah-menu hr { margin: 4px 6px; border: 0; border-top: 1px solid var(--line); }
+.am-head { margin: 0; padding: 8px 10px 4px; color: var(--muted); font-size: 0.8rem; font-weight: 600; }
+.am-word { margin-bottom: 4px; padding: 10px 10px 8px; border-radius: 10px; background: color-mix(in srgb, var(--accent) 7%, transparent); }
+.am-word-text { margin: 0; font-family: var(--font-quran); font-size: 1.7rem; line-height: 1.6; text-align: center; }
+.am-gloss { margin: 2px 0 8px; font-size: 1rem; font-weight: 600; text-align: center; color: var(--accent); }
+.am-gloss .muted { font-size: 0.85rem; font-weight: 400; }
+.am-word-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.am-word-acts button { min-height: 36px; padding: 0 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface, var(--panel)); color: var(--ink); font: inherit; font-size: 0.82rem; cursor: pointer; }
