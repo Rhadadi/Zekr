@@ -78,7 +78,7 @@ export function StudySourcePicker({ meta, surah, ayah, defaults, selected, onCha
 
 export function StudyAddedTranslation({ info, id }: { info: TranslationInfo; id: number }) {
   const data = useAsync(async () => (await loadTranslation(info.id))[id - 1], [info.id, id])
-  return data.error ? <LoadError retry={data.retry} /> : data.loading ? <Loading /> : <p class={`tr${data.value ? '' : ' merged'}`} lang={info.lang} dir={info.dir}>{data.value || t('mergedTranslation')}</p>
+  return data.error ? <LoadError retry={data.retry} /> : data.loading ? <Loading /> : <p data-word-source={info.id} class={`tr${data.value ? '' : ' merged'}`} lang={info.lang} dir={info.dir}>{data.value || t('mergedTranslation')}</p>
 }
 
 export function StudyAddedContent({ meta, surah, ayah, id, source }: { meta: Meta; surah: number; ayah: number; id: number; source: string }) {

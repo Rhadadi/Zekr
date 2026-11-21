@@ -94,7 +94,7 @@ export class SearchEngine {
     return [...new Set([`${stem}ي`, `${stem}و`, `${stem}وا`].flatMap(lookup))]
       .filter(id => /[ويى]$/.test(this.morphology!.roots[id]!))
   }
-  search(input: string, options: { mode?: SearchMode; first?: number; last?: number; limit?: number } = {}): SearchResult {
+  search(input: string, options: { mode?: SearchMode; first?: number; last?: number; limit?: number; fields?: string[] } = {}): SearchResult {
     const explicitRoot = /^(?:root|ریشه|جذر)\s*:/iu.test(input.trim())
     const query = input.trim().replace(/^(?:root|ریشه|جذر)\s*:/iu, '')
     const mode = explicitRoot ? 'root' : options.mode ?? 'smart'
@@ -107,6 +107,7 @@ export class SearchEngine {
     const rootNames = [...rootIds].map(id => this.morphology!.roots[id]!)
     const best = new Map<number, SearchHit>()
     for (const field of this.fields) {
+      if (options.fields?.length && !options.fields.includes(field.key)) continue
       if (mode === 'root' && field.key !== 'ar') continue
       const clauses = terms.map((term, k) => {
         const matches = new Map<number, { score: number; text: boolean }>()

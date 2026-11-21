@@ -1,3 +1,4 @@
+import { chooseAyahWords } from '../wordSelection'
 import { useState } from 'preact/hooks'
 import { loopAyah, looping, toggleAyah } from '../audio'
 import { type Meta, type TranslationInfo } from '../data'
@@ -40,6 +41,7 @@ export function StudyVerse({ meta, surah, n, ar, translations, active, playing, 
       <button aria-label={sounding ? t('pause') : t('play')} aria-pressed={sounding} onClick={e => { e.stopPropagation(); onSelect(); if (!sounding) onPlay(); toggleAyah(id) }}><Icon name={sounding ? 'pause' : 'play'} size={17} />{sounding ? t('pause') : t('playThisAyah')}</button>
       <button onClick={() => toggleBookmark(id)} aria-pressed={saved}>{saved ? t('unbookmark') : t('bookmark')}</button>
       <button onClick={() => loopAyah(id, !looping.value)} aria-pressed={playing && looping.value}>{t('repeatAyah')}</button>
+      <button onClick={() => chooseAyahWords(id)}>{t('words')}</button>
       <button onClick={() => copyText(text())}>{t('copy')}</button>
       <button onClick={() => shareText(text(), ayahLink(meta, id))}>{t('share')}</button>
       {tafsirIndex.value ? <a href={href.tafsir(surah, n)}>{t('tafsir')}: {t('almizan')}</a> : null}
@@ -49,7 +51,7 @@ export function StudyVerse({ meta, surah, n, ar, translations, active, playing, 
       <div class="study-translations" data-count={translations.length + extraTranslations.length}>
         {translations.length ? translations.map(x => <div class="study-translation" key={x.info.id} data-language={x.info.lang} role="group" aria-label={x.info.name} title={x.info.name}>
           {translations.filter(y => y.info.lang === x.info.lang).length + extraTranslations.filter(y => y.lang === x.info.lang).length > 1 ? <p class="tr-label" lang={x.info.lang} dir={x.info.dir}>{x.info.name}</p> : null}
-          <p class={`tr${x.text ? '' : ' merged'}`} lang={x.info.lang} dir={x.info.dir}>{x.text || t('mergedTranslation')}</p>
+          <p data-word-source={x.info.id} class={`tr${x.text ? '' : ' merged'}`} lang={x.info.lang} dir={x.info.dir}>{x.text || t('mergedTranslation')}</p>
         </div>) : !extraTranslations.length ? <p class="study-empty">{t('studyNoTranslations')}</p> : null}
         {extraTranslations.map(info => <div class="study-translation study-added-translation" data-language={info.lang} data-source={`tr:${info.id}`} role="group" aria-label={info.name} key={info.id}>
           <div class="study-source-heading"><span>{info.name}</span>{remove(`tr:${info.id}`)}</div>

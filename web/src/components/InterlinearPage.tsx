@@ -14,7 +14,7 @@ interface Props {
   highlight?: number
   kind?: 'sel' | 'playing'
   /** The translation shown under the lines (the first one chosen in Settings). */
-  tr: { texts: string[]; dir: 'rtl' | 'ltr'; lang: string; size: number }
+  tr: { id: string; texts: string[]; dir: 'rtl' | 'ltr'; lang: string; size: number }
   /** The text in the chosen Quran font over each line of the picture, instead of the picture's own text. */
   font?: boolean
   onJump: () => void
@@ -180,7 +180,7 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
             </div>
             {row && !under ? (
               // The translation flows in reading order; its number marks its own end, even when it borrows a row.
-              <div class="il-tr" dir={tr.dir} lang={tr.lang} title={t('enlargeTranslation')}>
+              <div class="il-tr" data-word-source={tr.id} dir={tr.dir} lang={tr.lang} title={t('enlargeTranslation')}>
                 {/* the frame goes on down the sides: the line's own strip of the picture, stretched to the box's height */}
                 <i class="pg-img il-pic il-frame" style={slice(s.top, h)} />
                 <span class="il-paper" />
@@ -191,7 +191,7 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
         )
       })}
       {under ? (
-        <div class="il-tr il-under" dir={tr.dir} lang={tr.lang} style={{ fontSize: tr.size }}>
+        <div class="il-tr il-under" data-word-source={tr.id} dir={tr.dir} lang={tr.lang} style={{ fontSize: tr.size }}>
           {words(strips.flatMap((s) => pieces.get(s) ?? []))}
         </div>
       ) : null}

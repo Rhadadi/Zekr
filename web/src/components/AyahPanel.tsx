@@ -1,3 +1,4 @@
+import { chooseAyahWords } from '../wordSelection'
 import type { JSX } from 'preact'
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks'
 import { loopAyah, player, toggleAyah } from '../audio'
@@ -82,7 +83,7 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
     if (top < head + tabsH || top > box.clientHeight - 80) box.scrollTop += top - head - tabsH - 8
   }, [id, shownTab])
   return (
-    <div ref={panelRef} class={`ayah-panel ayah-${variant}`} style={style} role="region" aria-label={ayahRef(meta.surahs[surah - 1]!, ayah)} data-testid="ayah-panel">
+    <div ref={panelRef} class={`ayah-panel ayah-${variant}`} style={style} role="region" aria-label={ayahRef(meta.surahs[surah - 1]!, ayah)} data-testid="ayah-panel" data-word-ayah={id}>
       <div class="sheet-head ayah-head">
         <strong class={inPlayer ? 'visually-hidden' : 'ayah-ref'}>{num(surah)}:{num(ayah)}</strong>
         <div class="ayah-actions">
@@ -104,6 +105,7 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
       </div>
       {more ? (
         <div class="ayah-more">
+          <button onClick={() => { chooseAyahWords(id); setMore(false) }}>{t('words')}</button>
           {showTranslations || run ? null : (
             <button onClick={() => { setFullTr(!fullTr); setMore(false) }} aria-pressed={fullTr}>
               <Icon name="book" size={18} /> {t('ayahTranslation')}
@@ -161,7 +163,7 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
                   const first = run.texts(i)[0]
                   return (
                     <div key={i} class={`run-ay${i === run.playing ? ' playing' : ''}`} data-id={i}>
-                      <button type="button" class="run-pick" lang={first?.info.lang} dir={first?.info.dir} style={{ fontSize: settings.value.trSize }} onClick={() => run.onPick(i)}>
+                      <button type="button" class="run-pick" data-word-source={first?.info.id} lang={first?.info.lang} dir={first?.info.dir} style={{ fontSize: settings.value.trSize }} onClick={() => run.onPick(i)}>
                         {first?.text || t('mergedTranslation')} <span class="run-n">{num(n)}</span>
                       </button>
                     </div>
@@ -172,7 +174,7 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
                     {translations.map((x, k) => (
                       <div class="tr-block" key={x.info.id}>
                         {translations.length > 1 ? <p class="tr-label">{x.info.name}</p> : null}
-                        <p class={`tr${x.text ? '' : ' merged'}`} lang={x.info.lang} dir={x.info.dir} style={{ fontSize: settings.value.trSize }}>
+                        <p data-word-source={x.info.id} class={`tr${x.text ? '' : ' merged'}`} lang={x.info.lang} dir={x.info.dir} style={{ fontSize: settings.value.trSize }}>
                           {texts[k]}{k === 0 ? <span class="run-n"> {num(n)}</span> : null}
                         </p>
                       </div>
@@ -209,7 +211,7 @@ export function AyahPanel({ meta, id, ar, translations, variant, showTranslation
         {showTr ? translations.map((x, i) => (
           <div class="tr-block" key={x.info.id}>
             {translations.length > 1 ? <p class="tr-label">{x.info.name}</p> : null}
-            <p class={`tr${x.text ? '' : ' merged'}`} lang={x.info.lang} dir={x.info.dir} style={{ fontSize: settings.value.trSize }}>
+            <p data-word-source={x.info.id} class={`tr${x.text ? '' : ' merged'}`} lang={x.info.lang} dir={x.info.dir} style={{ fontSize: settings.value.trSize }}>
               {texts[i]}
             </p>
           </div>

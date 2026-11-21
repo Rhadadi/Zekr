@@ -1,3 +1,4 @@
+import { chooseAyahWords } from '../wordSelection'
 import { memo } from 'preact/compat'
 import { useState } from 'preact/hooks'
 import { loopAyah, looping, toggleAyah } from '../audio'
@@ -70,6 +71,7 @@ function AyahCardView({ meta, id, ar, translations, playing, focused, showRef, q
               <button class="icon-btn" onClick={() => loopAyah(id, !repeating)} aria-label={t('repeatAyah')} aria-pressed={repeating}>
                 <Icon name="repeat" size={20} />
               </button>
+              <button class="icon-btn" onClick={() => chooseAyahWords(id)} aria-label={t('words')}>{t('words')}</button>
               <button class="icon-btn" onClick={() => copyText(text())} aria-label={t('copy')}>
                 <Icon name="copy" size={20} />
               </button>
@@ -97,7 +99,7 @@ function AyahCardView({ meta, id, ar, translations, playing, focused, showRef, q
       {translations.map((x, i) => (
         <div class="tr-block" key={x.info.id}>
           {labelled ? <p class="tr-label">{x.info.name}</p> : null}
-          <p class={`tr${x.text ? '' : ' merged'}`} lang={x.info.lang} dir={x.info.dir} style={{ fontSize: `${s.trSize}px` }}>
+          <p data-word-source={x.info.id} class={`tr${x.text ? '' : ' merged'}`} lang={x.info.lang} dir={x.info.dir} style={{ fontSize: `${s.trSize}px` }}>
             {x.text ? <Marked text={x.text} query={query} wordMatches={wordMatches} /> : trTexts[i]}
           </p>
         </div>

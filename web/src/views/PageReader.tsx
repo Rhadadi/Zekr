@@ -1,3 +1,4 @@
+import { wordGestureActive } from '../wordSelection'
 import { memo } from 'preact/compat'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { player, playFrom } from '../audio'
@@ -68,9 +69,9 @@ const MushafPage = memo(function MushafPage({ meta, n, ar, basmala, size, highli
     if (inline) {
       flush()
       out.push(
-        <div class="tr-inline" key={`t${id}`}>
+        <div class="tr-inline" data-word-ayah={id} key={`t${id}`}>
           {inline.info.map((info, k) => (
-            <p class="tr" key={info.id} lang={info.lang} dir={info.dir} style={{ fontSize: `${inline.size}px` }}>{inline.texts[k]![id - 1] || t('mergedTranslation')}</p>
+            <p data-word-source={info.id} class="tr" key={info.id} lang={info.lang} dir={info.dir} style={{ fontSize: `${inline.size}px` }}>{inline.texts[k]![id - 1] || t('mergedTranslation')}</p>
           ))}
         </div>,
       )
@@ -192,7 +193,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
     const id = data.value?.ids[0]
     const info = id ? meta.translations.find((x) => x.id === id) : undefined
     return place === 'inline' && printed && info && data.value
-      ? { texts: data.value.trs[0]!, dir: info.dir, lang: info.lang, size: Math.round(s.trSize * 0.9) }
+      ? { id: info.id, texts: data.value.trs[0]!, dir: info.dir, lang: info.lang, size: Math.round(s.trSize * 0.9) }
       : undefined
   }, [place, printed, data.value, s.trSize, wide])
   const selected = panel?.kind === 'ayah' ? panel.id : undefined
@@ -637,6 +638,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
               at: Date.now(),
               timer: window.setTimeout(() => {
                 if (touch.current) touch.current.long = true
+                if (wordGestureActive()) return
                 pressAt(target, false)
               }, 500),
             }
@@ -644,7 +646,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
           onTouchMove={(e) => {
             const start = touch.current
             const p = e.touches[0]
-            if (start && p && Math.hypot(p.clientX - start.x, p.clientY - start.y) > 10) clearTimeout(start.timer)
+            if (start && p && Math.hypot(p.clientX - start.x, p.clientY - start.y) > 8) clearTimeout(start.timer)
           }}
           onTouchEnd={(e) => {
             const start = touch.current

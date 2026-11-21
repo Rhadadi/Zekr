@@ -924,3 +924,21 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .vno-n.latin { translate: 0 0.115em; }
 .mushaf-flow[data-color='dark'] .vno { --vno-fill: #8f8d3a; --vno-line: #e8e6df; }
 .mushaf-flow[data-color='dark'] .vno-n { color: #f4f2ea; }
+
+/* Word tools are delegated to selected text; printed images keep their ayah gestures. */
+[data-word-source], .mushaf-flow .ay:not(.seg), .fl-t, .wb-ar, .wb-fa { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+.word-toolbar { position: fixed; z-index: 35; display: flex; align-items: center; width: min(280px, calc(100vw - 24px)); padding: 4px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); box-shadow: 0 5px 20px #0002; }
+.word-toolbar button { min-height: 44px; min-width: 44px; border: 0; border-radius: 7px; background: none; color: inherit; font: inherit; font-size: .85rem; cursor: pointer; }
+.word-toolbar button:first-child { flex: 1; }
+.word-dialog { width: min(420px, calc(100vw - 24px)); max-height: 80dvh; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); }
+.word-dialog::backdrop { background: #0004; }
+.word-dialog header { display: flex; align-items: center; justify-content: space-between; position: sticky; top: -16px; background: var(--surface); z-index: 1; }
+.word-dialog h2 { font-size: 1rem; }
+.word-dialog button { min-height: 44px; min-width: 44px; color: inherit; border: 0; border-radius: 7px; background: none; font: inherit; cursor: pointer; }
+.word-display { font-size: 1.8rem; margin-block: 16px; overflow-wrap: anywhere; }
+.word-choice { display: flex; align-items: center; justify-content: space-between; min-height: 48px; padding: 8px; gap: 12px; border-bottom: 1px solid var(--line); color: var(--ink); text-decoration: none; }
+.word-choice small { color: var(--muted); }
+.word-choice[aria-disabled='true'] { opacity: .6; }
+.word-picker { display: flex; flex-wrap: wrap; gap: 6px; padding-block: 12px; }
+.word-picker button { border: 1px solid var(--line); padding-inline: 10px; font-family: var(--font-quran); font-size: 1.3rem; }
+@media (max-width: 699px) { .word-dialog { margin: auto; inset: auto 12px max(12px, env(safe-area-inset-bottom)); } }
