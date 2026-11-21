@@ -7,7 +7,7 @@ import json
 import re
 import tempfile
 import unittest
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from email import message_from_bytes, policy
 from pathlib import Path
 from unittest import mock
@@ -207,12 +207,9 @@ class FlowTest(Base):
             self.svc.subscribe("w@example.com", "weekly", "en", tz="UTC", verified=True)
         sent = len(self.mail.sent)
         with mock.patch.object(app.time, "sleep"):
-            # the coming Thursday and Friday: a fixed date turns into the past and the subscription would postdate it
-            now = datetime.now(timezone.utc)
-            thursday = (now + timedelta(days=(3 - now.weekday()) % 7 or 7)).replace(hour=7, minute=0, second=0, microsecond=0)
-            self.svc.tick(thursday)
+            self.svc.tick(datetime(2026, 11, 19, 7, tzinfo=timezone.utc))  # Thursday
             self.assertEqual(len(self.mail.sent), sent)
-            self.svc.tick(thursday + timedelta(days=1))  # Friday
+            self.svc.tick(datetime(2026, 11, 20, 7, tzinfo=timezone.utc))  # Friday
         self.assertEqual(len(self.mail.sent), sent + 1)
         self.assertTrue(self.mail.sent[-1]["Subject"].startswith("Ayah of the week"))
 
