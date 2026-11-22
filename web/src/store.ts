@@ -56,14 +56,14 @@ export const defaultSettings: Settings = {
   lang: 'fa',
   theme: 'auto',
   script: 'uthmani',
-  quranFont: DEFAULT_QURAN_FONT,
+  quranFont: 'scheherazade',
   translationPlace: 'inline',
-  pageStyle: 'printed',
+  pageStyle: 'text',
   pageColor: 'blue',
   arabicSize: 26,
   trSize: 16,
   trBackground: false,
-  translations: ['fa.safavi'],
+  translations: ['fa.fooladvand'],
   reciter: 'minshawi-murattal',
   speed: 1,
   repeat: 1,
@@ -71,7 +71,7 @@ export const defaultSettings: Settings = {
   audioTranslation: 'off',
   lastAudioTranslation: '',
   autoScroll: true,
-  daily: { period: 86400, pool: 'all', show: 'fa', fa: 'fa.safavi', en: 'en.sahih', salt: 0 },
+  daily: { period: 86400, pool: 'all', show: 'fa', fa: 'fa.fooladvand', en: 'en.sahih', salt: 0 },
 }
 
 function read<T>(key: string): T | undefined {
@@ -114,9 +114,22 @@ function loadSettings(): Settings {
     if (saved.trSize === 17) delete saved.trSize
     write('zekr.sizesV2', true)
   }
+  // Scheherazade and Fooladvand became the defaults: what was still the old default (the printed page, Hafs, Safavi
+  // alone) follows the new one, once
+  const moved = read<boolean>('zekr.defaultsV3') === undefined || firstSize || firstFa || firstInline
+  if (read<boolean>('zekr.defaultsV3') === undefined) {
+    if (saved.pageStyle === 'printed') delete saved.pageStyle
+    if (saved.quranFont === DEFAULT_QURAN_FONT) delete saved.quranFont
+    if (saved.translations?.length === 1 && saved.translations[0] === 'fa.safavi') delete saved.translations
+    if (saved.daily?.fa === 'fa.safavi') saved.daily = { ...saved.daily, fa: 'fa.fooladvand' }
+    write('zekr.defaultsV3', true)
+  }
   if (firstFa) write('zekr.persianDefault', true)
   if (firstInline) write('zekr.inlineDefault', true)
-  return { ...defaultSettings, ...saved, daily: { ...defaultSettings.daily, ...saved.daily } }
+  const result = { ...defaultSettings, ...saved, daily: { ...defaultSettings.daily, ...saved.daily } }
+  // what a one-time step changed is kept, or the old value would come back on the next visit
+  if (moved && read('zekr.settings')) write('zekr.settings', result)
+  return result
 }
 
 export const settings = signal<Settings>(loadSettings())

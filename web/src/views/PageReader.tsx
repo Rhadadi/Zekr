@@ -641,7 +641,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
             ) : null}
             {/* where one is, in one piece: the surah with the ayah, and the juz; each opens its list */}
             <div class="bar-where">
-              <button class="mb-surah" lang="ar" aria-haspopup="listbox" aria-expanded={menu === 'surah'} aria-label={`${t('surahs')}: ${surahName(surahOfPage)}${barAyahNo ? ` ${num(barAyahNo)}` : ''}`} onClick={() => { setPickSurah(null); setMenu(menu === 'surah' ? null : 'surah') }}>
+              <button class="mb-surah" lang="ar" aria-haspopup="listbox" aria-expanded={menu === 'ayah' || menu === 'surah'} aria-label={`${t('goToAyah')}: ${surahName(surahOfPage)}${barAyahNo ? ` ${num(barAyahNo)}` : ''}`} onClick={() => { setPickSurah(null); setMenu(menu === 'ayah' || menu === 'surah' ? null : 'ayah') }}>
                 <span>{surahOfPage.ar}</span>{barAyahNo ? <span class="mb-ayah">{num(barAyahNo)}</span> : null}
               </button>
               {/* the juz (the page is at the foot of the page, where its number opens a field to type one) */}
@@ -689,8 +689,10 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
             {menu === 'ayah'
               ? Array.from({ length: listed.ayahs }, (_, i) => i + 1).map((a) => {
                   const here = pageOf(meta, listed.first + a - 1) === current
+                  const first = here && (a === 1 || pageOf(meta, listed.first + a - 2) !== current)
                   return (
                     <button key={a} role="option" aria-selected={here} class={here ? 'on' : ''} aria-label={ayahRef(listed, a)}
+                      ref={first ? (el) => el?.scrollIntoView({ block: 'center' }) : undefined}
                       onClick={() => { setMenu(null); location.hash = href.ayah(listed.id, a) }}>
                       {num(a)}
                     </button>

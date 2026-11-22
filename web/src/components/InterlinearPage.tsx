@@ -49,12 +49,19 @@ function fit(root: HTMLElement, base: number) {
     // words, each within bounds, so no row ends far short of the frame and none has gaps in it
     let actual = text.getBoundingClientRect().width
     if (actual < width - 3 && actual > 0 && row.style.fontStretch === '100%') {
-      size = Math.min(base * 1.12, size * ((width - 2) / actual))
+      size = Math.min(base * 1.12, size * ((width - 4) / actual))
       apply()
       actual = text.getBoundingClientRect().width
     }
     const gaps = (text.textContent?.trim().match(/\s+/g) ?? []).length
-    if (gaps && actual < width - 3) text.style.wordSpacing = `calc(-0.02em + ${Math.min((width - 2 - actual) / gaps, size * 0.45).toFixed(2)}px)`
+    if (gaps && actual < width - 4) text.style.wordSpacing = `calc(-0.02em + ${Math.min((width - 4 - actual) / gaps, size * 0.45).toFixed(2)}px)`
+    // never past the frame: what the font's hinting adds at the new size or spacing is taken back
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const over = text.getBoundingClientRect().width - (width - 1)
+      if (over <= 0) break
+      if (text.style.wordSpacing && gaps) text.style.wordSpacing = ''
+      else { size *= (width - 3) / (width - 1 + over); apply() }
+    }
     row.dataset.small = String(size < 12)
   }
 }

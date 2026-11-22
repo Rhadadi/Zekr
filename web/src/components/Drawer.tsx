@@ -1,9 +1,8 @@
 import { asciiDigits } from '../goto'
 import { useEffect, useLayoutEffect, useRef } from 'preact/hooks'
-import { type Meta, locate } from '../data'
+import type { Meta } from '../data'
 import { num, t } from '../i18n'
-import { type LayerName, href, mushafAt } from '../router'
-import { lastRead } from '../store'
+import { type LayerName, href } from '../router'
 import { useDocked } from '../hooks'
 import { dockCrowded, dockOpen, drawerOpen, drawerSection, gotoOpen, pageOptionsAsked, setDock, takeDrawerOpener, zenMode } from '../ui'
 import { Logo } from './AppBar'
@@ -17,15 +16,6 @@ import { QuickSearch } from './QuickSearch'
  * a choice and on Back. */
 export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active: LayerName; onMushaf?: boolean }) {
   const open = drawerOpen.value
-  const base = mushafAt.value
-  const remembered = lastRead.value ?? { surah: 1, ayah: 1 }
-  const rememberedId = meta ? (meta.surahs[remembered.surah - 1]?.first ?? 1) + remembered.ayah - 1 : 1
-  const onRememberedPage = meta && base && 'page' in base && rememberedId >= (meta.pages[base.page - 1] ?? 1) && rememberedId < (meta.pages[base.page] ?? 6237)
-  const at = meta && base && 'page' in base ? onRememberedPage ? remembered : locate(meta, meta.pages[base.page - 1] ?? 1)
-    : base && 'surah' in base ? { surah: base.surah, ayah: base.ayah ?? 1 } : remembered
-  const studyAt = active === 'study' ? remembered : at
-  const studyHref = href.verse(studyAt.surah, studyAt.ayah)
-  const readingHref = onMushaf ? location.hash || href.start : href.ayah(studyAt.surah, studyAt.ayah)
   // in a wide window the menu is a panel docked beside the page instead: not modal, the page stays in use beside it
   const docked = useDocked()
   // put away in Zen, and while the panel at the right has been made too wide to leave the page room for both
@@ -113,14 +103,6 @@ export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active
     return (
       <div class="drawer-body">
         {settingsOnly ? <h2 class="drawer-section-title">{t('settings')}</h2> : <>
-        <nav class="drawer-modes" aria-label={t('readerMode')}>
-          <a href={readingHref} aria-label={t('navReading')} aria-current={onMushaf ? 'page' : undefined} onClick={nav ? e => nav(e, readingHref) : undefined}>
-            <Icon name="book" size={20} /><strong>{t('navReading')}</strong>
-          </a>
-          <a href={studyHref} aria-label={t('navStudy')} aria-current={active === 'study' ? 'page' : undefined} onClick={nav ? e => nav(e, studyHref) : undefined}>
-            <Icon name="study" size={20} /><strong>{t('navStudy')}</strong>
-          </a>
-        </nav>
         {meta ? <QuickSearch meta={meta} go={navTo} /> : null}
         {meta ? (
           <form class="drawer-page" onSubmit={(e) => {
@@ -163,10 +145,6 @@ export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active
             document.querySelector<HTMLElement>('.burger')?.focus()
           }
         }}>
-        <div class="drawer-head">
-          <strong class="dock-title">{t('menu')}</strong>
-          <button class="icon-btn" onClick={() => setDock(false)} aria-label={t('close')}><Icon name="close" size={20} /></button>
-        </div>
         {body(undefined, (to) => { location.hash = to }, false)}
       </aside>
     )
@@ -181,7 +159,7 @@ export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active
         // a link further down (About, in the settings) leaves the menu as the ones above do
         onClick={(e) => {
           const a = (e.target as Element).closest<HTMLAnchorElement>('.drawer-body a[href^="#"]')
-          if (a && !a.closest('.drawer-links, .drawer-modes')) go(e, a.getAttribute('href')!)
+          if (a && !a.closest('.drawer-links')) go(e, a.getAttribute('href')!)
         }}
       >
         <div class="drawer-head">

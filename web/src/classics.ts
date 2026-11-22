@@ -40,6 +40,8 @@ export type TafsirPick = 'almizan' | 'classic' | 'study'
 const PICK_KEY = 'zekr.tafsirPick'
 export const tafsirPick = signal<TafsirPick>(((): TafsirPick => {
   try {
+    // Al-Mizan is the default: a choice from before is set back to it, once
+    if (!localStorage.getItem('zekr.tafsirV2')) { localStorage.removeItem(PICK_KEY); localStorage.setItem('zekr.tafsirV2', '1') }
     const v = localStorage.getItem(PICK_KEY)
     return v === 'classic' || v === 'study' ? v : 'almizan'
   } catch { return 'almizan' }

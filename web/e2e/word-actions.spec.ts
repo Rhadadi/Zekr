@@ -6,6 +6,7 @@ async function fixture(page: Page, language = 'en') {
   await page.addInitScript(language => {
     localStorage.setItem('zekr.settings', JSON.stringify({ lang: language, translations: ['fa.safavi'], theme: 'light' }))
     localStorage.setItem('zekr.inlineDefault', 'true')
+    localStorage.setItem('zekr.defaultsV3', 'true')
   }, language)
   let first = 0
   await page.route('**/data/meta.json*', async r => {

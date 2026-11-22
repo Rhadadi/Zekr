@@ -21,9 +21,11 @@ async function trackAudio(page: Page): Promise<() => Promise<string[]>> {
 
 async function useSettings(page: Page, settings: Record<string, unknown>) {
   await page.addInitScript((s) => {
-    if (!localStorage.getItem('zekr.settings')) localStorage.setItem('zekr.settings', JSON.stringify(s))
+    // the tests were written against the printed page in Hafs with Safavi: kept, unless a test says otherwise
+    if (!localStorage.getItem('zekr.settings')) localStorage.setItem('zekr.settings', JSON.stringify({ pageStyle: 'printed', quranFont: 'hafs', translations: ['fa.safavi'], ...s }))
     // these are choices, not an old default to move on from
     localStorage.setItem('zekr.inlineDefault', 'true')
+    localStorage.setItem('zekr.defaultsV3', 'true')
   }, settings)
 }
 
@@ -298,15 +300,15 @@ test.describe('mushaf page view', () => {
     await expect(page.getByLabel('Translation size')).toHaveValue('16')
   })
 
-  test('the surah in the bar opens its ayahs to jump to', async ({ page }) => {
+  test('the surah in the bar opens its ayahs to jump to, in one step', async ({ page }) => {
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/page/305')
     await settle(page)
     await page.locator('.mb-surah').click()
-    await page.getByRole('listbox', { name: 'Surahs' }).getByRole('option', { name: /Maryam/ }).click()
-    const grid = page.getByRole('listbox', { name: /Go to an ayah/ })
+    // straight to the ayahs of the surah one is in: no picking the same surah first
+    const grid = page.getByRole('listbox', { name: /Go to an ayah: Maryam/ })
     await expect(grid.getByRole('option').first()).toHaveText('1')
-    await expect(grid.locator('[aria-selected="true"]').first()).toBeVisible() // the ayahs on this page are marked
+    await expect(grid.locator('[aria-selected="true"]').first()).toBeInViewport() // the ayahs on this page are marked, in view
     await grid.getByRole('option', { name: /· 19:40$/ }).click()
     await expect(page).toHaveURL(/#\/ayah\/19\/40$/)
     await expect(page.getByTestId('ayah-panel')).toContainText('19:40')
@@ -316,11 +318,31 @@ test.describe('mushaf page view', () => {
     await expect(page.locator('.ay.sel').first()).toBeInViewport()
   })
 
+  test('a first visit reads in Scheherazade with Fooladvand, and an old default moves on to them once', async ({ page }) => {
+    await page.addInitScript(() => {
+      if (sessionStorage.getItem('seeded')) return
+      sessionStorage.setItem('seeded', '1')
+      localStorage.setItem('zekr.settings', JSON.stringify({ lang: 'en', pageStyle: 'printed', quranFont: 'hafs', translations: ['fa.safavi'] }))
+      localStorage.setItem('zekr.inlineDefault', 'true')
+    })
+    await page.goto('/#/page/3')
+    const saved = await page.evaluate(() => { const v = localStorage.getItem('zekr.settings'); return v ? JSON.parse(v) : {} })
+    await page.goto('/#/settings')
+    await expect(page.getByLabel('Quran font')).toHaveValue('scheherazade')
+    expect(saved.translations ?? ['fa.fooladvand']).toEqual(['fa.fooladvand'])
+    // a choice made after that stays
+    await page.getByLabel('Quran font').selectOption({ label: 'Amiri Quran' })
+    await page.reload()
+    await expect(page.getByLabel('Quran font')).toHaveValue('amiri')
+  })
+
   test('the surah and the juz in the bar open a menu to pick from', async ({ page }) => {
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/page/305')
     await settle(page)
     await page.locator('.mb-surah').click()
+    // from the ayahs of this surah, back to all the surahs to pick another
+    await page.getByRole('button', { name: 'All surahs' }).click()
     const menu = page.getByRole('listbox', { name: 'Surahs' })
     await expect(menu.getByRole('option')).toHaveCount(114)
     await expect(menu.getByRole('option', { selected: true })).toContainText('Maryam')
@@ -328,20 +350,18 @@ test.describe('mushaf page view', () => {
     await expect(menu).toHaveCount(0)
     await expect(page.locator('.mushaf-id')).toHaveAttribute('data-page', '2')
     await expect(page.locator('.mb-surah')).toContainText('البقرة')
-    // a surah picked goes to its start and lists its ayahs, to go on to one: Al-Baqara 25 in two clicks
+    // a surah picked goes to its start and lists its ayahs, to go on to one
     const ayahs = page.getByRole('listbox', { name: /Go to an ayah: Al-Baqara/ })
     await expect(ayahs.getByRole('option')).toHaveCount(286)
     await ayahs.getByRole('option', { name: /· 2:25$/ }).click()
     await expect(page).toHaveURL(/#\/ayah\/2\/25$/)
     await expect(page.getByTestId('ayah-panel')).toContainText('2:25')
-    // and back from the ayahs to all the surahs
+    // the bar's surah now opens Al-Baqara's ayahs at once
     await page.locator('.mb-surah').click()
-    await page.getByRole('listbox', { name: 'Surahs' }).getByRole('option', { name: /Al-Baqara/ }).click()
-    await page.getByRole('button', { name: 'All surahs' }).click()
-    await expect(page.getByRole('listbox', { name: 'Surahs' }).getByRole('option')).toHaveCount(114)
+    await expect(page.getByRole('listbox', { name: /Go to an ayah: Al-Baqara/ })).toBeVisible()
     await page.keyboard.press('Escape')
-    await page.locator('.mb-surah').click()
-    await page.locator('.mb-switch').getByRole('button', { name: 'Juz', exact: true }).click() // the juz are in the same list
+    await expect(page.getByRole('listbox')).toHaveCount(0)
+    await page.locator('.mb-juz').click()
     const juz = page.getByRole('listbox', { name: 'Juz' })
     await expect(juz.getByRole('option')).toHaveCount(30)
     await juz.getByRole('option', { name: /Juz 16/ }).click()
@@ -1413,7 +1433,7 @@ test.describe('page view on a phone', () => {
     expect(r.width).toBeLessThanOrEqual(44)
     await btn.click()
     const nav = page.getByRole('navigation', { name: 'Main' })
-    await expect(page.getByRole('navigation', { name: 'Reader mode' }).getByRole('link')).toHaveText(['Reading', 'Study'])
+    await expect(page.getByRole('navigation', { name: 'Reader mode' })).toHaveCount(0) // Reading and Study are in the bar
     await expect(nav.getByRole('link')).toHaveText(['Today', 'Saved'])
     const menuPanel = page.getByRole('dialog', { name: 'Menu' })
     await expect(menuPanel.getByLabel('Language')).toBeVisible()
@@ -1915,8 +1935,8 @@ test.describe('finding a passage', () => {
   test('on a page that holds two surahs, the bar names the surah of the chosen ayah', async ({ page }) => {
     await useSettings(page, { lang: 'en' })
     await page.goto('/#/page/235')
-    await expect(page.getByRole('button', { name: 'Surahs: Hud' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Go to an ayah: Hud' })).toBeVisible()
     await page.goto('/#/ayah/12/2')
-    await expect(page.getByRole('button', { name: 'Surahs: Yusuf' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Go to an ayah: Yusuf' })).toBeVisible()
   })
 })

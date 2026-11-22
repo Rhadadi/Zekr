@@ -8,6 +8,7 @@ async function fixture(page: Page, lang = 'en', theme = 'light', translations = 
       lang: language, theme: appearance, translations: selected, autoScroll: true,
     }))
     localStorage.setItem('zekr.inlineDefault', 'true')
+    localStorage.setItem('zekr.defaultsV3', 'true')
     const w = window as unknown as { canvasAudio: EventTarget[]; canvasPlayed: string[] }
     w.canvasAudio = []; w.canvasPlayed = []
     class FixtureAudio extends EventTarget {
@@ -340,19 +341,16 @@ test('Focus keeps a complete long ayah and navigates without exposing neighbouri
 })
 
 for (const lang of ['en', 'fa']) for (const width of [390, 1280]) {
-  test(`the menu opens Study at the current passage: ${lang}, ${width}px`, async ({ page }) => {
+  test(`the bar opens Study at the current passage: ${lang}, ${width}px`, async ({ page }) => {
     await fixture(page, lang)
     await page.setViewportSize({ width, height: 844 })
     await page.goto('/#/ayah/12/2')
     await expect(page.locator('#page-235')).toBeVisible()
+    // Reading and Study are in the bar at the top, not again in the menu
     await page.getByRole('button', { name: lang === 'fa' ? 'منو' : 'Menu', exact: true }).click()
-    const modes = page.locator('.drawer-modes')
-    const reading = modes.getByRole('link', { name: lang === 'fa' ? 'خواندن' : 'Reading', exact: true })
-    await expect(reading).toHaveAttribute('aria-current', 'page')
-    const modeBox = (await modes.boundingBox())!
-    const searchBox = (await page.locator('.drawer-search').boundingBox())!
-    expect(modeBox.y + modeBox.height).toBeLessThanOrEqual(searchBox.y)
-    const study = page.locator('.drawer').getByRole('link', { name: lang === 'fa' ? 'مطالعه' : 'Study', exact: true })
+    await expect(page.locator('.drawer-modes')).toHaveCount(0)
+    await page.keyboard.press('Escape')
+    const study = page.locator('.bar-study')
     await expect(study).toBeVisible()
     await expect(study).toHaveAttribute('href', '#/verse/12/2')
     await study.click()
@@ -363,14 +361,13 @@ for (const lang of ['en', 'fa']) for (const width of [390, 1280]) {
     const box = await logo.boundingBox()
     expect(box!.width).toBeGreaterThanOrEqual(80)
     await page.locator('.study-reader').getByRole('button', { name: lang === 'fa' ? 'آیهٔ بعد' : 'Next ayah', exact: true }).click()
+    const reading = page.locator('.study-modes').getByRole('link', { name: lang === 'fa' ? 'خواندن' : 'Reading', exact: true })
+    await expect(reading).toHaveAttribute('href', '#/ayah/12/3')
     const menu = page.locator('.study-reader').getByRole('button', { name: lang === 'fa' ? 'منو' : 'Menu', exact: true })
     await menu.click()
-    await expect(page.locator('.drawer').getByRole('link', { name: lang === 'fa' ? 'مطالعه' : 'Study', exact: true })).toHaveAttribute('aria-current', 'page')
-    await expect(reading).toHaveAttribute('href', '#/ayah/12/3')
     await page.keyboard.press('Escape')
     await expect(page.locator('.drawer')).toHaveCount(0)
     await expect(menu).toBeFocused()
-    await menu.click()
     await reading.click()
     await expect(page).toHaveURL(/#\/ayah\/12\/3$/)
     await expect(page.locator('.study-reader')).toHaveCount(0)
@@ -388,10 +385,7 @@ test('incidental scrolling keeps the passage, while manual browsing updates it',
   // A focus/layout adjustment can scroll the container without a browsing gesture.
   await layer.evaluate(el => el.scrollTo(0, 0))
   await expect.poll(() => layer.evaluate(el => el.scrollTop)).toBe(0)
-  await reader.getByRole('button', { name: 'Menu', exact: true }).click()
-  await expect(page.locator('.drawer-modes').getByRole('link', { name: 'Reading', exact: true })).toHaveAttribute('href', '#/ayah/12/3')
-  await page.keyboard.press('Escape')
-  await expect(page.locator('.drawer')).toHaveCount(0)
+  await expect(reader.locator('.study-modes').getByRole('link', { name: 'Reading', exact: true })).toHaveAttribute('href', '#/ayah/12/3')
   await page.mouse.move(200, 360)
   await page.mouse.wheel(0, 1200)
   await expect.poll(() => reader.getByRole('heading', { level: 1 }).textContent()).not.toContain('3 / 111')

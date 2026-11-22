@@ -14,7 +14,7 @@ export function TafsirTab({ meta, id, surah, ayah }: { meta: Meta; id: number; s
   const l = lang.value
   const books = classicsIndex.value ? booksFor(classicsIndex.value, surah) : []
   const sources: { value: string; label: string }[] = [
-    ...(tafsirIndex.value ? [{ value: 'almizan', label: `${t('tafsir')}: ${t('almizan')}` }] : []),
+    ...(tafsirIndex.value || (tafsirIndex.value === null && meta.tafsir?.includes('almizan')) ? [{ value: 'almizan', label: `${t('tafsir')}: ${t('almizan')}` }] : []),
     ...books.map((b) => ({ value: b.id, label: b.name[l] })),
     ...(meta.studyQuran ? [{ value: 'study', label: t('studyQuranName') }] : []),
   ]
