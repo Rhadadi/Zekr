@@ -28,6 +28,7 @@ function fit(root: HTMLElement, base: number) {
     const width = row.clientWidth
     if (!width) continue
     row.style.fontSize = '20px'
+    text.style.wordSpacing = ''
     let natural = 0
     for (const stretch of [100, 87.5, 75, 62.5]) {
       row.style.fontStretch = `${stretch}%`
@@ -44,6 +45,16 @@ function fit(root: HTMLElement, base: number) {
       size *= (width - 2) / actual
       apply()
     }
+    // a row shorter than the line (a terser translation) fills it: a little larger type first, then wider spaces between
+    // words, each within bounds, so no row ends far short of the frame and none has gaps in it
+    let actual = text.getBoundingClientRect().width
+    if (actual < width - 3 && actual > 0 && row.style.fontStretch === '100%') {
+      size = Math.min(base * 1.12, size * ((width - 2) / actual))
+      apply()
+      actual = text.getBoundingClientRect().width
+    }
+    const gaps = (text.textContent?.trim().match(/\s+/g) ?? []).length
+    if (gaps && actual < width - 3) text.style.wordSpacing = `calc(-0.02em + ${Math.min((width - 2 - actual) / gaps, size * 0.45).toFixed(2)}px)`
     row.dataset.small = String(size < 12)
   }
 }
@@ -139,7 +150,13 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
         const tokens = translationWords(rows)
         for (const token of tokens) {
           const span = document.createElement('span')
-          span.textContent = `${token.text}${token.ends ? ` ${num(locate(meta, token.id).ayah)}` : ''} `
+          span.textContent = `${token.text} `
+          if (token.ends) {
+            const mark = document.createElement('span')
+            mark.className = 'il-mark'
+            mark.textContent = num(locate(meta, token.id).ayah)
+            span.append(mark, ' ')
+          }
           probe.append(span)
         }
         el.append(probe)
@@ -180,7 +197,7 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
       <span class="il-t">
         {row.map((p, i) => (
           <span key={`${p.id}-${i}`} class="ay" data-id={p.id} aria-hidden="true">
-            {p.text}{p.ends ? <span class="il-mark">{' '}{num(locate(meta, p.id).ayah)}</span> : null}{' '}
+            {p.text}{p.ends ? <>{' '}<span class="il-mark">{num(locate(meta, p.id).ayah)}</span></> : null}{' '}
           </span>
         ))}
       </span>
@@ -228,7 +245,7 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
             </div>
             {row && !under ? (
               // The translation flows in reading order; its number marks its own end, even when it borrows a row.
-              <div class="il-tr" data-word-source={tr.id} dir={tr.dir} lang={tr.lang} title={t('enlargeTranslation')}>
+              <div class="il-tr" data-word-source={tr.id} dir={tr.dir} lang={tr.lang}>
                 {/* the frame goes on down the sides: the line's own strip of the picture, stretched to the box's height */}
                 <i class="pg-img il-pic il-frame" style={slice(s.top, h)} />
                 {paperRows(s) ? <i class="pg-img il-pic il-clean" style={paperRows(s)} /> : <span class="il-paper" style={paperBox} />}

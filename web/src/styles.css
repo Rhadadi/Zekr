@@ -673,6 +673,8 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .mushaf-flow[data-color='purple'] :is(.pg-img, .fl) { filter: hue-rotate(70deg); }
 .mushaf-flow[data-color='pink'] :is(.pg-img, .fl) { filter: hue-rotate(130deg); }
 .mushaf-flow[data-color='dark'] :is(.pg-img, .fl) { filter: invert(1) hue-rotate(180deg); }
+/* the ayah's medallion is drawn in the dark theme's own colours: undo the line's inversion for it */
+.mushaf-flow[data-color='dark'] .fl .fl-n { filter: invert(1) hue-rotate(180deg); }
 .pg .ay { position: absolute; inset: 0; padding: 0; border-radius: 0; pointer-events: none; background: none; }
 .pg .ay.sel, .pg .ay.playing { background: none; }
 .printed .seg { position: absolute; display: block; pointer-events: auto; cursor: pointer; border-radius: 5px; }
@@ -867,7 +869,13 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .il-tr:not(.il-under) .il-p { font-family: 'Zekr Translation', var(--font-ui); white-space: nowrap; overflow-wrap: normal; text-align: start; min-height: 1.4em; line-height: 1.4; word-spacing: -.02em; }
 .il-tr:not(.il-under) .il-t { display: inline-block; white-space: nowrap; vertical-align: top; }
 .il-p .ay { padding: 0; border-radius: 0; }
-.il-mark { white-space: nowrap; font-size: .72em; font-weight: 500; padding-inline: .05em; }
+/* the end of an ayah in the translation: its number small, in a ring, easy to find in the line */
+.il-mark {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 1.55em; height: 1.55em; padding: 0.1em 0.3em 0; margin-inline: 0.1em;
+  border-radius: 999px; vertical-align: 0.12em; background: var(--il-ink); color: var(--il-paper);
+  white-space: nowrap; font-size: .64em; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; word-spacing: 0;
+}
+.mushaf-flow[data-color='dark'] .il-mark { background: #dfe8eb; color: #102029; }
 .il-measure { position: absolute; inset-inline-start: -100000px; top: 0; visibility: hidden; pointer-events: none; white-space: pre; font: 500 20px 'Zekr Translation', var(--font-ui); font-stretch: 75%; word-spacing: -.02em; }
 .il-measure > span { display: inline-block; white-space: pre; }
 .mushaf-flow[data-color='dark'] .mpage.il { background: #111; }
