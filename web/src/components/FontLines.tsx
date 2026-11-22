@@ -1,4 +1,5 @@
-import { quranText } from '../store'
+import { quranText, settings } from '../store'
+import { quranFontInfo } from '../fonts'
 import { useLayoutEffect } from 'preact/hooks'
 import type { MushafPageMap, PageLine } from '../data'
 import type { Strip } from '../interlinear'
@@ -30,8 +31,10 @@ function width(w: string): number {
   return ctx ? ctx.measureText(`${w} `).width : w.length + 1
 }
 
-/** Wait for the font the words are measured in. */
-export const hafsReady = () => document.fonts?.load("40px 'Zekr Hafs'").then(() => undefined) ?? Promise.resolve()
+/** Wait for the font the words are measured in, and the one they are shown in (so they are set once, not twice). */
+export const hafsReady = () => document.fonts
+  ? Promise.all([document.fonts.load("40px 'Zekr Hafs'"), document.fonts.load(`40px '${quranFontInfo(settings.value.quranFont).family}'`)]).then(() => undefined, () => undefined)
+  : Promise.resolve()
 
 /** The page's words line by line as this edition prints them. The words come by ayah (the layout file's own line
  * breaks are another printing's); the page map says how much of each line every ayah takes, so each ayah's words are
@@ -77,7 +80,7 @@ export function FontLine({ tokens, band, box, paper }: { tokens: PageLine; band:
     <div class="fl" aria-hidden="true" style={{
       left: `${band.left / 10}%`, width: `${(band.right - band.left) / 10}%`,
       // a little taller than the line, to hide the tips of the printed letters above and below it
-      top: `${((band.top - 7 - box.top) / h) * 100}%`, height: `${((band.bottom - band.top + 10) / h) * 100}%`, background: paper,
+      top: `${((band.top - 7 - box.top) / h) * 100}%`, height: `${((band.bottom - band.top + 10) / h) * 100}%`, background: paper ?? 'var(--il-paper)',
     }}>
       <p class="fl-t" lang="ar" dir="rtl">
         {tokens.map((t, i) => (typeof t === 'number' ? <span key={i} class="fl-n"><VerseNo n={arabicNum(t)} /></span> : <span key={i}>{quranText(t)}</span>))}

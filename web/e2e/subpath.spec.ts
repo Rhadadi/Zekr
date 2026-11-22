@@ -67,7 +67,7 @@ test('the site works from a sub-path, installs its service worker and runs offli
   await expect
     .poll(() => page.evaluate(async () => {
       await document.fonts.ready
-      return [...document.fonts].some((f) => f.family.replace(/"/g, '') === 'Zekr Hafs' && f.status === 'loaded')
+      return [...document.fonts].some((f) => f.family.replace(/"/g, '') === 'Zekr Scheherazade' && f.status === 'loaded')
     }))
     .toBe(true)
   expect(failed.filter((f) => !f.includes('favicon'))).toEqual([])

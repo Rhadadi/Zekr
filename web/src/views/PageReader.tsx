@@ -174,6 +174,7 @@ const PrintedPage = memo(function PrintedPage({ meta, pg, ar, highlight, kind, f
   const laid = useMemo(() => (page.value ? layoutLines(pg, strips, page.value) : undefined), [page.value, pg, strips])
   const fonted = !!laid && laid.length === bands.length
   const paper = useAsync(async () => (fonted ? bandPaper(src, bands) : undefined), [fonted, src])
+  const waiting = font && !!meta.lines && n > 2 && page.loading
   const root = useRef<HTMLElement>(null)
   useFontLinesFit(root, [fonted, n])
   return (
@@ -182,7 +183,7 @@ const PrintedPage = memo(function PrintedPage({ meta, pg, ar, highlight, kind, f
       <div class="pg" style={{ aspectRatio: `${pg.w * (1 - 2 * PAGE_TRIM)} / ${pg.h}`, '--trim': PAGE_TRIM }}>
         <div class="pg-in">
         <img class="pg-img" src={src} alt="" decoding="async" draggable={false} />
-        {fonted ? bands.map((b, i) => <FontLine key={i} tokens={laid![i]!} band={b} box={{ top: 0, bottom: 1000 }} paper={paper.value?.[i]} />) : null}
+        {fonted || waiting ? bands.map((b, i) => <FontLine key={i} tokens={fonted ? laid![i]! : []} band={b} box={{ top: 0, bottom: 1000 }} paper={paper.value?.[i]} />) : null}
         {pg.a.map((segs, k) => {
           const id = pg.first + k
           const at = locate(meta, id)
@@ -582,6 +583,8 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   const surahOfPage = meta.surahs[locate(meta, barAyah).surah - 1]!
   // the ayah that is chosen (or being recited), when it is on this page: "Al-Haqqa 52"; the number beside it is the page
   const barAyahNo = highlight !== undefined && pageOf(meta, highlight) === current ? locate(meta, highlight).ayah : undefined
+  // Study opens at the ayah chosen on this page, else where the page is read
+  const studyAt = barAyahNo !== undefined ? locate(meta, highlight!) : barAt
   // a layout effect, so Escape works as soon as the menu is on screen
   useLayoutEffect(() => {
     if (!menu) return
@@ -590,6 +593,12 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
     return () => document.removeEventListener('keydown', key)
   }, [menu])
   const juzOfPage = juzOf(meta, pageRange(meta, current).first)
+  // the words of the pages either side are fetched ahead, so turning to one shows it in the font at once
+  useEffect(() => {
+    if (!font || !meta.lines) return
+    void hafsReady()
+    for (const k of [current + 1, current - 1, current + 2]) if (k > 2 && k <= PAGES) loadPageLines(meta, k).catch(() => {})
+  }, [current, font])
   const listed = pickSurah ? meta.surahs[pickSurah - 1]! : surahOfPage
   /** The surah and juz menus, and "go to page", all end here. */
   const goPage = (n: number) => {
@@ -654,7 +663,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
             <div class="bar-tools">
               <button class="icon-btn small bar-act bar-tafsir" onClick={togglePanel} aria-pressed={ayahOpen}
                 aria-label={wide ? t('sidePanel') : t('tabTafsir')} title={wide ? t('sidePanel') : t('tabTafsir')}><Icon name={wide ? 'panel' : 'book'} size={19} /></button>
-              <a class="icon-btn small bar-act bar-study" href={href.verse(barAt.surah, barAt.ayah)} aria-label={t('navStudy')} title={t('navStudy')}><Icon name="study" size={19} /><span class="bar-label">{t('navStudy')}</span></a>
+              <a class="icon-btn small bar-act bar-study" href={href.verse(studyAt.surah, studyAt.ayah)} aria-label={t('navStudy')} title={t('navStudy')}><Icon name="study" size={19} /><span class="bar-label">{t('navStudy')}</span></a>
               <button class="icon-btn small bar-act bar-zen" onClick={() => setZen(true)} aria-label={t('studyFocus')} title={t('studyFocus')}><Icon name="zen" size={19} /><span class="bar-label">{t('studyFocusLabel')}</span></button>
             </div>
             {turnButtons ? (

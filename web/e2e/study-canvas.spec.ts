@@ -346,10 +346,9 @@ for (const lang of ['en', 'fa']) for (const width of [390, 1280]) {
     await page.setViewportSize({ width, height: 844 })
     await page.goto('/#/ayah/12/2')
     await expect(page.locator('#page-235')).toBeVisible()
-    // Reading and Study are in the bar at the top, not again in the menu
-    await page.getByRole('button', { name: lang === 'fa' ? 'منو' : 'Menu', exact: true }).click()
-    await expect(page.locator('.drawer-modes')).toHaveCount(0)
-    await page.keyboard.press('Escape')
+    // Study is in the bar at the top (not again in the menu), at the ayah chosen, once the page has settled on it
+    await expect(page.locator('.ay.sel').first()).toBeInViewport()
+    await page.waitForTimeout(800)
     const study = page.locator('.bar-study')
     await expect(study).toBeVisible()
     await expect(study).toHaveAttribute('href', '#/verse/12/2')

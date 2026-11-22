@@ -130,6 +130,8 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
   const page = useAsync(async () => (font && meta.lines && n > 2 ? (await hafsReady(), loadPageLines(meta, n)) : undefined), [font, n])
   const laid = useMemo(() => (page.value ? layoutLines(pg, strips, page.value) : undefined), [page.value, pg, strips])
   const fonted = !!laid && laid.length === bands.length
+  // until the words have come, the printed lines are covered in paper, so the page does not show its print and then change
+  const waiting = font && !!meta.lines && n > 2 && page.loading
   const paper = useAsync(async () => (fonted ? bandPaper(src, bands) : undefined), [fonted, src, bands])
   useFontLinesFit(root, [fonted, n, bands])
   let lineNo = -1
@@ -229,9 +231,9 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
           <Fragment key={s.top}>
             <div class="il-strip" style={{ paddingTop: `${(h / 1000) * ratio * 100}%` }}>
               <i class="pg-img il-pic" style={slice(s.top, h)} />
-              {fonted && s.line?.length ? (lineNo++, <FontLine tokens={laid![lineNo]!} band={bands[lineNo]!} box={s} paper={paper.value?.[lineNo]} />) : null}
+              {(fonted || waiting) && s.line?.length ? (lineNo++, <FontLine tokens={fonted ? laid![lineNo]! : []} band={bands[lineNo]!} box={s} paper={paper.value?.[lineNo]} />) : null}
               {/* the tips of the next line's printed letters reach up into the strip above it (the frame, a banner): hidden too */}
-              {fonted && !s.line?.length && strips[si + 1]?.line?.length && h > 14
+              {(fonted || waiting) && !s.line?.length && strips[si + 1]?.line?.length && h > 14
                 ? <FontLine tokens={[]} band={{ ...bands[lineNo + 1]!, top: s.bottom - 7, bottom: s.bottom - 3 }} box={s} paper={paper.value?.[lineNo + 1]} />
                 : null}
               {(s.line ?? []).map((seg) => {
@@ -258,7 +260,7 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
                 {paperRows(s) ? <i class="pg-img il-pic il-clean" style={paperRows(s)} /> : <span class="il-paper" style={paperBox} />}
                 {/* set in a font, the line above is covered in its paper from margin to margin (FontLine), the frame's thin
                     rule with it: the same cover here, so the rule does not show beside the translation alone */}
-                {fonted && lineOf.has(s) ? (() => { const b = bands[lineOf.get(s)!]!; return <span class="fl il-cover" aria-hidden="true" style={{ left: `${b.left / 10}%`, width: `${(b.right - b.left) / 10}%`, top: 0, height: '100%', background: paper.value?.[lineOf.get(s)!] }} /> })() : null}
+                {(fonted || waiting) && lineOf.has(s) ? (() => { const b = bands[lineOf.get(s)!]!; return <span class="fl il-cover" aria-hidden="true" style={{ left: `${b.left / 10}%`, width: `${(b.right - b.left) / 10}%`, top: 0, height: '100%', background: paper.value?.[lineOf.get(s)!] ?? 'var(--il-paper)' }} /> })() : null}
                 {words(row)}
               </div>
             ) : null}
