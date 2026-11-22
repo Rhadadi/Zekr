@@ -53,6 +53,14 @@ export function setSideWidth(r: number | null) {
   sideWidth.value = v
   try { v === null ? localStorage.removeItem('zekr.sideWidth') : localStorage.setItem('zekr.sideWidth', String(v)) } catch { /* a convenience only */ }
 }
+/** Whether the ayah's panel (translation and tafsir) shows beside the page in a wide window: at first yes, on the
+ * page's first ayah; once the reader hides it, it stays hidden until asked for again. */
+const savedSidePref = (() => { try { return localStorage.getItem('zekr.sidePanel') !== '0' } catch { return true } })()
+export const sidePref = signal(savedSidePref)
+export function setSidePref(on: boolean) {
+  sidePref.value = on
+  try { localStorage.setItem('zekr.sidePanel', on ? '1' : '0') } catch { /* a convenience only */ }
+}
 /** Whether the translation panel is open beside the page. */
 export const sideOpen = signal(false)
 /** The panel at the right is so wide that the page would be squeezed: the menu steps aside while it is open. */
@@ -82,6 +90,8 @@ export const sheetOpen = signal(false)
 
 /** Whether the "Go to…" box (Ctrl/Cmd-K, or the menu) is open. */
 export const gotoOpen = signal(false)
+/** The search box opened with Ctrl/Cmd-F. */
+export const findOpen = signal(false)
 
 /** Counts the times the drawer was asked for the mushaf's reading options (they used to have a button in the bar). */
 export const pageOptionsAsked = signal(0)

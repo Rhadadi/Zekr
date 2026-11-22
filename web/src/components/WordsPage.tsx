@@ -1,3 +1,4 @@
+import { quranText } from '../store'
 import { Fragment } from 'preact'
 import { memo } from 'preact/compat'
 import { type Meta, loadWbw, locate, pageRange } from '../data'
@@ -41,7 +42,7 @@ export const WordsPage = memo(function WordsPage({ meta, n, basmala, size, trSiz
     if (at.ayah === 1) {
       flush()
       out.push(<SurahBanner key={`b${at.surah}`} name={meta.surahs[at.surah - 1]!.ar} />)
-      if (at.surah !== 1 && at.surah !== 9) out.push(<p class="basmala" lang="ar" dir="rtl" key={`s${at.surah}`} style={{ fontSize: `${size}px` }}>{basmala}</p>)
+      if (at.surah !== 1 && at.surah !== 9) out.push(<p class="basmala" lang="ar" dir="rtl" key={`s${at.surah}`} style={{ fontSize: `${size}px` }}>{quranText(basmala)}</p>)
     }
     const words = bySurah.get(at.surah)?.[at.ayah - 1] ?? []
     run.push(
@@ -49,7 +50,7 @@ export const WordsPage = memo(function WordsPage({ meta, n, basmala, size, trSiz
         {words.map(([ar, fa], k) => (
           <Fragment key={k}>
             <span class={`wb c${colour++ % COLOURS}`}>
-              <span class="wb-ar" lang="ar">{ar}</span>
+              <span class="wb-ar" lang="ar">{quranText(ar)}</span>
               <span class="wb-fa" lang="fa" style={{ fontSize: `${trSize}px` }}>{fa}</span>
             </span>{' '}
           </Fragment>

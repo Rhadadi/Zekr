@@ -3,7 +3,7 @@ import { AyahMenu, type AyahMenuAt } from '../components/AyahMenu'
 import { memo } from 'preact/compat'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { player, playFrom } from '../audio'
-import { SIDE_MIN, drawerOpen, pageOptionsAsked, setSideWidth, sideMax, sideOpen, winWidth, zenMode } from '../ui'
+import { SIDE_MIN, setSidePref, sidePref, drawerOpen, pageOptionsAsked, setSideWidth, sideMax, sideOpen, winWidth, zenMode } from '../ui'
 import { AppBar, Logo } from '../components/AppBar'
 import { AyahPanel } from '../components/AyahPanel'
 import { Icon } from '../components/Icon'
@@ -19,7 +19,7 @@ import { useAsync, useWide } from '../hooks'
 import { bandPaper, pageStrips } from '../interlinear'
 import { ayahRef, num, surahName, t } from '../i18n'
 import { href } from '../router'
-import { type TranslationPlace, setLastRead, settings } from '../store'
+import { type TranslationPlace, setLastRead, settings, quranText } from '../store'
 
 const ARABIC_INDIC = '٠١٢٣٤٥٦٧٨٩'
 /** Ayah numbers inside the text use the traditional Arabic-Indic digits, as printed mushafs do. */
@@ -58,12 +58,12 @@ const MushafPage = memo(function MushafPage({ meta, n, ar, basmala, size, highli
       const surah = meta.surahs[at.surah - 1]!
       out.push(<SurahBanner key={`b${at.surah}`} name={surah.ar} />)
       if (at.surah !== 1 && at.surah !== 9) {
-        out.push(<p class="basmala" lang="ar" dir="rtl" key={`s${at.surah}`} style={{ fontSize: `${size}px` }}>{basmala}</p>)
+        out.push(<p class="basmala" lang="ar" dir="rtl" key={`s${at.surah}`} style={{ fontSize: `${size}px` }}>{quranText(basmala)}</p>)
       }
     }
     run.push(
       <span key={id} class={`ay${highlight === id ? ` ${kind}` : ''}`} data-id={id} role="button" tabIndex={0}>
-        {ar[id - 1]} <span class="mark">﴿{marker(at.ayah)}﴾</span>
+        {quranText(ar[id - 1] as string)} <span class="mark">﴿{marker(at.ayah)}﴾</span>
       </span>,
       ' ',
     )
@@ -249,6 +249,11 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   // The translation shows in a panel in the margin beside the page (wide screens, only while an ayah is open), in a box
   // at the bottom (phones), or in a card over the page under its ayah.
   const wide = useWide()
+  /** The reader hides the ayah's panel: beside the page this is remembered (it then opens only on a tap). */
+  const hidePanel = () => {
+    if (wide && panel?.kind === 'ayah') setSidePref(false)
+    setPanel(null)
+  }
   // "In the page": under each ayah on the text pages, under each line on the printed pages.
   const place: TranslationPlace = s.translationPlace === 'words' && !meta.wbw ? 'panel' : s.translationPlace
   const words = place === 'words'
@@ -443,7 +448,8 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   const pressAt = (target: EventTarget | null, toggle: boolean) => {
     const el = target instanceof Element ? target.closest<HTMLElement>('.ay') : null
     const id = el ? Number(el.dataset.id) : undefined
-    if (id) setPanel(toggle && selected === id ? null : { kind: 'ayah', id })
+    // beside the page (a wide window) the panel stays while the reader goes from ayah to ayah; a tap toggles it on a phone
+    if (id) toggle && selected === id ? (wide ? undefined : setPanel(null)) : setPanel({ kind: 'ayah', id })
     else setPanel(toggle && panel ? null : { kind: 'options' })
   }
   /** A right click or a long press: on an ayah its menu at that point, with the word there (if the page shows text) at
@@ -491,7 +497,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
         run={variant === 'box' && wide && place !== 'off' ? pageRun(id) : undefined}
         panelRef={variant === 'popup' ? popRef : undefined}
         onClose={() => {
-          setPanel(null)
+          hidePanel()
           setHoverId(undefined)
         }}
       />
@@ -524,7 +530,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   useLayoutEffect(() => {
     if (!sideBox) return
     const key = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !e.defaultPrevented && !drawerOpen.peek() && !document.querySelector('.mb-menu, .ayah-menu')) setPanel(null)
+      if (e.key === 'Escape' && !e.defaultPrevented && !drawerOpen.peek() && !document.querySelector('.mb-menu, .ayah-menu')) hidePanel()
     }
     document.addEventListener('keydown', key)
     const el = sideRef.current
@@ -560,7 +566,18 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
   // The bar's panel button shows and hides the ayah's panel: for the ayah chosen (or the first of the page). On a
   // computer it is the translation and tafsir panel beside the page; on a phone it opens on the tafsir.
   const ayahOpen = panel?.kind === 'ayah'
-  const togglePanel = () => setPanel(ayahOpen ? null : { kind: 'ayah', id: barAyah, tafsir: !wide })
+  const togglePanel = () => {
+    if (ayahOpen) return hidePanel()
+    if (wide) setSidePref(true)
+    setPanel({ kind: 'ayah', id: barAyah, tafsir: !wide })
+  }
+  // Beside the page the ayah's panel shows from the start (on the page's first ayah, and the next page's after a turn),
+  // unless the reader has hidden it
+  const showSide = wide && sidePref.value && !paused && !zen && ready
+  useEffect(() => {
+    if (showSide && panel === null) setPanel({ kind: 'ayah', id: pageRange(meta, current).first })
+  }, [showSide, panel, current])
+  const barAt = locate(meta, barAyah)
   const surahOfPage = meta.surahs[locate(meta, barAyah).surah - 1]!
   // the ayah that is chosen (or being recited), when it is on this page: "Al-Haqqa 52"; the number beside it is the page
   const barAyahNo = highlight !== undefined && pageOf(meta, highlight) === current ? locate(meta, highlight).ayah : undefined
@@ -614,7 +631,7 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
           // Surah, page and juz in the bar, each a button: the surah and the juz open a menu to pick from, the page
           // opens a field for its number. On the printed pages two small buttons turn to the previous and the next page
           // (the book is right to left: the next page is to the left).
-          <div class="mushaf-id" dir="rtl">
+          <div class="mushaf-id" dir="rtl" data-page={current}>
             {turnButtons ? (
               <button class="icon-btn small turn-prev" onClick={() => turnTo(current - 1)} disabled={current <= 1} aria-label={t('prevPage')}>
                 <Icon name="chevron" size={20} />
@@ -623,17 +640,16 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
             <button class="mb-surah" lang="ar" aria-haspopup="listbox" aria-expanded={menu === 'surah'} aria-label={`${t('surahs')}: ${surahName(surahOfPage)}${barAyahNo ? ` ${num(barAyahNo)}` : ''}`} onClick={() => { setPickSurah(null); setMenu(menu === 'surah' ? null : 'surah') }}>
               <span>{surahOfPage.ar}</span>{barAyahNo ? <span class="mb-ayah"> {num(barAyahNo)}</span> : null}
             </button>
-            {jumping ? (
-              jumpForm
-            ) : (
-              // the page number opens the surah's ayahs to jump to; typing a page is the page number at the foot of the page
-              <button class="mb-page" aria-haspopup="listbox" aria-expanded={menu === 'ayah'} onClick={() => { setPickSurah(null); setMenu(menu === 'ayah' ? null : 'ayah') }} aria-label={`${t('goToAyah')}: ${t('pageN', { n: current })}`}>
-                {t('pageShort')} {num(current)}
-              </button>
-            )}
+            {/* the juz (the page is at the foot of the page, where its number opens a field to type one) */}
+            <button class="mb-page mb-juz" aria-haspopup="listbox" aria-expanded={menu === 'juz'} onClick={() => { setPickSurah(null); setMenu(menu === 'juz' ? null : 'juz') }} aria-label={`${t('juz')}: ${t('juzN', { n: juzOfPage })}`}>
+              {t('juzN', { n: juzOfPage })}
+            </button>
             <button class="icon-btn small bar-act bar-tafsir" onClick={togglePanel} aria-pressed={ayahOpen}
               aria-label={wide ? t('sidePanel') : t('tabTafsir')} title={wide ? t('sidePanel') : t('tabTafsir')}><Icon name={wide ? 'panel' : 'book'} size={20} /></button>
-            <button class="icon-btn small bar-act bar-zen" onClick={() => setZen(true)} aria-label={t('studyFocus')} title={t('studyFocus')}><Icon name="focus" size={20} /></button>
+            {/* two different ways of reading, each with its own sign and (on a computer) its name: Study (the ayah
+                with its translation and commentary, one after the other) and Zen (only the page, nothing around it) */}
+            <a class="icon-btn small bar-act bar-study" href={href.verse(barAt.surah, barAt.ayah)} aria-label={t('navStudy')} title={t('navStudy')}><Icon name="study" size={20} /><span class="bar-label">{t('navStudy')}</span></a>
+            <button class="icon-btn small bar-act bar-zen" onClick={() => setZen(true)} aria-label={t('studyFocus')} title={t('studyFocus')}><Icon name="zen" size={20} /><span class="bar-label">{t('studyFocusLabel')}</span></button>
             {turnButtons ? (
               <button class="icon-btn small turn-next" onClick={() => turnTo(current + 1)} disabled={current >= PAGES} aria-label={t('nextPage')}>
                 <Icon name="chevron" size={20} />
@@ -642,6 +658,8 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
           </div>
         }
       />
+      {/* Go to page: the page number at the foot of the page (or Go to page in the menu and the reading options) opens it here */}
+      {jumping ? <div class="page-jump" onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); setJumping(false) } }}>{jumpForm}</div> : null}
       {zen ? <button class="zen-exit" onClick={() => setZen(false)} aria-label={t('studyExitFocus')} title={t('studyExitFocus')}><Icon name="close" size={18} /></button> : null}
       {menu ? (
         <>

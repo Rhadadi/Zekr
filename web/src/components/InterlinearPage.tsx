@@ -4,7 +4,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { type Meta, type MushafPageMap, loadPageLines, locate, mushafImage, PAGE_TRIM } from '../data'
 import { useAsync } from '../hooks'
 import { num, t } from '../i18n'
-import { type Piece, type Strip, balanceTranslationRows, translationWords, bandPaper, lineTranslations, pageInk, pageStrips } from '../interlinear'
+import { type Piece, type Strip, balanceTranslationRows, translationWords, bandPaper, lineTranslations, pageFrame, pageInk, pageStrips } from '../interlinear'
 import { FontLine, hafsReady, layoutLines, textBands, useFontLinesFit } from './FontLines'
 
 interface Props {
@@ -54,6 +54,9 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
   const n = pg.n
   const src = mushafImage(meta, n)
   const ink = useAsync(() => pageInk(src), [src]).value
+  const frame = useAsync(() => pageFrame(src), [src]).value
+  // the paper under a translation reaches the frame's band, over the thin rule inside it (see paperEdges)
+  const paperBox = frame ? { left: `${frame.left * 100}%`, right: `${(1 - frame.right) * 100}%` } : undefined
   const strips = useMemo(() => pageStrips(pg, ink), [pg, ink])
   const pieces = useMemo(() => lineTranslations(pg, strips, tr.texts), [pg, strips, tr.texts])
   const [reflow, setReflow] = useState<{ source: typeof pieces; rows: typeof pieces }>()
@@ -183,7 +186,7 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
               <div class="il-tr" data-word-source={tr.id} dir={tr.dir} lang={tr.lang} title={t('enlargeTranslation')}>
                 {/* the frame goes on down the sides: the line's own strip of the picture, stretched to the box's height */}
                 <i class="pg-img il-pic il-frame" style={slice(s.top, h)} />
-                <span class="il-paper" />
+                <span class="il-paper" style={paperBox} />
                 {words(row)}
               </div>
             ) : null}

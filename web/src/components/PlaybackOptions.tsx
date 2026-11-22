@@ -3,7 +3,7 @@ import { lang, t } from '../i18n'
 import { audioTranslations, reciters } from '../reciters'
 import { settings, updateSettings } from '../store'
 
-const SPEEDS = [0.75, 1, 1.25, 1.5, 2]
+export const SPEEDS = [0.75, 1, 1.25, 1.5, 2]
 const REPEATS = [1, 2, 3, 5, 10]
 const PLAY_TO: [PlayTo, 'toAyah' | 'toPage' | 'toSurah' | 'toJuz' | 'toRub' | 'toQuran'][] = [
   ['ayah', 'toAyah'], ['page', 'toPage'], ['surah', 'toSurah'], ['juz', 'toJuz'], ['rub', 'toRub'], ['quran', 'toQuran'],

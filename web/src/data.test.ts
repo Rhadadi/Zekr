@@ -60,9 +60,9 @@ describe.skipIf(!existsSync(file))('Quran data', () => {
 })
 
 describe('tanween as printed', () => {
-  it('drops the small low meem after a merging tanween and writes an iqlab as one vowel with the small meem', () => {
+  it('leaves no small meem under or over the words: the vowels alone', () => {
     expect(printedTanween('صِرَٰطًۭا مُّسْتَقِيمًۭا')).toBe('صِرَٰطًا مُّسْتَقِيمًا')
-    expect(printedTanween('وَلَدٌۭ صَيِّبٍۢ عَلِيمٌۢ')).toBe('وَلَدٌ صَيِّبِۢ عَلِيمُۢ')
-    expect(printedTanween('مِنۢ بَعْدِ')).toBe('مِنۢ بَعْدِ')
+    expect(printedTanween('وَلَدٌۭ صَيِّبٍۢ لَغَفُورٌ رَّحِيمٌۢ')).toBe('وَلَدٌ صَيِّبٍ لَغَفُورٌ رَّحِيمٌ')
+    expect(printedTanween('مِنۢ بَعْدِ')).toBe('مِن بَعْدِ')
   })
 })

@@ -1,6 +1,6 @@
 import { signal } from '@preact/signals'
 import type { PlayTo, Script } from './data'
-import { DEFAULT_QURAN_FONT, type QuranFont } from './fonts'
+import { fitToFont, DEFAULT_QURAN_FONT, type QuranFont } from './fonts'
 import type { Period } from './rotation'
 
 export interface DailySettings {
@@ -162,3 +162,6 @@ export function setLastRead(surah: number, ayah: number) {
   lastRead.value = { surah, ayah }
   write('zekr.lastRead', lastRead.value)
 }
+
+/** Quran text as the chosen font can draw it (see fitToFont). */
+export const quranText = (text: string): string => fitToFont(text, settings.value.quranFont)

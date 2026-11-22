@@ -5,7 +5,7 @@ import { type Meta, type TranslationInfo } from '../data'
 import { lang, num, t } from '../i18n'
 import { href } from '../router'
 import { ayahLink, ayahText, copyText, shareImage, shareText } from '../share'
-import { isBookmarked, toggleBookmark } from '../store'
+import { isBookmarked, quranText, toggleBookmark } from '../store'
 import { tafsirIndex } from '../tafsir'
 import { classicsIndex } from '../classics'
 import { Icon } from './Icon'
@@ -41,7 +41,7 @@ export function StudyVerse({ meta, surah, n, ar, translations, active, playing, 
   const [tafsirOpen, setTafsirOpen] = useState(false)
   const hasTafsir = !!(meta.studyQuran || tafsirIndex.value || classicsIndex.value)
   return <article class={`ayah study-ayah${playing ? ' playing' : ''}${focused ? ' focused' : ''}`} aria-label={t('ayahN', { n })} id={`a-${n}`} data-ayah={n} data-id={id} onClick={onSelect}>
-    <p class="ar study-ar" lang="ar" dir="rtl">{ar}<button class="study-marker" lang={lang.value} aria-label={t('more')} title={t('more')} aria-expanded={more} onClick={() => setMore(!more)}>{num(n)}</button></p>
+    <p class="ar study-ar" lang="ar" dir="rtl">{quranText(ar)}<button class="study-marker" lang={lang.value} aria-label={t('more')} title={t('more')} aria-expanded={more} onClick={() => setMore(!more)}>{num(n)}</button></p>
     {more ? <div class="study-more">
       <button aria-label={sounding ? t('pause') : t('play')} aria-pressed={sounding} onClick={e => { e.stopPropagation(); onSelect(); if (!sounding) onPlay(); toggleAyah(id) }}><Icon name={sounding ? 'pause' : 'play'} size={17} />{sounding ? t('pause') : t('playThisAyah')}</button>
       <button onClick={() => toggleBookmark(id)} aria-pressed={saved}>{saved ? t('unbookmark') : t('bookmark')}</button>

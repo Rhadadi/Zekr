@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'preact/hooks'
 import { initAudio } from './audio'
 import { AppBar, Logo } from './components/AppBar'
 import { Drawer } from './components/Drawer'
+import { FindBox } from './components/QuickSearch'
 import { GoTo } from './components/GoTo'
 import { Icon } from './components/Icon'
 import { LoadError, Loading } from './components/Page'
@@ -144,6 +145,7 @@ export function App() {
       {meta.value ? <PlayerBar meta={meta.value} study={layer?.name === 'study'} /> : null}
       <Drawer meta={meta.value} active={active} onMushaf={!layer} />
       {meta.value ? <GoTo meta={meta.value} /> : null}
+      {meta.value ? <FindBox meta={meta.value} /> : null}
       {meta.value ? <WordActions meta={meta.value} /> : null}
       {toast.value ? <div class="toast" role="status">{toast.value}</div> : null}
     </div>

@@ -20,6 +20,10 @@ const stroked = {
   book: 'M4 4h6a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4zM20 4h-6a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h6z',
   focus: 'M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5M8 12h8',
   panel: 'M4 4h16v16H4zM14 4v16M16.5 8h1M16.5 11h1',
+  grip: 'M9 6h.01M9 12h.01M9 18h.01M15 6h.01M15 12h.01M15 18h.01',
+  dock: 'M4 4h16v3H4zM12 20v-9M8 15l4-4 4 4',
+  zen: 'M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5',
+  study: 'M2 9.5l10-5 10 5-10 5zM6 11.5v4.5c3 2.2 9 2.2 12 0v-4.5M21 10v5.5',
 } as const
 
 const filled = {

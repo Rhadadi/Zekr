@@ -7,7 +7,7 @@ import { ayahRef, num, t } from '../i18n'
 import { href } from '../router'
 import { highlight } from '../search'
 import { copyText, ayahLink, ayahText, shareText } from '../share'
-import { isBookmarked, settings, toggleBookmark } from '../store'
+import { isBookmarked, settings, toggleBookmark, quranText } from '../store'
 import { tafsirIndex } from '../tafsir'
 import { Icon } from './Icon'
 import { StudyChips } from './StudyQuranPanel'
@@ -94,7 +94,7 @@ function AyahCardView({ meta, id, ar, translations, playing, focused, showRef, q
         </div>
       </div>
       <p class="ar" lang="ar" dir="rtl" style={{ fontSize: `${s.arabicSize}px` }}>
-        <Marked text={ar} query={arQuery ?? query} wordMatches={wordMatches} />
+        <Marked text={quranText(ar)} query={arQuery ?? query} wordMatches={wordMatches} />
       </p>
       {translations.map((x, i) => (
         <div class="tr-block" key={x.info.id}>

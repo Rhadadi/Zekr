@@ -76,4 +76,9 @@ describe('smart search', () => {
     expect(variants.search('زنان').hits.map(hit => hit.id)).toEqual([6])
     expect(highlight('زنان، زنا', 'زنا', true).filter(part => part.hit).map(part => part.text)).toEqual(['زنا'])
   })
+  it('matches a half-typed last word by its beginning when asked to (search as one types)', () => {
+    expect(engine.search('tra', { typing: true }).hits.map(hit => hit.id).sort()).toEqual([1, 5])
+    expect(engine.search('tra').total).toBe(0)
+    expect(engine.search('كت', { typing: true }).hits.map(hit => hit.id).sort()).toEqual([3, 4])
+  })
 })

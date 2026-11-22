@@ -21,6 +21,14 @@ export const QURAN_FONTS: readonly QuranFontInfo[] = [
 
 export const DEFAULT_QURAN_FONT: QuranFont = 'hafs'
 
+/** KFGQPC Naskh is made for the plain (imla'i) spelling and has none of the Uthmani text's small marks: the small waw
+ * and yeh, the pause signs, the small meem, the hizb and sajdah signs. Borrowed from another font they sit in the wrong
+ * place and break the word, so with Naskh they are left out. The other fonts have them all. */
+const NASKH_MISSING = /[\u06D6-\u06DC\u06DE\u06E2\u06E3\u06E5-\u06ED]/g
+export function fitToFont(text: string, font: string): string {
+  return font === 'naskh' ? text.replace(NASKH_MISSING, '') : text
+}
+
 export function quranFontInfo(id: string): QuranFontInfo {
   return QURAN_FONTS.find((f) => f.id === id) ?? (QURAN_FONTS[0] as QuranFontInfo)
 }

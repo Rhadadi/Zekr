@@ -99,13 +99,12 @@ export function loadMeta(): Promise<Meta> {
 
 const arrays = new Map<string, Promise<string[]>>()
 
-const SINGLE: Record<string, string> = { '\u064B': '\u064E', '\u064C': '\u064F', '\u064D': '\u0650' }
 /** The Uthmani text (Tanzil) marks a tanween that merges into the next letter with a small low meem after it, and an
- * iqlab with a small high meem after the tanween. The Quran fonts draw that low meem as a letter of its own (an extra
- * "م" under the word), and the printed mushaf writes an iqlab as one vowel with the small meem. So: the tanween alone,
- * and the iqlab as printed. (Search and word lookups fold these marks away, so they are unaffected.) */
+ * iqlab with a small high meem (after a tanween, or over a noon). The Quran fonts draw them as small "م" letters under
+ * and over the words, which the owner does not want on the page: the vowels alone. (Search and word lookups fold these
+ * marks away, so they are unaffected.) */
 export function printedTanween(text: string): string {
-  return text.replace(/([\u064B-\u064D])\u06ED/g, '$1').replace(/([\u064B-\u064D])\u06E2/g, (_, t: string) => `${SINGLE[t]}\u06E2`)
+  return text.replace(/[\u06E2\u06ED]/g, '')
 }
 
 function loadArray(path: string, refresh = false): Promise<string[]> {

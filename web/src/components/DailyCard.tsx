@@ -6,7 +6,7 @@ import { ayahRef, t } from '../i18n'
 import { currentSlot } from '../rotation'
 import { href } from '../router'
 import { ayahLink, ayahText, copyText, shareText } from '../share'
-import { settings } from '../store'
+import { settings, quranText } from '../store'
 import { Icon } from './Icon'
 
 /** The ayah of the day (or hour): the Arabic, its translation, where it is from, and a few actions. */
@@ -39,7 +39,7 @@ export function DailyCard({ meta, showSettingsLink = false }: { meta: Meta; show
           </a>
         ) : null}
       </div>
-      <p class="ar feature-ar" lang="ar" dir="rtl" style={{ fontSize: `${Math.max(26, s.arabicSize)}px` }}>{d.ar}</p>
+      <p class="ar feature-ar" lang="ar" dir="rtl" style={{ fontSize: `${Math.max(26, s.arabicSize)}px` }}>{quranText(d.ar)}</p>
       {d.fa !== undefined ? <p class="feature-tr" lang="fa" dir="rtl" style={{ fontSize: `${s.trSize}px` }}>{d.fa || t('mergedTranslation')}</p> : null}
       {d.en !== undefined ? <p class="feature-tr" lang="en" dir="ltr" style={{ fontSize: `${s.trSize}px` }}>{d.en || t('mergedTranslation')}</p> : null}
       <div class="feature-foot">

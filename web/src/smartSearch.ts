@@ -94,7 +94,8 @@ export class SearchEngine {
     return [...new Set([`${stem}ي`, `${stem}و`, `${stem}وا`].flatMap(lookup))]
       .filter(id => /[ويى]$/.test(this.morphology!.roots[id]!))
   }
-  search(input: string, options: { mode?: SearchMode; first?: number; last?: number; limit?: number; fields?: string[] } = {}): SearchResult {
+  /** `typing`: the last word may be half typed, so it also matches the words that begin with it (results as one types). */
+  search(input: string, options: { mode?: SearchMode; first?: number; last?: number; limit?: number; fields?: string[]; typing?: boolean } = {}): SearchResult {
     const explicitRoot = /^(?:root|ریشه|جذر)\s*:/iu.test(input.trim())
     const query = input.trim().replace(/^(?:root|ریشه|جذر)\s*:/iu, '')
     const mode = explicitRoot ? 'root' : options.mode ?? 'smart'
@@ -113,10 +114,11 @@ export class SearchEngine {
         const matches = new Map<number, { score: number; text: boolean }>()
         if (mode !== 'root') {
           const candidates = [term]
-          if (mode === 'smart' && term.length >= 4 && field.key !== 'ar') {
+          const typed = !!options.typing && k === terms.length - 1 && term.length >= 2
+          if ((mode === 'smart' && term.length >= 4 && field.key !== 'ar') || typed) {
             for (const word of field.postings.keys()) {
               if (word !== term && word.startsWith(term)) candidates.push(word)
-              if (candidates.length >= 100) break
+              if (candidates.length >= (typed ? 200 : 100)) break
             }
           }
           for (const word of candidates) {
@@ -149,7 +151,8 @@ export class SearchEngine {
         if (best.has(id) && best.get(id)!.score >= score) continue
         const matchingRoots = [...rootIds].filter(root => this.rootAyahs.get(root)?.has(id))
         const arabicText = this.fields.find(value => value.key === 'ar')?.texts[id - 1] ?? ''
-        const matchedWords = words(arabicText).filter(word => terms.includes(word) || this.rootsFor(word).some(root => matchingRoots.includes(root)))
+        const lastTerm = options.typing ? terms[terms.length - 1]! : ''
+        const matchedWords = words(arabicText).filter(word => terms.includes(word) || (lastTerm.length >= 2 && word.startsWith(lastTerm)) || this.rootsFor(word).some(root => matchingRoots.includes(root)))
         best.set(id, { id, key: field.key, match, score, words: [...new Set(matchedWords)], roots: matchingRoots.map(root => this.morphology!.roots[root]!) })
       }
     }

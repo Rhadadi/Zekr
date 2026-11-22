@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef } from 'preact/hooks'
 import { type Meta, locate } from '../data'
-import { t } from '../i18n'
+import { num, t } from '../i18n'
 import { type LayerName, href, mushafAt } from '../router'
 import { lastRead } from '../store'
 import { useDocked } from '../hooks'
@@ -8,6 +8,7 @@ import { dockCrowded, dockOpen, drawerOpen, drawerSection, gotoOpen, pageOptions
 import { Logo } from './AppBar'
 import { Icon } from './Icon'
 import { MenuSettings } from './MenuSettings'
+import { QuickSearch } from './QuickSearch'
 
 /** The menu: everything in one panel. At the top the name (back to the mushaf), a search field, Today and Saved, and
  * on the mushaf its reading options; below them all the settings, recitation included, to change in place. It opens
@@ -116,17 +117,21 @@ export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active
             <Icon name="book" size={20} /><strong>{t('navReading')}</strong>
           </a>
           <a href={studyHref} aria-label={t('navStudy')} aria-current={active === 'study' ? 'page' : undefined} onClick={nav ? e => nav(e, studyHref) : undefined}>
-            <Icon name="focus" size={20} /><strong>{t('navStudy')}</strong>
+            <Icon name="study" size={20} /><strong>{t('navStudy')}</strong>
           </a>
         </nav>
-        <form class="drawer-search" role="search" onSubmit={(e) => {
-          e.preventDefault()
-          const q = new FormData(e.currentTarget).get('q')?.toString().trim() ?? ''
-          navTo(href.search(q))
-        }}>
-          <input type="search" name="q" enterKeyHint="search" placeholder={t('searchPlaceholder')} aria-label={t('navSearch')} />
-          <button type="submit" class="icon-btn" aria-label={t('navSearch')}><Icon name="search" size={20} /></button>
-        </form>
+        {meta ? <QuickSearch meta={meta} go={navTo} /> : null}
+        {meta ? (
+          <form class="drawer-page" onSubmit={(e) => {
+            e.preventDefault()
+            const n = Number(new FormData(e.currentTarget).get('page'))
+            if (Number.isInteger(n) && n >= 1 && n <= 604) navTo(href.page(n))
+          }}>
+            <label for="drawer-page">{t('pageNumber')}</label>
+            <input id="drawer-page" name="page" type="number" min={1} max={604} inputMode="numeric" enterKeyHint="go" placeholder={`${num(1)}–${num(604)}`} />
+            <button type="submit" class="mb-go">{t('go')}</button>
+          </form>
+        ) : null}
         <nav class="drawer-links" aria-label="Main">
           <button class="drawer-item" onClick={() => { if (closeAfter) close(); gotoOpen.value = true }}>
             <Icon name="goto" size={20} />

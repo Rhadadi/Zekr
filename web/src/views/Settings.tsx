@@ -6,7 +6,7 @@ import { QURAN_FONTS } from '../fonts'
 import { useWide } from '../hooks'
 import { lang, t } from '../i18n'
 import { href } from '../router'
-import { type PageColor, type TranslationPlace, pickFont, settings, updateSettings } from '../store'
+import { type PageColor, type TranslationPlace, pickFont, settings, updateSettings, quranText } from '../store'
 
 /** The translations to show, Persian then English: a pill for each, on or off (a checkbox inside, for screen readers).
  * The translator's full name is the pill's tooltip. */
@@ -127,7 +127,7 @@ export function SettingsView({ meta }: { meta: Meta }) {
         </label>
       </div>
       <div class="sample card">
-        <p class="ar" lang="ar" dir="rtl" style={{ fontSize: `${s.arabicSize}px` }}>{meta.basmala[s.script]}</p>
+        <p class="ar" lang="ar" dir="rtl" style={{ fontSize: `${s.arabicSize}px` }}>{quranText(meta.basmala[s.script])}</p>
         <p class="tr" lang={lang.value} style={{ fontSize: `${s.trSize}px` }}>{lang.value === 'fa' ? 'به نام خداوند رحمتگر مهربان' : 'In the name of Allah, the Entirely Merciful, the Especially Merciful.'}</p>
       </div>
 

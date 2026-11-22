@@ -202,7 +202,8 @@ for (const lang of ['en', 'fa']) for (const theme of ['light', 'sepia', 'dark'])
     const text = await (await textResponse).json() as string[]
     const reader = page.locator('.study-reader')
     const ayah = reader.locator('article#a-282')
-    await expect(ayah.locator('.ar')).toContainText(text[288]!)
+    // as shown: without the small meem marks the fonts would draw as letters (data.ts printedTanween)
+    await expect(ayah.locator('.ar')).toContainText(text[288]!.replace(/[\u06E2\u06ED]/g, ''))
     await expect(ayah.locator('.tr')).not.toBeEmpty()
     await expect(reader.getByRole('button', { name: lang === 'fa' ? 'تنظیمات' : 'Settings', exact: true })).toBeVisible()
     for (const size of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {

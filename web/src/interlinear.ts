@@ -169,6 +169,77 @@ export function lineTranslations(pg: MushafPageMap, strips: Strip[], texts: stri
   return out
 }
 
+/** Where the paper inside the frame begins and ends, in fractions of the picture's width, from how much of each column
+ * is ink (0 to 1). Going out from the text, the first column that is mostly ink is the frame: either its band, or a thin
+ * rule a pixel or two inside the band with a column of paper between them. The rule is taken into the paper (a
+ * translation's row, the line's strip stretched, would draw it as a bar beside the words); the band is not. */
+export function paperEdges(cols: ArrayLike<number>): { left: number; right: number } | undefined {
+  const w = cols.length
+  const side = (from: number, to: number, step: 1 | -1) => {
+    for (let x = from; x !== to; x += step) {
+      if (cols[x]! <= 0.6) continue
+      for (let g = x + step, k = 0; k < 4 && g !== to; g += step, k++) {
+        if (cols[g]! < 0.25) return (cols[g + step] ?? 0) > 0.6 ? g : x
+      }
+      return x
+    }
+    return undefined
+  }
+  const l = side(Math.round(w * 0.12), Math.round(w * 0.03), -1)
+  const r = side(Math.round(w * 0.88), Math.round(w * 0.97), 1)
+  if (l === undefined || r === undefined) return undefined
+  // the paper covers the gap column itself (it is paper), and nothing of the band
+  const left = cols[l]! > 0.6 ? l + 1 : l
+  const right = cols[r]! > 0.6 ? r : r + 1
+  return { left: left / w, right: right / w }
+}
+
+const frames = new Map<string, Promise<{ left: number; right: number } | undefined>>()
+
+/** The paper's edges inside a page's frame (`paperEdges`), once a picture. */
+export function pageFrame(src: string): Promise<{ left: number; right: number } | undefined> {
+  let p = frames.get(src)
+  if (!p) {
+    p = new Promise((resolve) => {
+      const img = new Image()
+      img.onload = () => {
+        const w = img.naturalWidth
+        const h = img.naturalHeight
+        const g = document.createElement('canvas').getContext('2d', { willReadFrequently: true })
+        if (!g || !w || !h) return resolve(undefined)
+        g.canvas.width = w
+        g.canvas.height = h
+        g.drawImage(img, 0, 0)
+        const d = g.getImageData(0, 0, w, h).data
+        // the paper: the colour in the middle of the page, between the lines (the lightest of a few samples)
+        let best = -1
+        let paper = [255, 255, 255]
+        for (let y = Math.round(h * 0.3); y < h * 0.7; y += 11) {
+          const i = (y * w + Math.round(w / 2)) * 4
+          const lum = d[i]! + d[i + 1]! + d[i + 2]!
+          if (lum > best) { best = lum; paper = [d[i]!, d[i + 1]!, d[i + 2]!] }
+        }
+        const y0 = Math.round(h * 0.1)
+        const y1 = Math.round(h * 0.95)
+        const cols = new Float32Array(w)
+        for (let x = 0; x < w; x++) {
+          let n = 0
+          for (let y = y0; y < y1; y++) {
+            const i = (y * w + x) * 4
+            if (Math.abs(d[i]! - paper[0]!) + Math.abs(d[i + 1]! - paper[1]!) + Math.abs(d[i + 2]! - paper[2]!) > 60) n++
+          }
+          cols[x] = n / (y1 - y0)
+        }
+        resolve(paperEdges(cols))
+      }
+      img.onerror = () => resolve(undefined)
+      img.src = src
+    })
+    frames.set(src, p)
+  }
+  return p
+}
+
 const inks = new Map<string, Promise<Float32Array | undefined>>()
 
 /** For each row of pixels of a page's picture, how much of it inside the frame is ink: a surah banner's border is a row

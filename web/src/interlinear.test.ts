@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { MushafPageMap } from './data'
-import { balanceTranslationRows, translationWords, lineTranslations, pageStrips, splitAcross } from './interlinear'
+import { balanceTranslationRows, translationWords, lineTranslations, pageStrips, paperEdges, splitAcross } from './interlinear'
 
 // A made-up page: three lines; ayah 10 fills line 1 and the right half of line 2, ayah 11 the rest; line 3 is a
 // banner (no ayahs) between lines 2 and 4.
@@ -109,3 +109,25 @@ describe('on the real printed pages (when assets/mushaf is there)', async () => 
     }
   })
 })
+
+describe('paperEdges', () => {
+  // a page 100 columns wide: the band, a column of paper, a thin rule, then paper and text
+  const page = (left: number[], right: number[]) => {
+    const cols = new Array(100).fill(0)
+    left.forEach((v, i) => (cols[i] = v))
+    right.forEach((v, i) => (cols[100 - right.length + i] = v))
+    cols.fill(0.3, 20, 80) // text, never most of a column
+    return cols
+  }
+  it('takes the thin rule inside the band into the paper, and none of the band', () => {
+    const e = paperEdges(page([1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0], [0, 0, 1, 0, 1, 1, 1, 1, 1]))!
+    expect(e.left).toBeCloseTo(0.06)
+    expect(e.right).toBeCloseTo(0.95)
+  })
+  it('stops at a band with no rule inside it', () => {
+    const e = paperEdges(page([1, 1, 1, 1, 1, 1, 1, 0, 0, 0], [0, 0, 0, 1, 1, 1, 1, 1]))!
+    expect(e.left).toBeCloseTo(0.07)
+    expect(e.right).toBeCloseTo(0.95)
+  })
+})
+

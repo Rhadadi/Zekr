@@ -12,7 +12,7 @@ import { type Meta, loadText, loadTranslation } from '../data'
 import { useAsync } from '../hooks'
 import { lang, num, surahName, t } from '../i18n'
 import { closeLayer, href } from '../router'
-import { setLastRead, settings } from '../store'
+import { setLastRead, settings, quranText } from '../store'
 import { drawerOpen, openDrawer } from '../ui'
 
 /** A continuous edition; listening follows ayahs without changing the text's geometry. */
@@ -168,7 +168,7 @@ export function StudyView({ meta, surahId, ayah }: { meta: Meta; surahId: number
     {focusMode ? <nav class="study-zen-controls" aria-label={t('navStudy')}><button aria-label={t('previous')} disabled={current <= 1} onClick={() => navigate(current - 1)}><Icon name="chevron" size={18} /></button><button onClick={changeFocus}>{t('studyExitFocus')}</button><button aria-label={t('next')} disabled={current >= surah.ayahs} onClick={() => navigate(current + 1)}><Icon name="chevron" size={18} /></button></nav> : null}
     <div class="study-content">
       {data.error ? <LoadError retry={data.retry} /> : !data.value ? <Loading /> : <div class="ayahs">
-        {surahId !== 1 && surahId !== 9 ? <p class="basmala" lang="ar" dir="rtl">{meta.basmala[s.script]}</p> : null}
+        {surahId !== 1 && surahId !== 9 ? <p class="basmala" lang="ar" dir="rtl">{quranText(meta.basmala[s.script])}</p> : null}
         {Array.from({ length: surah.ayahs }, (_, i) => {
           const id = surah.first + i
           return <StudyVerse key={id} meta={meta} surah={surahId} n={i + 1} ar={data.value!.ar[id - 1]!}
