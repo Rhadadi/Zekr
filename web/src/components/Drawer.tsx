@@ -1,3 +1,4 @@
+import { asciiDigits } from '../goto'
 import { useEffect, useLayoutEffect, useRef } from 'preact/hooks'
 import { type Meta, locate } from '../data'
 import { num, t } from '../i18n'
@@ -124,11 +125,11 @@ export function Drawer({ meta, active, onMushaf = false }: { meta?: Meta; active
         {meta ? (
           <form class="drawer-page" onSubmit={(e) => {
             e.preventDefault()
-            const n = Number(new FormData(e.currentTarget).get('page'))
+            const n = Number(asciiDigits(String(new FormData(e.currentTarget).get('page') ?? '')).trim())
             if (Number.isInteger(n) && n >= 1 && n <= 604) navTo(href.page(n))
           }}>
             <label for="drawer-page">{t('pageNumber')}</label>
-            <input id="drawer-page" name="page" type="number" min={1} max={604} inputMode="numeric" enterKeyHint="go" placeholder={`${num(1)}–${num(604)}`} />
+            <input id="drawer-page" name="page" type="text" pattern="[0-9۰-۹٠-٩]*" autoComplete="off" inputMode="numeric" enterKeyHint="go" placeholder={`${num(1)}–${num(604)}`} />
             <button type="submit" class="mb-go">{t('go')}</button>
           </form>
         ) : null}

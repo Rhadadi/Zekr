@@ -114,7 +114,7 @@ export function SettingsView({ meta }: { meta: Meta }) {
           </select>
         </label>
         <label class="field">
-          <span>{t('arabicSize')}</span>
+          <span>{t('arabicSize')}{meta.mushaf ? <small class="muted"> · {t('arabicSizeWhere')}</small> : null}</span>
           <input type="range" min={22} max={52} step={1} value={s.arabicSize} onInput={(e) => updateSettings({ arabicSize: Number(e.currentTarget.value) })} />
         </label>
         <label class="field">

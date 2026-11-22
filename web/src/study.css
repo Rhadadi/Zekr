@@ -55,6 +55,15 @@
 .study-toolbar :is(button,a):hover { color: var(--study-ink); background: color-mix(in srgb, var(--study-ink) 5%, transparent); }
 .study-toolbar button:disabled { opacity: .35; cursor: default; }
 .study-toolbar svg { stroke-width: 1.6; }
+.study-toolbar .study-close { gap: 6px; margin-inline-end: 6px; padding-inline: 10px 14px; border: 1px solid var(--study-line); border-radius: 999px; color: var(--study-ink); }
+.study-toolbar .study-close:hover { border-color: var(--study-accent); color: var(--study-accent); }
+/* on a computer the close is in the outer corner with its name; on a tablet or phone the header is laid out tight, and
+   it stays beside the logo */
+.study-toolbar .study-close-narrow { display: none; }
+@media (max-width: 899px) {
+  .study-toolbar .study-close { display: none; }
+  .study-toolbar .study-close-narrow { display: inline-flex; }
+}
 .study-toolbar .study-focus[aria-pressed='true'] { color: var(--study-accent); background: var(--study-wash); }
 .study-toolbar .study-brand { flex-direction: column; gap: 1px; padding: 0; border-radius: 0; }
 .study-brand-symbol { position: relative; display: block; width: 96px; height: 52px; }
@@ -178,7 +187,8 @@
 @media (max-width: 1119px) {
   .study-layer, .app.study-active { --study-column: min(740px, calc(100vw - 64px)); }
   .study-toolbar { gap: 12px; padding-inline: 24px; }
-  .study-toolbar .study-settings span, .study-focus span { display: none; }
+  .study-toolbar .study-settings span, .study-focus span, .study-close span { display: none; }
+  .study-toolbar .study-close { padding-inline: 8px; }
   .app.study-active .player { left: 20px; right: 20px; width: calc(100vw - 40px); grid-template-columns: minmax(90px, 1fr) auto; gap: 4px 12px; padding: 8px 16px; }
   .app.study-active .commentary-seek { grid-column: 1 / -1; }
 }

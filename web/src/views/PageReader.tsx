@@ -1,3 +1,4 @@
+import { asciiDigits } from '../goto'
 import { wordAtPoint, wordGestureActive } from '../wordSelection'
 import { AyahMenu, type AyahMenuAt } from '../components/AyahMenu'
 import { memo } from 'preact/compat'
@@ -608,13 +609,14 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
       class="mb-jump"
       onSubmit={(e) => {
         e.preventDefault()
-        goPage(Number(new FormData(e.currentTarget).get('page')))
+        goPage(Number(asciiDigits(String(new FormData(e.currentTarget).get('page') ?? '')).trim()))
       }}
     >
       {/* The iPhone's number pad has no Go key: a Go button, and leaving the field (Done) goes there too */}
-      <input name="page" type="number" min={1} max={PAGES} defaultValue={current} autofocus aria-label={t('goToPage')} inputMode="numeric" enterKeyHint="go"
+      {/* text, not number: a number field takes no Persian digits (۳۰۰) */}
+      <input name="page" type="text" pattern="[0-9۰-۹٠-٩]*" defaultValue={num(current)} autofocus onFocus={(e) => e.currentTarget.select()} aria-label={t('goToPage')} inputMode="numeric" enterKeyHint="go"
         onBlur={(e) => {
-          const v = Number(e.currentTarget.value)
+          const v = Number(asciiDigits(e.currentTarget.value).trim())
           if (e.relatedTarget instanceof HTMLElement && e.relatedTarget.closest('.mb-jump')) return // the Go button
           if (Number.isInteger(v) && v >= 1 && v <= PAGES && v !== current) goPage(v)
           else setJumping(false)
@@ -637,19 +639,24 @@ export function PageReader({ meta, pageNo, focusId, paused = false }: { meta: Me
                 <Icon name="chevron" size={20} />
               </button>
             ) : null}
-            <button class="mb-surah" lang="ar" aria-haspopup="listbox" aria-expanded={menu === 'surah'} aria-label={`${t('surahs')}: ${surahName(surahOfPage)}${barAyahNo ? ` ${num(barAyahNo)}` : ''}`} onClick={() => { setPickSurah(null); setMenu(menu === 'surah' ? null : 'surah') }}>
-              <span>{surahOfPage.ar}</span>{barAyahNo ? <span class="mb-ayah"> {num(barAyahNo)}</span> : null}
-            </button>
-            {/* the juz (the page is at the foot of the page, where its number opens a field to type one) */}
-            <button class="mb-page mb-juz" aria-haspopup="listbox" aria-expanded={menu === 'juz'} onClick={() => { setPickSurah(null); setMenu(menu === 'juz' ? null : 'juz') }} aria-label={`${t('juz')}: ${t('juzN', { n: juzOfPage })}`}>
-              {t('juzN', { n: juzOfPage })}
-            </button>
-            <button class="icon-btn small bar-act bar-tafsir" onClick={togglePanel} aria-pressed={ayahOpen}
-              aria-label={wide ? t('sidePanel') : t('tabTafsir')} title={wide ? t('sidePanel') : t('tabTafsir')}><Icon name={wide ? 'panel' : 'book'} size={20} /></button>
-            {/* two different ways of reading, each with its own sign and (on a computer) its name: Study (the ayah
-                with its translation and commentary, one after the other) and Zen (only the page, nothing around it) */}
-            <a class="icon-btn small bar-act bar-study" href={href.verse(barAt.surah, barAt.ayah)} aria-label={t('navStudy')} title={t('navStudy')}><Icon name="study" size={20} /><span class="bar-label">{t('navStudy')}</span></a>
-            <button class="icon-btn small bar-act bar-zen" onClick={() => setZen(true)} aria-label={t('studyFocus')} title={t('studyFocus')}><Icon name="zen" size={20} /><span class="bar-label">{t('studyFocusLabel')}</span></button>
+            {/* where one is, in one piece: the surah with the ayah, and the juz; each opens its list */}
+            <div class="bar-where">
+              <button class="mb-surah" lang="ar" aria-haspopup="listbox" aria-expanded={menu === 'surah'} aria-label={`${t('surahs')}: ${surahName(surahOfPage)}${barAyahNo ? ` ${num(barAyahNo)}` : ''}`} onClick={() => { setPickSurah(null); setMenu(menu === 'surah' ? null : 'surah') }}>
+                <span>{surahOfPage.ar}</span>{barAyahNo ? <span class="mb-ayah">{num(barAyahNo)}</span> : null}
+              </button>
+              {/* the juz (the page is at the foot of the page, where its number opens a field to type one) */}
+              <button class="mb-page mb-juz" aria-haspopup="listbox" aria-expanded={menu === 'juz'} onClick={() => { setPickSurah(null); setMenu(menu === 'juz' ? null : 'juz') }} aria-label={`${t('juz')}: ${t('juzN', { n: juzOfPage })}`}>
+                {t('juzN', { n: juzOfPage })}
+              </button>
+            </div>
+            {/* the ways of reading, together: the panel beside the page, Study (the ayah with its translation and
+                commentary, one after the other) and Zen (only the page, nothing around it), on a computer with their names */}
+            <div class="bar-tools">
+              <button class="icon-btn small bar-act bar-tafsir" onClick={togglePanel} aria-pressed={ayahOpen}
+                aria-label={wide ? t('sidePanel') : t('tabTafsir')} title={wide ? t('sidePanel') : t('tabTafsir')}><Icon name={wide ? 'panel' : 'book'} size={19} /></button>
+              <a class="icon-btn small bar-act bar-study" href={href.verse(barAt.surah, barAt.ayah)} aria-label={t('navStudy')} title={t('navStudy')}><Icon name="study" size={19} /><span class="bar-label">{t('navStudy')}</span></a>
+              <button class="icon-btn small bar-act bar-zen" onClick={() => setZen(true)} aria-label={t('studyFocus')} title={t('studyFocus')}><Icon name="zen" size={19} /><span class="bar-label">{t('studyFocusLabel')}</span></button>
+            </div>
             {turnButtons ? (
               <button class="icon-btn small turn-next" onClick={() => turnTo(current + 1)} disabled={current >= PAGES} aria-label={t('nextPage')}>
                 <Icon name="chevron" size={20} />

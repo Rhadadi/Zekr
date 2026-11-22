@@ -55,10 +55,54 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
   const src = mushafImage(meta, n)
   const ink = useAsync(() => pageInk(src), [src]).value
   const frame = useAsync(() => pageFrame(src), [src]).value
-  // the paper under a translation reaches the frame's band, over the thin rule inside it (see paperEdges)
   const paperBox = frame ? { left: `${frame.left * 100}%`, right: `${(1 - frame.right) * 100}%` } : undefined
   const strips = useMemo(() => pageStrips(pg, ink), [pg, ink])
   const pieces = useMemo(() => lineTranslations(pg, strips, tr.texts), [pg, strips, tr.texts])
+  // Under a translation, the page's own paper: a few rows of the picture with no ink on them (between two printed lines),
+  // stretched to the row's height. Every column of such rows is the same all the way down, so stretched it is the paper
+  // and the frame's thin rule exactly as printed, as if the translation were written on the page. It is shown from the
+  // frame's band inwards (paperEdges); the band beside it is the line's own strip, stretched.
+  const clean = useMemo(() => {
+    if (!ink) return undefined
+    const H = ink.length
+    const out = new Map<Strip, number>()
+    for (const st of strips) {
+      if (!st.line) continue
+      const from = Math.round((st.bottom / 1000) * H)
+      let best = -1
+      for (let d = 0; d < 60 && best < 0; d++) {
+        for (const y of [from + d, from - d]) {
+          if (y < 3 || y > H - 4) continue
+          let ok = true
+          for (let k = -2; k <= 2 && ok; k++) if (ink[y + k]! > 0.002) ok = false
+          if (ok) { best = y; break }
+        }
+      }
+      if (best >= 0) out.set(st, best)
+    }
+    // a line with none near it borrows one from elsewhere on the page: the paper and the rule are the same all the way down
+    const lines = strips.filter((st) => st.line)
+    if (out.size < lines.length) {
+      const y0 = Math.round(((lines[0]?.top ?? 100) / 1000) * H)
+      const y1 = Math.round(((lines.at(-1)?.bottom ?? 900) / 1000) * H)
+      let any = -1
+      let least = Infinity
+      for (let y = Math.max(3, y0); y < Math.min(H - 4, y1); y++) {
+        let most = 0
+        for (let k = -2; k <= 2; k++) most = Math.max(most, ink[y + k]!)
+        if (most < least) { least = most; any = y }
+        if (most === 0) break
+      }
+      if (any >= 0 && least <= 0.002) for (const st of lines) if (!out.has(st)) out.set(st, out.values().next().value ?? any)
+    }
+    return out
+  }, [ink, strips])
+  const paperRows = (st: Strip) => {
+    const y = clean?.get(st)
+    if (y === undefined || !ink || !frame) return undefined
+    const H = ink.length
+    return { ...slice(((y - 1) / H) * 1000, (3 / H) * 1000), clipPath: `inset(0 ${(1 - frame.right) * 100}% 0 ${frame.left * 100}%)` }
+  }
   const [reflow, setReflow] = useState<{ source: typeof pieces; rows: typeof pieces }>()
   const shown = reflow?.source === pieces ? reflow.rows : pieces
   const root = useRef<HTMLElement>(null)
@@ -71,6 +115,7 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
   const paper = useAsync(async () => (fonted ? bandPaper(src, bands) : undefined), [fonted, src, bands])
   useFontLinesFit(root, [fonted, n, bands])
   let lineNo = -1
+  const lineOf = useMemo(() => new Map(strips.filter((st) => st.line?.length).map((st, i) => [st, i])), [strips])
   const cls = (id: number) => (highlight === id ? ` ${kind}` : '')
 
   useLayoutEffect(() => {
@@ -186,7 +231,10 @@ export const InterlinearPage = memo(function InterlinearPage({ meta, pg, ar, hig
               <div class="il-tr" data-word-source={tr.id} dir={tr.dir} lang={tr.lang} title={t('enlargeTranslation')}>
                 {/* the frame goes on down the sides: the line's own strip of the picture, stretched to the box's height */}
                 <i class="pg-img il-pic il-frame" style={slice(s.top, h)} />
-                <span class="il-paper" style={paperBox} />
+                {paperRows(s) ? <i class="pg-img il-pic il-clean" style={paperRows(s)} /> : <span class="il-paper" style={paperBox} />}
+                {/* set in a font, the line above is covered in its paper from margin to margin (FontLine), the frame's thin
+                    rule with it: the same cover here, so the rule does not show beside the translation alone */}
+                {fonted && lineOf.has(s) ? (() => { const b = bands[lineOf.get(s)!]!; return <span class="fl il-cover" aria-hidden="true" style={{ left: `${b.left / 10}%`, width: `${(b.right - b.left) / 10}%`, top: 0, height: '100%', background: paper.value?.[lineOf.get(s)!] }} /> })() : null}
                 {words(row)}
               </div>
             ) : null}

@@ -135,7 +135,7 @@ test('the study header keeps controls separate on a small tablet', async ({ page
     await fixture(page, language)
     await page.setViewportSize({ width: 768, height: 1024 })
     await page.goto('/#/verse/69/9')
-    const controls = await page.locator('.study-toolbar button, .study-toolbar a').all()
+    const controls = await page.locator('.study-toolbar button:visible, .study-toolbar a:visible').all()
     const boxes = await Promise.all(controls.map(control => control.boundingBox()))
     for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
       const a = boxes[i]!, b = boxes[j]!
@@ -168,7 +168,7 @@ for (const language of ['en', 'fa']) for (const theme of ['light', 'sepia', 'dar
   expect(await pair.allTextContents()).toEqual(original)
   expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0)
   const toolbar = reader.locator('.study-toolbar')
-  for (const el of await toolbar.locator('a,button').all()) {
+  for (const el of await toolbar.locator('a:visible,button:visible').all()) {
     const box = (await el.boundingBox())!
     expect(box.x).toBeGreaterThanOrEqual(0)
     expect(box.x + box.width).toBeLessThanOrEqual(390)

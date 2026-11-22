@@ -115,7 +115,8 @@ export function MenuSettings({ meta, study = false }: { meta: Meta; study?: bool
             {QURAN_FONTS.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
           </select>
         </label>
-        <Stepper label={t('arabicSize')} value={s.arabicSize} min={22} max={52} set={(v) => updateSettings({ arabicSize: v })} />
+        {/* the printed pages are sized to the window: the Arabic size is for Study, the ayah cards and word by word */}
+        {study || !meta.mushaf || s.translationPlace === 'words' ? <Stepper label={t('arabicSize')} value={s.arabicSize} min={22} max={52} set={(v) => updateSettings({ arabicSize: v })} /> : null}
       </Section>
       <Section id="translations" title={t('translations')}><TranslationChecks meta={meta} /></Section>
       <Section id="recitation" title={t('recitation')}><PlaybackOptions /></Section>

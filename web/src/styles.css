@@ -746,6 +746,8 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .drawer-search { display: flex; align-items: center; gap: 4px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); padding-inline-start: 10px; }
 .drawer-search input { flex: 1; min-width: 0; min-height: 44px; border: 0; background: none; font: inherit; color: var(--ink); }
 .drawer-search input:focus { outline: none; }
+/* our own clear button only, not the browser's as well */
+.drawer-search input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; display: none; }
 .drawer-search:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
 .drawer-links { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; margin: 10px 0 6px; }
 .drawer-links a, .drawer-item {
@@ -1050,10 +1052,32 @@ a.player-info { color: var(--ink); text-decoration: none; }
 /* Study and Zen in the bar: their own signs, and on a computer their names beside them */
 .bar-study, .bar-zen { text-decoration: none; }
 .bar-label { display: none; }
+/* The reading bar: where one is (surah, ayah, juz) in one quiet pill, the ways of reading in another, the page turns
+   at the two ends; the same height, the same rounding and the same ink throughout */
+.bar-where, .bar-tools { display: flex; align-items: center; flex: none; min-width: 0; }
+.bar-where { flex: 0 1 auto; }
+.mb-surah { display: inline-flex; align-items: center; gap: 0.35em; }
+/* the bar's words are in the interface's font: the Quran's (inherited from the bar, for the surah's name) does not join
+   every Persian letter (تمرکز came apart between ک and ز) */
+.bar-tools, .bar-where .mb-juz, .bar-where .mb-ayah { font-family: var(--font-ui); }
+.bar-tools .bar-act { color: var(--ink); }
+/* on a phone the bar is the surah and its ayah; the juz is in the surah's list (Surahs | Juz) */
+@media (max-width: 599px) { .bar-where .mb-juz { display: none; } }
 @media (min-width: 1000px) {
-  .appbar .bar-study, .appbar .bar-zen { display: inline-flex; align-items: center; width: auto; gap: 6px; padding-inline: 10px; border-radius: 999px; border: 1px solid var(--line); font-size: 0.85rem; font-weight: 600; color: var(--ink); }
-  .appbar .bar-study:hover, .appbar .bar-zen:hover { background: var(--hl); }
+  .appbar .mushaf-id { gap: 10px; }
+  .bar-where, .bar-tools { height: 44px; padding: 3px; gap: 2px; border: 1px solid var(--line); border-radius: 999px; background: color-mix(in srgb, var(--surface) 70%, transparent); }
+  .bar-where .mb-surah { min-height: 36px; padding: 0 8px 0 14px; border-radius: 999px; font-size: 1.22rem; line-height: 1; }
+  .bar-where .mb-ayah { display: inline-grid; place-items: center; min-width: 26px; height: 24px; padding: 2px 7px 0; border-radius: 999px; background: color-mix(in srgb, var(--gold) 15%, transparent); color: var(--gold); font-size: 0.74rem; line-height: 1; }
+  .bar-where .mb-juz { position: relative; overflow: visible; min-height: 36px; padding: 0 14px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+  .bar-where .mb-juz::before { content: ''; position: absolute; inset-inline-start: -1px; top: 10px; bottom: 10px; width: 1px; background: var(--line); }
+  .bar-where :is(.mb-surah, .mb-juz):hover, .bar-where :is(.mb-surah, .mb-juz)[aria-expanded='true'] { background: var(--hl); color: var(--ink); }
+  .bar-tools .bar-act { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto; min-width: 36px; height: 36px; padding: 0 9px; border: 0; border-radius: 999px; font-size: 0.84rem; font-weight: 600; color: var(--ink); text-decoration: none; }
+  .bar-tools .bar-act:hover { background: var(--hl); color: var(--ink); }
+  .bar-tools .bar-act[aria-pressed='true'] { background: color-mix(in srgb, var(--accent) 13%, transparent); color: var(--accent); }
+  .bar-tools .bar-act:has(.bar-label) { padding-inline: 11px 13px; }
   .bar-label { display: inline; }
+  .mushaf-id :is(.turn-prev, .turn-next) { width: 36px; height: 36px; border-radius: 999px; color: var(--muted); }
+  .mushaf-id :is(.turn-prev, .turn-next):hover:not(:disabled) { background: var(--hl); color: var(--ink); }
 }
 
 /* The recitation's speed (a tap moves to the next) and close, everywhere; the grip that moves it on a computer */
@@ -1082,7 +1106,7 @@ a.player-info { color: var(--ink); text-decoration: none; }
 @media (min-width: 1000px) and (max-width: 1279px) {
   .player.desk-bar .player-repeat { display: none; }
   .appbar .bar-label { display: none; }
-  .appbar .bar-study, .appbar .bar-zen { width: 44px; padding: 0; border: 0; }
+  .bar-tools .bar-act, .bar-tools .bar-act:has(.bar-label) { width: 36px; padding: 0; }
 }
 
 /* The menu's search: results under the field as one types, over the menu, see-through */
@@ -1090,7 +1114,7 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .qs-panel {
   position: absolute; inset-inline: 0; top: calc(100% + 6px); max-height: min(62dvh, 560px); overflow-y: auto; overscroll-behavior: contain;
   padding: 6px; border: 1px solid var(--line); border-radius: 14px;
-  background: color-mix(in srgb, var(--surface) 82%, transparent); backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  background: color-mix(in srgb, var(--surface) 66%, transparent); backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4);
   box-shadow: 0 18px 40px -16px rgb(0 0 0 / 0.35);
 }
 .qs-item { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 10px; color: var(--ink); text-decoration: none; }
@@ -1103,15 +1127,19 @@ a.player-info { color: var(--ink); text-decoration: none; }
 .qs-text mark { background: color-mix(in srgb, var(--gold) 35%, transparent); color: inherit; border-radius: 3px; padding: 0 1px; }
 .qs-all { flex-direction: row; align-items: center; justify-content: center; gap: 4px; margin-top: 2px; font-size: 0.85rem; font-weight: 600; color: var(--accent); border-top: 1px solid var(--line); border-radius: 0 0 10px 10px; }
 [dir='rtl'] .qs-all svg, :root[lang='fa'] .qs-all svg { transform: scaleX(-1); }
+/* Ctrl/Cmd-F: glass over the page, which stays in sight behind it */
 .find-box {
   position: fixed; inset: 0 0 auto 0; margin: min(12dvh, 96px) auto 0; width: min(640px, calc(100vw - 32px)); padding: 8px; overflow: visible;
-  border: 1px solid var(--line); border-radius: 18px; color: var(--ink);
-  background: color-mix(in srgb, var(--surface) 78%, transparent); backdrop-filter: blur(16px) saturate(1.2); -webkit-backdrop-filter: blur(16px) saturate(1.2);
-  box-shadow: 0 24px 60px -16px rgb(0 0 0 / 0.4);
+  border: 1px solid color-mix(in srgb, var(--surface) 55%, transparent); border-radius: 20px; color: var(--ink);
+  background: color-mix(in srgb, var(--surface) 30%, transparent);
+  backdrop-filter: blur(12px) saturate(1.4); -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  box-shadow: 0 24px 60px -18px rgb(0 0 0 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.35);
 }
 .find-box:not([open]) { display: none; }
-.find-box::backdrop { background: rgb(0 0 0 / 0.25); }
-.find-box .drawer-search { background: var(--surface); }
+.find-box::backdrop { background: rgb(0 0 0 / 0.06); }
+.find-box .drawer-search { background: color-mix(in srgb, var(--surface) 62%, transparent); border-color: color-mix(in srgb, var(--line) 70%, transparent); }
 .find-box .drawer-search input { min-height: 50px; font-size: 1.1rem; }
-.find-box .qs-panel { position: static; margin-top: 8px; max-height: min(64dvh, 620px); box-shadow: none; }
+.find-box .qs-panel { position: static; margin-top: 8px; max-height: min(64dvh, 620px); box-shadow: none; border: 0; padding: 2px; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.find-box .qs-item:hover, .find-box .qs-item.on { background: color-mix(in srgb, var(--hl) 75%, transparent); }
+.find-box .qs-all { border-top-color: color-mix(in srgb, var(--line) 60%, transparent); }
 .qs-note { margin: 0; padding: 10px; color: var(--muted); font-size: 0.85rem; text-align: center; }
