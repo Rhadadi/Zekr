@@ -1071,6 +1071,8 @@ a.player-info { color: var(--ink); text-decoration: none; }
   .player.desk-bar .player-info { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .player.desk-bar :is(.icon-btn, .icon-btn.big) { width: 36px; height: 36px; margin: 0; }
   .player.desk-bar .player-speed { height: 28px; margin-inline: 2px; }
+  .player.desk-bar .player-ref { flex: none; padding: 4px 6px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; color: var(--accent); text-decoration: none; font-variant-numeric: tabular-nums; }
+  .player.desk-bar .player-ref:hover { background: var(--hl); }
   /* floating: a card wherever it was put (at first under the bar, in the middle) */
   .player.desk-float { right: auto; bottom: auto; width: auto; max-width: min(480px, calc(100vw - 16px)); padding: 6px 8px; gap: 6px; flex-wrap: wrap; z-index: 9; }
   .player.desk-float:not(.placed) { top: calc(var(--bar-h) + 10px); left: 50%; translate: -50% 0; }

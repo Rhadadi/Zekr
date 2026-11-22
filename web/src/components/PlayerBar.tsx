@@ -123,12 +123,14 @@ export function PlayerBar({ meta, study = false }: { meta: Meta; study?: boolean
               setPos(v); savePos(v)
             }}><Icon name="grip" size={18} /></button>
         ) : null}
-        <a class="player-info" href={destination} aria-label={destinationLabel} aria-hidden={compactInfo || undefined} tabIndex={compactInfo ? -1 : undefined}>
+        <a class="player-info" href={destination} aria-label={destinationLabel} aria-hidden={compactInfo || docked || undefined} tabIndex={compactInfo || docked ? -1 : undefined}>
           <strong>{surahName(meta.surahs[surah - 1]!)} {num(surah)}:{num(ayah)}</strong>
           {p.status === 'error' || p.phase !== 'ayah' || entry ? (
             <span class="muted small">{p.status === 'error' ? t('audioError') : entry ? `${label} · ${entry.audio!.voice}` : p.phase === 'translation' ? t('audioTranslation') : 'بسم الله'}</span>
           ) : null}
         </a>
+        {/* in the top bar: the ayah being recited, short, and a link to it */}
+        {docked ? <a class="player-ref" href={destination} aria-label={destinationLabel} title={destinationLabel}>{num(surah)}:{num(ayah)}</a> : null}
         <div class="player-controls" dir="ltr">
           <button class="icon-btn player-step" onClick={previous} aria-label={t(entry ? 'prevNote' : 'previous')}><Icon name="prev" size={20} /></button>
           <button class="icon-btn big" onClick={toggle} aria-label={playing ? t('pause') : t('play')}>
